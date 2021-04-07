@@ -4,7 +4,7 @@ var fs_1 = require("fs");
 var path_1 = require("path");
 var DATABASE_FILENAME = ".db.json";
 var DATABASE_PATH = path_1.resolve(process.cwd(), DATABASE_FILENAME);
-var data = { headlines: [], articles: [], phone: [] };
+var data = { headlines: [], articles: [], phone: {} };
 var DB = (function () {
     function DB() {
     }
