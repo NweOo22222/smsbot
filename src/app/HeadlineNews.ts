@@ -16,7 +16,9 @@ export default class HeadlineNews {
 
   static fetch(): Promise<HeadlineNews[]> {
     return axios
-      .get("https://nweoo-developer.herokuapp.com/news/headlines?limit=20")
+      .get(
+        'https://rtdb.nweoo.com/v1/_articles.json?orderBy="timestamp"&limitToLast=20'
+      )
       .then(({ data }) => {
         const result = [];
         Object.entries(data).forEach(([id, value]) =>

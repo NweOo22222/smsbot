@@ -22,7 +22,9 @@ export default class Article {
 
   static fetch(): Promise<Article[]> {
     return axios
-      .get("https://nweoo-developer.herokuapp.com/articles?limit=20")
+      .get(
+        'https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=20'
+      )
       .then(({ data }) =>
         Object.values(data).map((article) => new Article(Object(article || {})))
       );
