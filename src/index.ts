@@ -3,7 +3,6 @@ import express from "express";
 import morgan from "morgan";
 import file from "express-fileupload";
 import router from "./routes";
-import { createExternalModuleExport } from "typescript";
 
 config();
 

@@ -1,3 +1,4 @@
+import axios from "axios";
 import e, { Router } from "express";
 import Article from "./app/Article";
 import DB from "./app/DB";
@@ -30,9 +31,18 @@ router.get("/call", (req, res) => {
     timestamps: Date.now.toString(),
     _id: 0,
   });
+  const keyword = new Keyword(inputMessage.body);
+
+  keyword.onUpdate(() => {
+    axios
+      .get("http://localhost:3000/update")
+      .then(() =>
+        res.send("[Command] Updated at " + new Date().toLocaleString())
+      );
+  });
+
   if (inputMessage.via("Telenor")) {
     const db = DB.read();
-    const keyword = new Keyword(inputMessage.body);
     keyword.onAskHelp(() => {
       if (!(inputMessage.phone.number in db["phone"])) {
         db["phone"][inputMessage.phone.number] = {
