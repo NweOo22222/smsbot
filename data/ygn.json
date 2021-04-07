@@ -1,0 +1,227 @@
+[
+  {
+    "name_en": "Ahlon",
+    "name_mm": "အလုံ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Bahan",
+    "name_mm": "ဗဟန်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Botataung",
+    "name_mm": "ဗိုလ်တထောင်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Cocokyun",
+    "name_mm": "ကိုကိုးကျွန်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Dagon",
+    "name_mm": "ဒ​​​​​ဂုံ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Dagon Seikkan",
+    "name_mm": "ဒ​​​​​ဂုံဆိပ်ကမ်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Dala",
+    "name_mm": "ဒလ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Dawbon",
+    "name_mm": "ဒေါပုံ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "East Dagon",
+    "name_mm": "အရှေ့ဒဂုံ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Hlaing",
+    "name_mm": "လှိုင်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Hlaingthaya",
+    "name_mm": "လှိုင်သာယာ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Hlegu",
+    "name_mm": "လှည်းကူး",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Hmawbi",
+    "name_mm": "မှော်ဘီ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Htantabin",
+    "name_mm": "ထန်းတပင်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Insein",
+    "name_mm": "အင်းစိန်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Kamayut",
+    "name_mm": "ကမာရွတ်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Kawhmu",
+    "name_mm": "ကေ့ာမှူး",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Kayan",
+    "name_mm": "ခရမ်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Kungyangon",
+    "name_mm": "ကွမ်းခြံကုန်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Kyauktada",
+    "name_mm": "ကျောက်တံတား",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Kyauktan",
+    "name_mm": "ကျောက်တန်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Kyimyindaing",
+    "name_mm": "ကြည့်မြင့်တိုင်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Lanmadaw",
+    "name_mm": "လမ်းမတော်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Latha",
+    "name_mm": "လသာ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Mayangon",
+    "name_mm": "မရမ်းကုန်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Mingala Taungnyunt",
+    "name_mm": "မင်္ဂလာတောင်ညွှန့်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Mingaladon",
+    "name_mm": "မင်္ဂလာဒုံ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "North Dagon",
+    "name_mm": "မြောက်ဒဂုံ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "North Okkalapa",
+    "name_mm": "မြောက်ဥက္ကလာပ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Pabedan",
+    "name_mm": "ပန်းဘဲတန်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Pazundaung",
+    "name_mm": "ပုဇွန်တောင်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Sanchaung",
+    "name_mm": "စမ်းချောင်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Seikkan",
+    "name_mm": "ဆိပ်ကမ်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Seikkyi Kanaungto",
+    "name_mm": "ဆိပ်ကြီးခနောင်တို",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Shwepyitha",
+    "name_mm": "ရွှေပြည်သာ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "South Dagon",
+    "name_mm": "တောင်ဒဂုံ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "South Okkalapa",
+    "name_mm": "တောင်ဥက္ကလာပ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Taikkyi",
+    "name_mm": "တိုက်ကြီး",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Tamwe",
+    "name_mm": "တာမွေ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Thaketa",
+    "name_mm": "သာကေတ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Thanlyin",
+    "name_mm": "သန်လျင်",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Thingangyun",
+    "name_mm": "သင်္ကန်းကျွန်း",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Thongwa",
+    "name_mm": "သုံးခွ",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Twante",
+    "name_mm": "တွံတေး",
+    "region_state": "yangon"
+  },
+  {
+    "name_en": "Yankin",
+    "name_mm": "ရန်ကင်း",
+    "region_state": "yangon"
+  }
+]
