@@ -122,8 +122,10 @@ router.get("/call", function (req, res) {
             }
             var sent = db_1["phone"][inputMessage.phone.number]["headlines"];
             var tdy = HeadlineNews_1.default.getLatest(0, sent);
-            var total = tdy.length + sent.length;
-            var remain = total - tdy.length;
+            var outbox = tdy.length + sent.length;
+            var inbox = outbox - tdy.length;
+            var total = outbox + inbox;
+            var remain = total - sent.length;
             var text = remain < 0
                 ? "\u101E\u1010\u1004\u103A\u1038\u1019\u103B\u102C\u1038 " + total + " \u1001\u102F\u1021\u102C\u1038\u101C\u102F\u1036\u1038\u1000\u102D\u102F\u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1015\u103C\u102E\u1038\u1015\u102B\u1015\u103C\u102D\u104B \u1021\u1005\u1000\u1015\u103C\u1014\u103A\u1005\u101B\u1014\u103A \"reset\" \u101E\u102D\u102F\u1037 \"\u1015\u103C\u1014\u103A\u1005\" \u101F\u102F\u1015\u102D\u102F\u1037\u1015\u102B\u104B"
                 : "\u101E\u1010\u1004\u103A\u1038\u1019\u103B\u102C\u1038 " + tdy.length + " \u1001\u102F\u101B\u103E\u102D\u1015\u103C\u102E\u1038 " + remain + " \u1001\u102F\u1015\u102D\u102F\u1037\u101B\u1014\u103A\u1000\u103B\u1014\u103A\u101B\u103E\u102D\u101E\u1031\u1038\u1015\u102B\u1010\u101A\u103A\u104B";
