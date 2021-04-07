@@ -1,3 +1,6 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.zg2uni = exports.uni2zg = void 0;
 function uni2zg(output) {
     var rule = [
         {
@@ -323,6 +326,7 @@ function uni2zg(output) {
     ];
     return replace_with_rule(rule, output);
 }
+exports.uni2zg = uni2zg;
 function zg2uni(output) {
     var rule = [
         {
@@ -800,6 +804,7 @@ function zg2uni(output) {
     ];
     return replace_with_rule(rule, output);
 }
+exports.zg2uni = zg2uni;
 function replace_with_rule(rule, output) {
     var max_loop = rule.length;
     for (var i = 0; i < max_loop; i++) {
@@ -811,7 +816,3 @@ function replace_with_rule(rule, output) {
     }
     return output;
 }
-module.exports = {
-    zg2uni: zg2uni,
-    uni2zg: uni2zg,
-};
