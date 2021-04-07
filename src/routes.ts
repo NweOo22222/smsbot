@@ -124,14 +124,11 @@ router.get("/call", (req, res) => {
       }
       const sent = db["phone"][inputMessage.phone.number]["headlines"];
       const tdy = HeadlineNews.getLatest(0, sent);
-      const outbox = tdy.length + sent.length;
-      const inbox = outbox - tdy.length;
-      const total = outbox + inbox;
-      const remain = total - sent.length;
+      const total = tdy.length + sent.length;
       const text =
-        remain < 0
+        tdy.length < 0
           ? `သတင်းများ ${total} ခုအားလုံးကိုပို့ဆောင်ပြီးပါပြိ။ အစကပြန်စရန် "reset" သို့ "ပြန်စ" ဟုပို့ပါ။`
-          : `သတင်းများ ${tdy.length} ခုရှိပြီး ${remain} ခုပို့ရန်ကျန်ရှိသေးပါတယ်။`;
+          : `သတင်းများ ${total} ခုရှိပြီး ${tdy.length} ခုပို့ရန်ကျန်ရှိသေးပါတယ်။`;
       db["phone"][inputMessage.phone.number]["times"]++;
       db["phone"][inputMessage.phone.number]["last_date"] = Date.now();
       res.send(text);
