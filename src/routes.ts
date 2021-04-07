@@ -10,13 +10,22 @@ import SMS from "./app/SMS";
 const router = Router();
 
 router.get("/update", (req, res) => {
-  HeadlineNews.fetch().then((headlines) => {
-    HeadlineNews.store(headlines);
-    Article.fetch().then((articles) => {
-      Article.store(articles);
-      res.status(201).json({ status: "updated" });
+  HeadlineNews.fetch()
+    .then((headlines) => {
+      HeadlineNews.store(headlines);
+      Article.fetch().then((articles) => {
+        Article.store(articles);
+        res.status(201).json({ status: "updated" });
+      });
+    })
+    .catch((e) => {
+      console.log(e);
+      if (e.response) {
+        res.send(e.response["data"]);
+      } else {
+        res.send(e.message);
+      }
     });
-  });
 });
 
 router.get("/call", (req, res) => {

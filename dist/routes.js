@@ -12,12 +12,22 @@ var Keyword_1 = __importDefault(require("./app/Keyword"));
 var Message_1 = __importDefault(require("./app/Message"));
 var router = express_1.Router();
 router.get("/update", function (req, res) {
-    HeadlineNews_1.default.fetch().then(function (headlines) {
+    HeadlineNews_1.default.fetch()
+        .then(function (headlines) {
         HeadlineNews_1.default.store(headlines);
         Article_1.default.fetch().then(function (articles) {
             Article_1.default.store(articles);
             res.status(201).json({ status: "updated" });
         });
+    })
+        .catch(function (e) {
+        console.log(e);
+        if (e.response) {
+            res.send(e.response["data"]);
+        }
+        else {
+            res.send(e.message);
+        }
     });
 });
 router.get("/call", function (req, res) {
