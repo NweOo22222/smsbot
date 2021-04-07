@@ -1,5 +1,3 @@
-const COUNTRY_CODE = require("../../data/countryCode.json");
-
 export default class Phone {
   public code: string;
   public dial: string;
@@ -7,13 +5,8 @@ export default class Phone {
   public operator: string;
 
   constructor(public number: string) {
-    let country = guessCountry(this) || {};
-    this.code = String(country["code"] || "");
-    this.dial = String(country["dial_code"] || "");
-    this.country = String(country["name"] || "");
-    if (this.code === "MM") {
-      guessOperator(this);
-    }
+    this.number = this.number.replace(/^\s/, "+");
+    guessOperator(this);
   }
 
   get localNumber() {
@@ -21,16 +14,10 @@ export default class Phone {
   }
 }
 
-function guessCountry(phone: Phone): Object | undefined {
-  phone.number = phone.number.replace(/^\s/, "+");
-  return COUNTRY_CODE.filter(({ dial_code }) => {
-    return phone.number.includes(dial_code);
-  })[0];
-}
-
 function guessOperator(phone: Phone) {
-  let [, n1, n2, n3] = phone.localNumber.match(/^09(\d)(\d)(\d{5,7})/) || [];
-  switch (n1) {
+  let matched = phone.number.match(/^(?:\+95|0)?9(\d)(\d)(\d{5,7})/) || [];
+  if (!matched) return;
+  switch (matched[1]) {
     case "2":
     case "3":
     case "4":

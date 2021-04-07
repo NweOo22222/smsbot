@@ -1,37 +1,36 @@
 import axios from "axios";
-import e, { Router } from "express";
+import { Router } from "express";
 import Article from "./app/Article";
 import DB from "./app/DB";
-import HeadlineNews from "./app/HeadlineNews";
+import Headline from "./app/Headline";
 import Keyword from "./app/Keyword";
 import Message from "./app/Message";
-import SMS from "./app/SMS";
 
 const router = Router();
 
-router.get("/update", (req, res) => {
-  HeadlineNews.fetch()
+router.get("/update", (req, res) =>
+  Headline.fetch()
     .then((headlines) => {
-      HeadlineNews.store(headlines);
-      Article.fetch().then((articles) => {
-        Article.store(articles);
-        res.status(201).json({ status: "updated" });
-      });
+      Headline.store(headlines);
+      Article.fetch()
+        .then((articles) => {
+          Article.store(articles);
+          res.status(201).json({ status: "updated" });
+        })
+        .catch((e) => {
+          e.response ? res.send(e.response["data"]) : res.send(e.message);
+        });
     })
-    .catch((e) => {
-      console.log(e);
-      if (e.response) {
-        res.send(e.response["data"]);
-      } else {
-        res.send(e.message);
-      }
-    });
-});
+    .catch((e) =>
+      e.response ? res.send(e.response["data"]) : res.send(e.message)
+    )
+);
 
 router.get("/call", (req, res) => {
   let { phone, message } = req.query;
   phone = String(phone).replace(/^\s/, "+");
   message = decodeURIComponent(String(message));
+
   let inputMessage = new Message({
     body: message,
     address: phone,
@@ -40,6 +39,7 @@ router.get("/call", (req, res) => {
     timestamps: Date.now.toString(),
     _id: 0,
   });
+
   const keyword = new Keyword(inputMessage.body);
 
   keyword.onUpdate(() => {
@@ -63,10 +63,10 @@ router.get("/call", (req, res) => {
       }
       const text = [
         'သတင်းများရယူရန် - "news" or "သတင်း" or "ဘာထူးလဲ"',
-        'သတင်းရေတွက်ကိုသိရန် - "count" or "ကျန်သေးလား" or "ဒါပဲလား"',
-        'အစကပြန်ရယူရန် - "reset" or "ပြန်စ"',
-        'သတင်းအပြည့်အစုံဖတ်ရန် - "read #" or "# ပို့ပေးပါ"',
-        "\nBot by nweoo.com",
+        'သတင်းအပြည့်အစုံကိုဖတ်ရန် - "read <id>" or "<ဂဏန်း၆လုံ> ဖတ်" ဥပမာ. read 450123',
+        'ကျန်ရှိသည့်အရေအတွက်ကိုသိရန် - "count" or "ကျန်သေးလား"',
+        'အစကပြန်လည်ရယူရန် - "reset" or "ပြန်စ"',
+        "\n-by nweoo.com",
       ];
       db["phone"][inputMessage.phone.number]["times"]++;
       db["phone"][inputMessage.phone.number]["last_date"] = Date.now();
@@ -84,17 +84,23 @@ router.get("/call", (req, res) => {
         };
       }
       const sent = db["phone"][inputMessage.phone.number]["headlines"];
-      const latest = HeadlineNews.getLatest(5, sent);
+      const latest = Headline.getLatest(5, sent);
       db["phone"][inputMessage.phone.number]["times"]++;
       db["phone"][inputMessage.phone.number]["last_date"] = Date.now();
       db["phone"][inputMessage.phone.number]["headlines"].push(
         ...latest.map(({ id }) => id)
       );
       if (latest.length) {
-        res.send(latest.map(({ id, title }) => `[${id}] ${title}`).join("\n"));
+        const text = latest
+          .map(({ id, title }) => `(${id}) ${title}`)
+          .join("\n");
+        res.send(
+          text +
+            '\nနောက်ထပ်သတင်းများ "news"  အပြည့်အစုံဖတ်ရန် "read <id>"  ပိုမိုသိရှိရန် "help"'
+        );
       } else {
         res.send(
-          'သတင်းများပို့ရန်မကျန်တော့ပါ။ အစကပြန်စရန် "reset" သို့ "ပြန်စ" ဟုပို့ပါ။'
+          'နောက်ထပ်သတင်းများမရှိတော့ပါ။ သတင်းတွေကိုအစကရယူလိုပါက "reset" ဟုပို့ပါ။ သတင်းအပြည့်အစုံဖတ်လိုပါက "read <id>" ဟုပို့ပါ။ ဥပမာ. read 450111\n\nBot by nweoo.com'
         );
       }
       DB.save(db);
@@ -109,31 +115,18 @@ router.get("/call", (req, res) => {
           headlines: [],
         };
       }
-      const sent = db["phone"][inputMessage.phone.number]["headlines"];
       db["phone"][inputMessage.phone.number]["times"]++;
       db["phone"][inputMessage.phone.number]["last_date"] = Date.now();
-      if (!sent.includes(id)) {
-        res.send(
-          `#${id} ကို ပို့ဆောင်ထားခြင်းမရှိသေးပါ။ အကူအညီရယူရန် "help" or "ကူညီ" ဟုပို့ပါ။`
-        );
-        return;
-      }
-      const article = Object.values(db["articles"]).find(
-        (article) => article["id"] == id
-      );
+      const article = db["articles"].find((article) => article["id"] == id);
       if (!article) {
-        res.send(
-          `#${id} ကိုရှာမတွေ့ပါ။ အဆင်မပြေမှုအတွက်တောင်းပန်ပါတယ်။ အကူအညီရယူရန် "help" or "ကူညီ" ဟုပို့ပါ။`
-        );
+        res.send(`သတင်း ${id} ကို ရှာမတွေ့ပါ။`);
         return;
       }
-      let text = article["content"]
-        .replace(/\n/gm, "  ")
-        .replace(/\s{4}/gm, " ");
+      let text = article["content"];
       if (text.length > 1000) {
-        text = text.slice(0, 997) + "...";
+        text = text.slice(0, 997) + "…";
       }
-      res.send(`${text} - ${article["source"]} [nweoo.com]`);
+      res.send(`${text} - ${article["source"]}`);
     });
 
     keyword.onAskCount(() => {
@@ -146,12 +139,11 @@ router.get("/call", (req, res) => {
         };
       }
       const sent = db["phone"][inputMessage.phone.number]["headlines"];
-      const tdy = HeadlineNews.getLatest(0, sent);
+      const tdy = Headline.getLatest(0, sent);
       const total = tdy.length + sent.length;
-      const text =
-        tdy.length < 0
-          ? `သတင်းများ ${total} ခုအားလုံးကိုပို့ဆောင်ပြီးပါပြိ။ အစကပြန်စရန် "reset" သို့ "ပြန်စ" ဟုပို့ပါ။`
-          : `သတင်းများ ${total} ခုရှိပြီး ${tdy.length} ခုပို့ရန်ကျန်ရှိသေးပါတယ်။`;
+      const text = tdy.length
+        ? `နောက်ထပ်သတင်း ${tdy.length} ခု ကျန်ပါတယ်။ သတင်းတစ်ပုဒ်ချင်းစီကိုဖတ်ရန် "read <id>" ဟုပို့ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။\n\nBot by nweoo.com`
+        : 'နောက်ထပ်သတင်းများပို့ရန်မကျန်တော့ပါ။ သတင်းတစ်ပုဒ်ချင်းစီကိုဖတ်ရန် "read <id>" ဟုပို့ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။\n\nBot by nweoo.com';
       db["phone"][inputMessage.phone.number]["times"]++;
       db["phone"][inputMessage.phone.number]["last_date"] = Date.now();
       res.send(text);
@@ -171,12 +163,18 @@ router.get("/call", (req, res) => {
       db["phone"][inputMessage.phone.number]["headlines"] = [];
       DB.save(db);
       res.send(
-        `သတင်းများကိုအစကပြန်စပြီးပါပြီး။ သတင်းများရယူလိုပါက "news" or "သတင်း" ဟုပို့ပါ။ အကူအညီရယူရန် "help" or "ကူညီ" ဟုပို့ပါ။`
+        `သတင်းများကိုအစကနေပြန်လည်ရယူနိုင်ပါပြီ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။\n\nBot by nweoo.com`
       );
     });
 
-    keyword.onUnexisted(() => res.status(400).end());
+    keyword.onUnexisted(() =>
+      res.send(
+        'လုပ်ဆောင်ချက်မအောင်မြင်ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။\n\nBot by nweoo.com'
+      )
+    );
   }
+
+  keyword.onUnexisted(() => res.status(400).end());
 });
 
 export default router;

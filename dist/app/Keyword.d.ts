@@ -1,7 +1,5 @@
 export default class Keyword {
     text: string;
-    protected command: boolean;
-    protected others: any[];
     protected sent: boolean;
     constructor(text: string);
     onAskHelp(callback: Function): void;

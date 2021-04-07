@@ -1,18 +1,22 @@
 const UPDATE = [/^\.update/];
 const RESET_SENT = [/^ပြန်စ/, /^reset/i];
-const READ_NEWS = [/^(\d+) (?:ကို)?ပို့ပေးပါ/, /^read (\d+)/i];
-const HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i];
+const READ_NEWS = [
+  /^(\d+) (?:ကို)?ပို့(?:ပေးပါ)?/,
+  /^(\d+) (?:ကို)?ဖတ်(?:ရန်)?/,
+  /^read (\d+)/i,
+  /^read [<"'#]?(\d+)['">]?/i,
+];
 const LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
+const HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i, /^info/i];
 const ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];
 
 export default class Keyword {
-  protected command: boolean;
-  protected others: any[];
   protected sent: boolean;
 
   constructor(public text: string) {}
 
   onAskHelp(callback: Function) {
+    if (this.sent) return;
     if (HELP_INFO.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
@@ -20,6 +24,7 @@ export default class Keyword {
   }
 
   onAskHeadlines(callback: Function) {
+    if (this.sent) return;
     if (LATEST_NEWS.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
@@ -27,6 +32,7 @@ export default class Keyword {
   }
 
   onAskRead(callback: Function) {
+    if (this.sent) return;
     const index = READ_NEWS.findIndex((keyword) => this.meta.match(keyword));
     if (index === -1) return;
     const matched = this.meta.match(READ_NEWS[index]);
@@ -35,6 +41,7 @@ export default class Keyword {
   }
 
   onAskCount(callback: Function) {
+    if (this.sent) return;
     if (ARTICLES_COUNT.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback(this);
@@ -42,6 +49,7 @@ export default class Keyword {
   }
 
   onAskReset(callback: Function) {
+    if (this.sent) return;
     if (RESET_SENT.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback(this);
@@ -49,6 +57,7 @@ export default class Keyword {
   }
 
   onUpdate(callback: Function) {
+    if (this.sent) return;
     if (UPDATE.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
@@ -56,7 +65,9 @@ export default class Keyword {
   }
 
   onUnexisted(callback: Function) {
-    this.sent || callback();
+    if (this.sent) return;
+    this.sent = true;
+    callback();
   }
 
   get meta(): string {
