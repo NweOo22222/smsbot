@@ -9,6 +9,7 @@ export default class Keyword {
     onAskRead(callback: Function): void;
     onAskCount(callback: Function): void;
     onAskReset(callback: Function): void;
+    onUpdate(callback: Function): void;
     onUnexisted(callback: Function): void;
     get meta(): string;
 }

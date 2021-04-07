@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var UPDATE = [/^\.update/];
 var RESET_SENT = [/^ပြန်စ/, /^reset/i];
 var READ_NEWS = [/^(\d+) ပို့ပေးပါ/, /^read (\d+)/i];
 var HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i];
@@ -12,15 +13,15 @@ var Keyword = (function () {
     Keyword.prototype.onAskHelp = function (callback) {
         var _this = this;
         if (HELP_INFO.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            callback();
             this.sent = true;
+            callback();
         }
     };
     Keyword.prototype.onAskHeadlines = function (callback) {
         var _this = this;
         if (LATEST_NEWS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            callback();
             this.sent = true;
+            callback();
         }
     };
     Keyword.prototype.onAskRead = function (callback) {
@@ -29,21 +30,28 @@ var Keyword = (function () {
         if (index === -1)
             return;
         var matched = this.meta.match(READ_NEWS[index]);
-        callback(matched[1]);
         this.sent = true;
+        callback(matched[1]);
     };
     Keyword.prototype.onAskCount = function (callback) {
         var _this = this;
         if (ARTICLES_COUNT.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            callback(this);
             this.sent = true;
+            callback(this);
         }
     };
     Keyword.prototype.onAskReset = function (callback) {
         var _this = this;
         if (RESET_SENT.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            callback(this);
             this.sent = true;
+            callback(this);
+        }
+    };
+    Keyword.prototype.onUpdate = function (callback) {
+        var _this = this;
+        if (UPDATE.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+            this.sent = true;
+            callback();
         }
     };
     Keyword.prototype.onUnexisted = function (callback) {

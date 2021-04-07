@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var axios_1 = __importDefault(require("axios"));
 var express_1 = require("express");
 var Article_1 = __importDefault(require("./app/Article"));
 var DB_1 = __importDefault(require("./app/DB"));
@@ -31,9 +32,16 @@ router.get("/call", function (req, res) {
         timestamps: Date.now.toString(),
         _id: 0,
     });
+    var keyword = new Keyword_1.default(inputMessage.body);
+    keyword.onUpdate(function () {
+        axios_1.default
+            .get("http://localhost:3000/update")
+            .then(function () {
+            return res.send("[Command] Updated at " + new Date().toLocaleString());
+        });
+    });
     if (inputMessage.via("Telenor")) {
         var db_1 = DB_1.default.read();
-        var keyword = new Keyword_1.default(inputMessage.body);
         keyword.onAskHelp(function () {
             if (!(inputMessage.phone.number in db_1["phone"])) {
                 db_1["phone"][inputMessage.phone.number] = {
