@@ -125,7 +125,7 @@ router.get("/call", (req, res) => {
       const sent = db["phone"][inputMessage.phone.number]["headlines"];
       const tdy = HeadlineNews.getLatest(0, sent);
       const total = tdy.length + sent.length;
-      const remain = total - sent.length;
+      const remain = total - tdy.length;
       const text =
         remain < 0
           ? `သတင်းများ ${total} ခုအားလုံးကိုပို့ဆောင်ပြီးပါပြိ။ အစကပြန်စရန် "reset" သို့ "ပြန်စ" ဟုပို့ပါ။`
