@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var UPDATE = [/^\.update/];
 var RESET_SENT = [/^ပြန်စ/, /^reset/i];
-var READ_NEWS = [/^(\d+) ပို့ပေးပါ/, /^read (\d+)/i];
+var READ_NEWS = [/^(\d+) (?:ကို)?ပို့ပေးပါ/, /^read (\d+)/i];
 var HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i];
 var LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
 var ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];

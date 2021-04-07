@@ -1,6 +1,6 @@
 const UPDATE = [/^\.update/];
 const RESET_SENT = [/^ပြန်စ/, /^reset/i];
-const READ_NEWS = [/^(\d+) ပို့ပေးပါ/, /^read (\d+)/i];
+const READ_NEWS = [/^(\d+) (?:ကို)?ပို့ပေးပါ/, /^read (\d+)/i];
 const HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i];
 const LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
 const ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];
