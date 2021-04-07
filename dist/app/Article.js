@@ -21,13 +21,13 @@ var Article = (function () {
             .get('https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=20')
             .then(function (_a) {
             var data = _a.data;
-            return Object.values(data).map(function (article) { return new Article(Object(article || {})); });
+            return data;
         });
     };
     Article.store = function (articles) {
-        var _a;
-        (_a = DB_1.default.read()["articles"]).push.apply(_a, articles);
-        DB_1.default.save();
+        var db = DB_1.default.read();
+        db["articles"] = articles;
+        DB_1.default.save(db);
     };
     return Article;
 }());

@@ -29,12 +29,7 @@ var HeadlineNews = (function () {
             .get('https://rtdb.nweoo.com/v1/_articles.json?orderBy="timestamp"&limitToLast=20')
             .then(function (_a) {
             var data = _a.data;
-            var result = [];
-            Object.entries(data).forEach(function (_a) {
-                var id = _a[0], value = _a[1];
-                return result.push(new HeadlineNews(__assign({ id: id }, Object(value))));
-            });
-            return result;
+            return data;
         });
     };
     HeadlineNews.filter = function (headlines) {
@@ -47,9 +42,9 @@ var HeadlineNews = (function () {
         });
     };
     HeadlineNews.store = function (headlines) {
-        var _a;
-        (_a = DB_1.default.read()["headlines"]).push.apply(_a, headlines);
-        DB_1.default.save();
+        var db = DB_1.default.read();
+        db["headlines"] = headlines;
+        DB_1.default.save(db);
     };
     HeadlineNews.exclude = function (headlines, sent) {
         if (sent === void 0) { sent = []; }
@@ -61,25 +56,16 @@ var HeadlineNews = (function () {
     HeadlineNews.getLatest = function (limit, diff) {
         if (limit === void 0) { limit = 0; }
         if (diff === void 0) { diff = []; }
-        var latest = DB_1.default.read()["headlines"].sort(function (a, b) { return Date.parse(b["datetime"]) - Date.parse(a["datetime"]); })
-            .map(function (headline) { return new HeadlineNews(headline); });
-        latest = diff.length ? this.exclude(latest, diff) : latest;
-        return limit ? latest.slice(0, limit) : latest;
-    };
-    HeadlineNews.getToday = function () {
-        return DB_1.default.read()["headlines"].sort(function (a, b) { return b["datetime"] - a["datetime"]; })
-            .filter(function (_a) {
-            var datetime = _a.datetime;
-            return new Date(datetime).toLocaleString() == new Date().toLocaleString();
-        });
-    };
-    HeadlineNews.getWithin24Hours = function () {
-        var within24Hours = Date.now() - 24 * 3600000;
-        return DB_1.default.read()["headlines"].sort(function (a, b) { return b["datetime"] - a["datetime"]; })
-            .filter(function (_a) {
-            var datetime = _a.datetime;
-            return new Date(datetime).getTime() > within24Hours;
-        });
+        var result = [];
+        var headlines = DB_1.default.read()["headlines"];
+        for (var _i = 0, _a = Object.entries(headlines); _i < _a.length; _i++) {
+            var entry = _a[_i];
+            var headline = new HeadlineNews(__assign({ id: entry[0] }, Object(entry[1])));
+            if (!diff.includes(headline["id"])) {
+                result.push(headline);
+            }
+        }
+        return limit ? result.reverse().slice(0, limit) : result.reverse();
     };
     return HeadlineNews;
 }());

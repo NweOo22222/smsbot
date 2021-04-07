@@ -20,11 +20,7 @@ export default class HeadlineNews {
         'https://rtdb.nweoo.com/v1/_articles.json?orderBy="timestamp"&limitToLast=20'
       )
       .then(({ data }) => {
-        const result = [];
-        Object.entries(data).forEach(([id, value]) =>
-          result.push(new HeadlineNews({ id, ...Object(value) }))
-        );
-        return result;
+        return data;
       });
   }
 
@@ -36,8 +32,9 @@ export default class HeadlineNews {
   }
 
   static store(headlines: HeadlineNews[]) {
-    DB.read()["headlines"].push(...headlines);
-    DB.save();
+    const db = DB.read();
+    db["headlines"] = headlines;
+    DB.save(db);
   }
 
   static exclude(headlines: HeadlineNews[], sent = []) {
@@ -47,28 +44,17 @@ export default class HeadlineNews {
   }
 
   static getLatest(limit = 0, diff = []): HeadlineNews[] {
-    let latest = DB.read()
-      ["headlines"].sort(
-        (a, b) => Date.parse(b["datetime"]) - Date.parse(a["datetime"])
-      )
-      .map((headline) => new HeadlineNews(headline));
-    latest = diff.length ? this.exclude(latest, diff) : latest;
-    return limit ? latest.slice(0, limit) : latest;
-  }
-
-  static getToday() {
-    return DB.read()
-      ["headlines"].sort((a, b) => b["datetime"] - a["datetime"])
-      .filter(
-        ({ datetime }) =>
-          new Date(datetime).toLocaleString() == new Date().toLocaleString()
-      );
-  }
-
-  static getWithin24Hours() {
-    const within24Hours = Date.now() - 24 * 3600000;
-    return DB.read()
-      ["headlines"].sort((a, b) => b["datetime"] - a["datetime"])
-      .filter(({ datetime }) => new Date(datetime).getTime() > within24Hours);
+    const result = [];
+    const headlines = DB.read()["headlines"];
+    for (let entry of Object.entries(headlines)) {
+      let headline = new HeadlineNews({
+        id: entry[0],
+        ...Object(entry[1]),
+      });
+      if (!diff.includes(headline["id"])) {
+        result.push(headline);
+      }
+    }
+    return limit ? result.reverse().slice(0, limit) : result.reverse();
   }
 }

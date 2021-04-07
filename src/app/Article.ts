@@ -25,12 +25,12 @@ export default class Article {
       .get(
         'https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=20'
       )
-      .then(({ data }) =>
-        Object.values(data).map((article) => new Article(Object(article || {})))
-      );
+      .then(({ data }) => data);
   }
+
   static store(articles: Article[]) {
-    DB.read()["articles"].push(...articles);
-    DB.save();
+    const db = DB.read();
+    db["articles"] = articles;
+    DB.save(db);
   }
 }

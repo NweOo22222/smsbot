@@ -4,7 +4,7 @@ import { resolve, join } from "path";
 const DATABASE_FILENAME = ".db.json";
 const DATABASE_PATH = resolve(process.cwd(), DATABASE_FILENAME);
 
-let data = { headlines: [], articles: [], phone: {} };
+let data = { headlines: {}, articles: {}, phone: {} };
 
 export default class DB {
   static read(): object {

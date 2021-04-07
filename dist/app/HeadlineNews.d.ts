@@ -14,7 +14,5 @@ export default class HeadlineNews {
     static store(headlines: HeadlineNews[]): void;
     static exclude(headlines: HeadlineNews[], sent?: any[]): HeadlineNews[];
     static getLatest(limit?: number, diff?: any[]): HeadlineNews[];
-    static getToday(): any;
-    static getWithin24Hours(): any;
 }
 //# sourceMappingURL=HeadlineNews.d.ts.map

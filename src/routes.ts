@@ -56,7 +56,7 @@ router.get("/call", (req, res) => {
         'သတင်းများရယူရန် - "news" or "သတင်း" or "ဘာထူးလဲ"',
         'သတင်းရေတွက်ကိုသိရန် - "count" or "ကျန်သေးလား" or "ဒါပဲလား"',
         'အစကပြန်ရယူရန် - "reset" or "ပြန်စ"',
-        'သတင်းအပြည့်အစုံဖတ်ရန် - "read {id}" or "{id} ပို့ပေးပါ"',
+        'သတင်းအပြည့်အစုံဖတ်ရန် - "read #" or "# ပို့ပေးပါ"',
         "\nBot by nweoo.com",
       ];
       db["phone"][inputMessage.phone.number]["times"]++;
@@ -109,18 +109,22 @@ router.get("/call", (req, res) => {
         );
         return;
       }
-      const article = DB.read()["articles"].find((article) => article.id == id);
+      const article = Object.values(db["articles"]).find(
+        (article) => article["id"] == id
+      );
       if (!article) {
         res.send(
           `#${id} ကိုရှာမတွေ့ပါ။ အဆင်မပြေမှုအတွက်တောင်းပန်ပါတယ်။ အကူအညီရယူရန် "help" or "ကူညီ" ဟုပို့ပါ။`
         );
         return;
       }
-      let text = article.content.replace(/\n/gm, "  ").replace(/\s{4}/gm, " ");
-      if (text.length > 800) {
-        text = text.slice(0, 800) + "...";
+      let text = article["content"]
+        .replace(/\n/gm, "  ")
+        .replace(/\s{4}/gm, " ");
+      if (text.length > 1000) {
+        text = text.slice(0, 997) + "...";
       }
-      res.send(`[${article.id}] ${text} - ${article.source}`);
+      res.send(`${text} - ${article["source"]} [nweoo.com]`);
     });
 
     keyword.onAskCount(() => {

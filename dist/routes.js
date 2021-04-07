@@ -55,7 +55,7 @@ router.get("/call", function (req, res) {
                 'သတင်းများရယူရန် - "news" or "သတင်း" or "ဘာထူးလဲ"',
                 'သတင်းရေတွက်ကိုသိရန် - "count" or "ကျန်သေးလား" or "ဒါပဲလား"',
                 'အစကပြန်ရယူရန် - "reset" or "ပြန်စ"',
-                'သတင်းအပြည့်အစုံဖတ်ရန် - "read {id}" or "{id} ပို့ပေးပါ"',
+                'သတင်းအပြည့်အစုံဖတ်ရန် - "read #" or "# ပို့ပေးပါ"',
                 "\nBot by nweoo.com",
             ];
             db_1["phone"][inputMessage.phone.number]["times"]++;
@@ -108,16 +108,18 @@ router.get("/call", function (req, res) {
                 res.send("#" + id + " \u1000\u102D\u102F \u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1011\u102C\u1038\u1001\u103C\u1004\u103A\u1038\u1019\u101B\u103E\u102D\u101E\u1031\u1038\u1015\u102B\u104B \u1021\u1000\u1030\u1021\u100A\u102E\u101B\u101A\u1030\u101B\u1014\u103A \"help\" or \"\u1000\u1030\u100A\u102E\" \u101F\u102F\u1015\u102D\u102F\u1037\u1015\u102B\u104B");
                 return;
             }
-            var article = DB_1.default.read()["articles"].find(function (article) { return article.id == id; });
+            var article = Object.values(db_1["articles"]).find(function (article) { return article["id"] == id; });
             if (!article) {
                 res.send("#" + id + " \u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B \u1021\u1006\u1004\u103A\u1019\u1015\u103C\u1031\u1019\u103E\u102F\u1021\u1010\u103D\u1000\u103A\u1010\u1031\u102C\u1004\u103A\u1038\u1015\u1014\u103A\u1015\u102B\u1010\u101A\u103A\u104B \u1021\u1000\u1030\u1021\u100A\u102E\u101B\u101A\u1030\u101B\u1014\u103A \"help\" or \"\u1000\u1030\u100A\u102E\" \u101F\u102F\u1015\u102D\u102F\u1037\u1015\u102B\u104B");
                 return;
             }
-            var text = article.content.replace(/\n/gm, "  ").replace(/\s{4}/gm, " ");
-            if (text.length > 800) {
-                text = text.slice(0, 800) + "...";
+            var text = article["content"]
+                .replace(/\n/gm, "  ")
+                .replace(/\s{4}/gm, " ");
+            if (text.length > 1000) {
+                text = text.slice(0, 997) + "...";
             }
-            res.send("[" + article.id + "] " + text + " - " + article.source);
+            res.send(text + " - " + article["source"] + " [nweoo.com]");
         });
         keyword.onAskCount(function () {
             if (!(inputMessage.phone.number in db_1["phone"])) {
