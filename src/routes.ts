@@ -46,7 +46,7 @@ router.get("/call", (req, res) => {
       }
       const text = [
         'သတင်းများရယူရန် - "news" or "သတင်း" or "ဘာထူးလဲ"',
-        'သတင်းအပြည့်အစုံကိုဖတ်ရန် - "read <id>" or "<id> ဖတ်" ဥပမာ။ read 450123',
+        'သတင်းအပြည့်အစုံကိုဖတ်ရန် - "read [id]" or "[id] ဖတ်" ဥပမာ။ read 450123',
         'ကျန်ရှိသည့်အရေအတွက်ကိုသိရန် - "count" or "ကျန်သေးလား"',
         'အစကပြန်လည်ရယူရန် - "reset" or "ပြန်စ"',
         "\nBot by nweoo.com",
@@ -68,22 +68,25 @@ router.get("/call", (req, res) => {
       }
       const sent = db["phone"][inputMessage.phone.number]["headlines"];
       const latest = Headline.getLatest(5, sent);
+      const remain = Headline.getLatest(0, sent).length - 5;
       db["phone"][inputMessage.phone.number]["times"]++;
       db["phone"][inputMessage.phone.number]["last_date"] = Date.now();
       db["phone"][inputMessage.phone.number]["headlines"].push(
         ...latest.map(({ id }) => id)
       );
       if (latest.length) {
-        const text = latest
-          .map(({ id, title }) => `[${id}] ${title}`)
-          .join("\n");
-        res.send(
-          text +
-            '\n\n- နောက်ထပ်သတင်းများရယူရန် "news"\n- သတင်းအပြည့်အစုံဖတ်ရန် "read <id>"'
-        );
+        let text = latest.map(({ id, title }) => `[${id}] ${title}`).join("\n");
+        if (remain) {
+          text +=
+            " \n\nနောက်ထပ်သတင်း " +
+            remain +
+            ' ခုကျန်ပါတယ်။ ထပ်မံရယူရန် "news" ဟုပို့ပါ။';
+        }
+        text += ' အပြည့်အစုံဖတ်ရန် "read [id]" လို့ပို့ပါ။';
+        res.send(text + "\n#NweOoSMSBot nweoo.com");
       } else {
         res.send(
-          'နောက်ထပ်သတင်းများမရှိတော့ပါ။ သတင်းတွေကိုအစကရယူလိုပါက "reset" ဟုပို့ပါ။ သတင်းအပြည့်အစုံဖတ်လိုပါက "read <id>" ဟုပို့ပါ။ ဥပမာ. read 450111'
+          'နောက်ထပ်သတင်းများမရှိတော့ပါ။ သတင်းတွေကိုအစကရယူလိုပါက "reset" ဟုပို့ပါ။ သတင်းအပြည့်အစုံဖတ်လိုပါက "read [id]" ဟုပို့ပါ။ ဥပမာ. read 450111'
         );
       }
       DB.save(db);
@@ -111,10 +114,13 @@ router.get("/call", (req, res) => {
       let c = [];
       let z = Math.floor(x.length / n);
       for (let i = 0; i < n; i++) {
-        if (i == n) {
-          c.push(x.slice(i * z).join(" "));
+        let p = i + 1;
+        if (p === n) {
+          c.push(
+            x.slice(i * z).join(" ") + " -" + article["content"]["source"]
+          );
         } else {
-          c.push(x.slice(i * z, (i + 1) * z).join(" "));
+          c.push(x.slice(i * z, p * z).join(" ") + " (" + p + "/" + n + ")");
         }
       }
       _tasks[inputMessage.phone.number] = c;
@@ -133,8 +139,8 @@ router.get("/call", (req, res) => {
       const sent = db["phone"][inputMessage.phone.number]["headlines"];
       const tdy = Headline.getLatest(0, sent);
       const text = tdy.length
-        ? `နောက်ထပ်သတင်း ${tdy.length} ခု ကျန်ပါတယ်။ သတင်းတစ်ပုဒ်စီဖတ်ရန် "read <id>" ဟုပို့ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။`
-        : 'နောက်ထပ်သတင်းများပို့ရန်မကျန်တော့ပါ။ သတင်းတစ်ပုဒ်စီဖတ်ရန် "read <id>" ဟုပို့ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။';
+        ? `နောက်ထပ်သတင်း ${tdy.length} ခု ကျန်ပါတယ်။ သတင်းတစ်ပုဒ်စီဖတ်ရန် "read [id]" ဟုပို့ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။`
+        : 'နောက်ထပ်သတင်းများပို့ရန်မကျန်တော့ပါ။ သတင်းတစ်ပုဒ်စီဖတ်ရန် "read [id]" ဟုပို့ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။';
       db["phone"][inputMessage.phone.number]["times"]++;
       db["phone"][inputMessage.phone.number]["last_date"] = Date.now();
       res.send(text);
