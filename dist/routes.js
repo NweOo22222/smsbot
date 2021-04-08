@@ -117,7 +117,7 @@ router.get("/call", function (req, res) {
             for (var i = 0; i < n; i++) {
                 var p = i + 1;
                 if (p === n) {
-                    c.push(x.slice(i * z).join(" ") + " -" + article["content"]["source"]);
+                    c.push(x.slice(i * z).join(" ") + " -" + article["source"]);
                 }
                 else {
                     c.push(x.slice(i * z, p * z).join(" ") + " (" + p + "/" + n + ")");
