@@ -83,7 +83,7 @@ router.get("/call", (req, res) => {
             ' ခုကျန်ပါတယ်။ ထပ်မံရယူရန် "news" ဟုပို့ပါ။';
         }
         text += ' အပြည့်အစုံဖတ်ရန် "read [id]" လို့ပို့ပါ။';
-        res.send(text + "\n#NweOoSMSBot nweoo.com");
+        res.send(text + "\nBot by nweoo.com");
       } else {
         res.send(
           'နောက်ထပ်သတင်းများမရှိတော့ပါ။ သတင်းတွေကိုအစကရယူလိုပါက "reset" ဟုပို့ပါ။ သတင်းအပြည့်အစုံဖတ်လိုပါက "read [id]" ဟုပို့ပါ။ ဥပမာ. read 450111'
