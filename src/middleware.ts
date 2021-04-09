@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import DB from "./app/DB";
 import Phone from "./app/Phone";
 
 export default function middleware(
@@ -10,24 +9,21 @@ export default function middleware(
   if ("phone" in req.query) {
     req["phone"] = String(req.query.phone).replace(/^\s/, "+");
     const phone = new Phone(req["phone"]);
-
+    const message = decodeURIComponent(String(req.query["message"] || ""));
     if (phone) {
       const session = phone.session;
-
-      if (session.isExpired()) {
+      const reset = () => {
         session.restart();
         phone.save();
-        return next();
+        next();
+      };
+      if (message.match(/\.update/) || message.match(/\.reset/)) {
+        return reset();
       }
-
+      if (session.isExpired()) {
+        return reset();
+      }
       if (session.isDenied()) {
-        const message = req.query["message"];
-        if (message === ".update") {
-          session.restart();
-          phone.save();
-          return next();
-        }
-
         return res
           .status(419)
           .send(
@@ -35,12 +31,7 @@ export default function middleware(
           );
       }
     }
-
     return next();
-  } else {
-    if ("allow_me" in req.query) {
-      return next();
-    }
-    return res.status(400).send("");
   }
+  return next();
 }

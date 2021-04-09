@@ -22,7 +22,7 @@ var Article = (function () {
     };
     Article.fetch = function () {
         return axios_1.default
-            .get('https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=50')
+            .get('https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=30')
             .then(function (_a) {
             var data = _a.data;
             return Object.values(data).map(function (article) { return new Article(Object(article)); });

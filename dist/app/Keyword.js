@@ -1,13 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var UPDATE = [/^\.update/];
-var RESET_SENT = [/^ပြန်စ/, /^reset/i];
+var RESET_COMMAND = [/^\.reset/];
+var UPDATE_COMMAND = [/^\.update/];
+var RESET_SENT = [/ပြန်စ/, /^reset/i];
 var READ_NEWS = [
-    /^(\d+) ?(?:ကို)?ပို့(?:ပေးပါ)?/,
-    /^(\d+) ?(?:ကို)?ဖတ်(?:ရန်)?/,
-    /^read ?(\d+)/i,
-    /^read ?[\[<("'#](\d+)['")>\]]/i,
-    /^(\d+)$/,
+    /(\d+) ?(?:ကို)?ပို့(?:ပေးပါ)?/,
+    /(\d+) ?(?:ကို)?ဖတ်(?:ရန်)?/,
+    /read ?(\d+)/i,
+    /read ?[\[\<\("'#](\d+)['"\)\>\]]/i,
+    /(\d+)$/,
 ];
 var LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
 var ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];
@@ -67,7 +68,16 @@ var Keyword = (function () {
         var _this = this;
         if (this.sent)
             return;
-        if (UPDATE.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+        if (UPDATE_COMMAND.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+            this.sent = true;
+            callback();
+        }
+    };
+    Keyword.prototype.onReset = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        if (RESET_COMMAND.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
         }

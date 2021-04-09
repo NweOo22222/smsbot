@@ -4,12 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
-var axios_1 = __importDefault(require("axios"));
 var Article_1 = __importDefault(require("./app/Article"));
 var Headline_1 = __importDefault(require("./app/Headline"));
 var Keyword_1 = __importDefault(require("./app/Keyword"));
 var Message_1 = __importDefault(require("./app/Message"));
 var Phone_1 = __importDefault(require("./app/Phone"));
+var api_1 = __importDefault(require("./api"));
 var _tasks = {};
 var router = express_1.Router();
 router.get("/call", function (req, res) {
@@ -20,7 +20,8 @@ router.get("/call", function (req, res) {
     var phone = message.phone;
     var keyword = new Keyword_1.default(message.body);
     keyword.onUpdate(function () {
-        axios_1.default.get("http://localhost:3000/update").then(function () { return res.send("0"); });
+        res.redirect("/update");
+        res.end();
     });
     if (message.via("Telenor")) {
         keyword.onAskHelp(function () {
@@ -156,6 +157,7 @@ router.get("/action", function (req, res) {
     var number = req["phone"];
     if (!(number in _tasks)) {
         res.status(400);
+        res.send("0");
         return;
     }
     var phone = new Phone_1.default(number);
@@ -171,7 +173,7 @@ router.get("/action", function (req, res) {
         read_count: 1,
     })
         .save();
-    res.send(text);
+    res.send(text || "0");
 });
 router.get("/update", function (req, res) {
     return Article_1.default.fetch()
@@ -179,6 +181,7 @@ router.get("/update", function (req, res) {
         Article_1.default.store(articles);
         res.status(201).send("0");
     })
-        .catch(function (e) { return res.status(400); });
+        .catch(function (e) { return res.status(400).end(); });
 });
+router.use("/api", api_1.default);
 exports.default = router;

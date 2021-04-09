@@ -1,10 +1,10 @@
 import { Router } from "express";
-import axios from "axios";
 import Article from "./app/Article";
 import Headline from "./app/Headline";
 import Keyword from "./app/Keyword";
 import Message from "./app/Message";
 import Phone from "./app/Phone";
+import api from "./api";
 
 const _tasks = {};
 const router = Router();
@@ -18,7 +18,8 @@ router.get("/call", (req, res) => {
   const keyword = new Keyword(message.body);
 
   keyword.onUpdate(() => {
-    axios.get("http://localhost:3000/update").then(() => res.send("0"));
+    res.redirect("/update");
+    res.end();
   });
 
   if (message.via("Telenor")) {
@@ -157,6 +158,7 @@ router.get("/action", (req, res) => {
   let number = req["phone"];
   if (!(number in _tasks)) {
     res.status(400);
+    res.send("0");
     return;
   }
   const phone = new Phone(number);
@@ -172,7 +174,7 @@ router.get("/action", (req, res) => {
       read_count: 1,
     })
     .save();
-  res.send(text);
+  res.send(text || "0");
 });
 
 router.get("/update", (req, res) =>
@@ -181,7 +183,9 @@ router.get("/update", (req, res) =>
       Article.store(articles);
       res.status(201).send("0");
     })
-    .catch((e) => res.status(400))
+    .catch((e) => res.status(400).end())
 );
+
+router.use("/api", api);
 
 export default router;

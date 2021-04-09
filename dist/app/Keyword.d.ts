@@ -8,6 +8,7 @@ export default class Keyword {
     onAskCount(callback: Function): void;
     onAskReset(callback: Function): void;
     onUpdate(callback: Function): void;
+    onReset(callback: Function): void;
     onUnexisted(callback: Function): void;
     get meta(): string;
 }

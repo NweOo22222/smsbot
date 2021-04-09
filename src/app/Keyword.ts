@@ -1,11 +1,12 @@
-const UPDATE = [/^\.update/];
-const RESET_SENT = [/^ပြန်စ/, /^reset/i];
+const RESET_COMMAND = [/^\.reset/];
+const UPDATE_COMMAND = [/^\.update/];
+const RESET_SENT = [/ပြန်စ/, /^reset/i];
 const READ_NEWS = [
-  /^(\d+) ?(?:ကို)?ပို့(?:ပေးပါ)?/,
-  /^(\d+) ?(?:ကို)?ဖတ်(?:ရန်)?/,
-  /^read ?(\d+)/i,
-  /^read ?[\[<("'#](\d+)['")>\]]/i,
-  /^(\d+)$/,
+  /(\d+) ?(?:ကို)?ပို့(?:ပေးပါ)?/,
+  /(\d+) ?(?:ကို)?ဖတ်(?:ရန်)?/,
+  /read ?(\d+)/i,
+  /read ?[\[\<\("'#](\d+)['"\)\>\]]/i,
+  /(\d+)$/,
 ];
 const LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
 const ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];
@@ -59,7 +60,15 @@ export default class Keyword {
 
   onUpdate(callback: Function) {
     if (this.sent) return;
-    if (UPDATE.filter((keyword) => this.meta.match(keyword)).length) {
+    if (UPDATE_COMMAND.filter((keyword) => this.meta.match(keyword)).length) {
+      this.sent = true;
+      callback();
+    }
+  }
+
+  onReset(callback: Function) {
+    if (this.sent) return;
+    if (RESET_COMMAND.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
     }

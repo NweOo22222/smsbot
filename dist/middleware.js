@@ -7,21 +7,22 @@ var Phone_1 = __importDefault(require("./app/Phone"));
 function middleware(req, res, next) {
     if ("phone" in req.query) {
         req["phone"] = String(req.query.phone).replace(/^\s/, "+");
-        var phone = new Phone_1.default(req["phone"]);
-        if (phone) {
-            var session = phone.session;
-            if (session.isExpired()) {
-                session.restart();
-                phone.save();
-                return next();
+        var phone_1 = new Phone_1.default(req["phone"]);
+        var message = decodeURIComponent(String(req.query["message"] || ""));
+        if (phone_1) {
+            var session_1 = phone_1.session;
+            var reset = function () {
+                session_1.restart();
+                phone_1.save();
+                next();
+            };
+            if (message.match(/\.update/) || message.match(/\.reset/)) {
+                return reset();
             }
-            if (session.isDenied()) {
-                var message = req.query["message"];
-                if (message === ".update") {
-                    session.restart();
-                    phone.save();
-                    return next();
-                }
+            if (session_1.isExpired()) {
+                return reset();
+            }
+            if (session_1.isDenied()) {
                 return res
                     .status(419)
                     .send("<#419> ဝန်ဆောင်မှုများထပ်မံမရရှိနိုင်တော့ပါ။ နောက်မှပြန်ပြီး ပို့ကြည့်ပါ။");
@@ -29,11 +30,6 @@ function middleware(req, res, next) {
         }
         return next();
     }
-    else {
-        if ("allow_me" in req.query) {
-            return next();
-        }
-        return res.status(400).send("");
-    }
+    return next();
 }
 exports.default = middleware;

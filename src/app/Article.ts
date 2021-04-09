@@ -28,7 +28,7 @@ export default class Article {
   static fetch(): Promise<Article[]> {
     return axios
       .get(
-        'https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=50'
+        'https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=30'
       )
       .then(({ data }) =>
         Object.values(data).map((article) => new Article(Object(article)))
@@ -37,7 +37,7 @@ export default class Article {
 
   static store(articles: Article[]) {
     const db = DB.read();
-    db["articles"] = Object.values(articles);
+    db["articles"].push(...Object.values(articles));
     DB.save(db);
   }
 }
