@@ -3,14 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var UPDATE = [/^\.update/];
 var RESET_SENT = [/^ပြန်စ/, /^reset/i];
 var READ_NEWS = [
-    /^(\d+) (?:ကို)?ပို့(?:ပေးပါ)?/,
-    /^(\d+) (?:ကို)?ဖတ်(?:ရန်)?/,
-    /^read (\d+)/i,
-    /^read [\[<"'#](\d+)['">\]]/i,
+    /^(\d+) ?(?:ကို)?ပို့(?:ပေးပါ)?/,
+    /^(\d+) ?(?:ကို)?ဖတ်(?:ရန်)?/,
+    /^read ?(\d+)/i,
+    /^read ?[\[<("'#](\d+)['")>\]]/i,
+    /^(\d+)$/,
 ];
 var LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
-var HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i, /^info/i];
 var ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];
+var HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i, /^info/i];
 var Keyword = (function () {
     function Keyword(text) {
         this.text = text;

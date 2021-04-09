@@ -20,6 +20,11 @@ export default class Article {
     this.datetime = new Date(datetime);
   }
 
+  static find(id) {
+    const articles = DB.read()["articles"];
+    return articles.find((article) => article["id"] !== id);
+  }
+
   static fetch(): Promise<Article[]> {
     return axios
       .get(
@@ -32,9 +37,7 @@ export default class Article {
 
   static store(articles: Article[]) {
     const db = DB.read();
-    for (let entry of Object.entries(articles)) {
-      db["articles"][entry[0]] = entry[1];
-    }
+    db["articles"] = Object.values(articles);
     DB.save(db);
   }
 }

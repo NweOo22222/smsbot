@@ -1,14 +1,15 @@
 const UPDATE = [/^\.update/];
 const RESET_SENT = [/^ပြန်စ/, /^reset/i];
 const READ_NEWS = [
-  /^(\d+) (?:ကို)?ပို့(?:ပေးပါ)?/,
-  /^(\d+) (?:ကို)?ဖတ်(?:ရန်)?/,
-  /^read (\d+)/i,
-  /^read [\[<"'#](\d+)['">\]]/i,
+  /^(\d+) ?(?:ကို)?ပို့(?:ပေးပါ)?/,
+  /^(\d+) ?(?:ကို)?ဖတ်(?:ရန်)?/,
+  /^read ?(\d+)/i,
+  /^read ?[\[<("'#](\d+)['")>\]]/i,
+  /^(\d+)$/,
 ];
 const LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
-const HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i, /^info/i];
 const ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];
+const HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i, /^info/i];
 
 export default class Keyword {
   protected sent: boolean;

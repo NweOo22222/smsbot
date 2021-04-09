@@ -7,13 +7,9 @@ var axios_1 = __importDefault(require("axios"));
 var Phone_1 = __importDefault(require("./Phone"));
 var Message = (function () {
     function Message(_a) {
-        var sim_slot = _a.sim_slot, msg_box = _a.msg_box, address = _a.address, timestamps = _a.timestamps, body = _a.body, _id = _a._id;
-        this.id = _id;
-        this.slot = sim_slot;
-        this.incoming = msg_box === "inbox";
+        var address = _a.address, body = _a.body;
         this.body = body;
         this.phone = new Phone_1.default(address);
-        this.datetime = new Date(parseInt(timestamps["delivery"] || timestamps["sent"]));
     }
     Message.prototype.via = function (operator) {
         return this.phone.operator === operator;
@@ -26,12 +22,6 @@ var Message = (function () {
             return data["messages"];
         })
             .then(function (messages) { return messages.map(function (message) { return new Message(message); }); });
-    };
-    Message.inbox = function (messages) {
-        return messages.filter(function (message) { return !!message.incoming; });
-    };
-    Message.outbox = function (messages) {
-        return messages.filter(function (message) { return !message.incoming; });
     };
     return Message;
 }());

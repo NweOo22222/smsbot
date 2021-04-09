@@ -1,60 +1,34 @@
-import axios from "axios";
 import DB from "./DB";
 
-export default class HeadlineNews {
+export default class Headline {
   public id: string;
   public title: string;
   public source: string;
   public datetime: Date;
 
-  constructor({ source, id, timestamp, title }) {
+  constructor({ source, id, datetime, title }) {
     this.id = id;
     this.title = title;
     this.source = source;
-    this.datetime = new Date(timestamp);
+    this.datetime = new Date(datetime);
   }
 
-  static fetch(): Promise<HeadlineNews[]> {
-    return axios
-      .get(
-        'https://rtdb.nweoo.com/v1/_articles.json?orderBy="timestamp"&limitToLast=30'
-      )
-      .then(({ data }) => {
-        return data;
-      });
-  }
-
-  static filter(headlines: HeadlineNews[]) {
+  static filter(headlines: Headline[]) {
+    const articles = DB.read()["articles"];
     return headlines.filter(
-      ({ id }) =>
-        DB.read()["headlines"].findIndex(({ id: _id }) => id !== _id) === -1
+      ({ id }) => articles.findIndex(({ id: _id }) => id !== _id) === -1
     );
   }
 
-  static store(headlines: HeadlineNews[]) {
-    const db = DB.read();
-    db["headlines"] = headlines;
-    DB.save(db);
+  static exclude(headlines: Headline[], sent = []) {
+    return headlines.filter(({ id }) => !sent.find((_id) => _id == id));
   }
 
-  static exclude(headlines: HeadlineNews[], sent = []) {
-    return headlines.filter(
-      ({ id }) => sent.findIndex((_id) => _id == id) == -1
-    );
-  }
-
-  static getLatest(limit = 0, diff = []): HeadlineNews[] {
-    const result = [];
-    const headlines = DB.read()["headlines"];
-    for (let entry of Object.entries(headlines)) {
-      let headline = new HeadlineNews({
-        id: entry[0],
-        ...Object(entry[1]),
-      });
-      if (!diff.includes(headline["id"])) {
-        result.push(headline);
-      }
-    }
-    return limit ? result.reverse().slice(0, limit) : result.reverse();
+  static latest(limit = 0, diff = []): Headline[] {
+    const articles = DB.read()
+      ["articles"].map((article) => new Headline(article))
+      .sort((a, b) => b.datetime > a.datetime)
+      .filter((headline) => !diff.includes(headline["id"]));
+    return limit ? articles.reverse().slice(0, limit) : articles.reverse();
   }
 }

@@ -16,6 +16,10 @@ var Article = (function () {
         this.link = link;
         this.datetime = new Date(datetime);
     }
+    Article.find = function (id) {
+        var articles = DB_1.default.read()["articles"];
+        return articles.find(function (article) { return article["id"] !== id; });
+    };
     Article.fetch = function () {
         return axios_1.default
             .get('https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=50')
@@ -26,10 +30,7 @@ var Article = (function () {
     };
     Article.store = function (articles) {
         var db = DB_1.default.read();
-        for (var _i = 0, _a = Object.entries(articles); _i < _a.length; _i++) {
-            var entry = _a[_i];
-            db["articles"][entry[0]] = entry[1];
-        }
+        db["articles"] = Object.values(articles);
         DB_1.default.save(db);
     };
     return Article;

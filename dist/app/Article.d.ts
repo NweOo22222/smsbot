@@ -15,6 +15,7 @@ export default class Article {
         link: any;
         image: any;
     });
+    static find(id: any): any;
     static fetch(): Promise<Article[]>;
     static store(articles: Article[]): void;
 }

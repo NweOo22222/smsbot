@@ -3,116 +3,102 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var axios_1 = __importDefault(require("axios"));
 var express_1 = require("express");
+var axios_1 = __importDefault(require("axios"));
 var Article_1 = __importDefault(require("./app/Article"));
-var DB_1 = __importDefault(require("./app/DB"));
 var Headline_1 = __importDefault(require("./app/Headline"));
 var Keyword_1 = __importDefault(require("./app/Keyword"));
 var Message_1 = __importDefault(require("./app/Message"));
-var router = express_1.Router();
+var Phone_1 = __importDefault(require("./app/Phone"));
 var _tasks = {};
+var router = express_1.Router();
 router.get("/call", function (req, res) {
-    var _a = req.query, phone = _a.phone, message = _a.message;
-    phone = String(phone).replace(/^\s/, "+");
-    message = decodeURIComponent(String(message));
-    var inputMessage = new Message_1.default({
-        body: message,
-        address: phone,
-        sim_slot: "0",
-        msg_box: "inbox",
-        timestamps: Date.now.toString(),
-        _id: 0,
+    var message = new Message_1.default({
+        body: decodeURIComponent(String(req.query.message)),
+        address: req["phone"],
     });
-    var keyword = new Keyword_1.default(inputMessage.body);
+    var phone = message.phone;
+    var keyword = new Keyword_1.default(message.body);
     keyword.onUpdate(function () {
-        axios_1.default
-            .get("http://localhost:3000/update")
-            .then(function () {
-            return res.send("[Command] Updated at " + new Date().toLocaleString());
-        });
+        axios_1.default.get("http://localhost:3000/update").then(function () { return res.send("0"); });
     });
-    if (inputMessage.via("Telenor")) {
-        var db_1 = DB_1.default.read();
+    if (message.via("Telenor")) {
         keyword.onAskHelp(function () {
-            if (!(inputMessage.phone.number in db_1["phone"])) {
-                db_1["phone"][inputMessage.phone.number] = {
-                    times: 0,
-                    first_date: Date.now(),
-                    last_date: Date.now(),
-                    headlines: [],
-                };
+            var text;
+            if (keyword.meta.slice(0, 4) == "read") {
+                text = [
+                    "<နံပါတ်၆လုံး> ဆိုတဲ့နေရာမှာသတင်းအရှေ့မှာပါတဲ့နံပါတ်ကိုပြောင်းထည့်ပေးပါ။",
+                ];
             }
-            var text = [
-                'သတင်းများရယူရန် - "news" or "သတင်း" or "ဘာထူးလဲ"',
-                'သတင်းအပြည့်အစုံကိုဖတ်ရန် - "read [id]" or "[id] ဖတ်" ဥပမာ။ read 450123',
-                'ကျန်ရှိသည့်အရေအတွက်ကိုသိရန် - "count" or "ကျန်သေးလား"',
-                'အစကပြန်လည်ရယူရန် - "reset" or "ပြန်စ"',
-                "\nBot by nweoo.com",
-            ];
-            db_1["phone"][inputMessage.phone.number]["times"]++;
-            db_1["phone"][inputMessage.phone.number]["last_date"] = Date.now();
-            DB_1.default.save(db_1);
-            res.send(text.join("\n"));
+            else {
+                text = [
+                    "1.သတင်းများရယူရန်  -  news  /  သတင်း  /  ဘာထူးလဲ",
+                    "2.သတင်းအပြည့်အစုံကိုဖတ်ရန်  -  read <နံပါတ်၆လုံး>  /  <နံပါတ်၆လုံး> ဖတ်ရန်",
+                    "3.ကျန်ရှိသည့်အရေအတွက်ကိုသိရန်  - count  /  ကျန်သေးလား",
+                    "တို့ပို့ပြီးရယူနိုင်ပါတယ်။ <နံပါတ်၆လုံး> ဆိုတာသတင်းခေါင်းစဥ်အရှေ့ကအမှတ်စဥ်ကိုဆိုလိုတာပါ။",
+                ];
+            }
+            text = text.join("\n");
+            phone
+                .incr({
+                total_action: 1,
+                read_count: 0,
+                character_count: text.length,
+            })
+                .save();
+            res.send(text);
         });
         keyword.onAskHeadlines(function () {
-            var _a;
-            if (!(inputMessage.phone.number in db_1["phone"])) {
-                db_1["phone"][inputMessage.phone.number] = {
-                    times: 0,
-                    first_date: Date.now(),
-                    last_date: Date.now(),
-                    headlines: [],
-                };
-            }
-            var sent = db_1["phone"][inputMessage.phone.number]["headlines"];
-            var latest = Headline_1.default.getLatest(5, sent);
-            var remain = Headline_1.default.getLatest(0, sent).length - 5;
-            db_1["phone"][inputMessage.phone.number]["times"]++;
-            db_1["phone"][inputMessage.phone.number]["last_date"] = Date.now();
-            (_a = db_1["phone"][inputMessage.phone.number]["headlines"]).push.apply(_a, latest.map(function (_a) {
-                var id = _a.id;
-                return id;
-            }));
+            var text;
+            var latest = Headline_1.default.latest(5, phone.headlines);
+            var remain = Headline_1.default.latest(0, phone.headlines).length - latest.length;
             if (latest.length) {
-                var text = latest.map(function (_a) {
+                text = latest.map(function (_a) {
                     var id = _a.id, title = _a.title;
                     return "[" + id + "] " + title;
                 }).join("\n");
-                if (remain) {
-                    text +=
-                        " \n\nနောက်ထပ်သတင်း " +
-                            remain +
-                            ' ခုကျန်ပါတယ်။ ထပ်မံရယူရန် "news" ဟုပို့ပါ။';
+                if (remain > 0) {
+                    text += "\n- နောက်ထပ်သတင်းများရယူလိုပါက news ဟုပို့ပါ။";
                 }
-                text += ' အပြည့်အစုံဖတ်ရန် "read [id]" လို့ပို့ပါ။';
-                res.send(text + "\nBot by nweoo.com");
+                phone
+                    .markAsSent(latest)
+                    .incr({
+                    total_action: 1,
+                    read_count: 0,
+                    character_count: text.length,
+                })
+                    .save();
+                res.send(text);
             }
             else {
-                res.send('နောက်ထပ်သတင်းများမရှိတော့ပါ။ သတင်းတွေကိုအစကရယူလိုပါက "reset" ဟုပို့ပါ။ သတင်းအပြည့်အစုံဖတ်လိုပါက "read [id]" ဟုပို့ပါ။ ဥပမာ. read 450111');
+                text = "နောက်ထပ်သတင်းများမရှိပါ။";
+                if (phone.session.canReadArticle()) {
+                    text +=
+                        " read <နံပါတ်၆လုံး> ဟုပို့ပြီးတစ်ပုဒ်စီတိုင်းကိုဖတ်နိုင်ပါတယ်။";
+                }
+                phone
+                    .incr({
+                    total_action: 1,
+                    read_count: 0,
+                    character_count: text.length,
+                })
+                    .save();
+                res.send(text);
             }
-            DB_1.default.save(db_1);
         });
         keyword.onAskRead(function (id) {
-            if (!(inputMessage.phone.number in db_1["phone"])) {
-                db_1["phone"][inputMessage.phone.number] = {
-                    times: 0,
-                    first_date: Date.now(),
-                    last_date: Date.now(),
-                    headlines: [],
-                };
-            }
-            db_1["phone"][inputMessage.phone.number]["times"]++;
-            db_1["phone"][inputMessage.phone.number]["last_date"] = Date.now();
-            var article = db_1["articles"].find(function (article) { return article["id"] == id; });
-            if (!article) {
-                res.send("\u101E\u1010\u1004\u103A\u1038 " + id + " \u1000\u102D\u102F \u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B");
+            if (!phone.session.canReadArticle()) {
+                res.status(419);
+                res.send("<#419> သတင်းအပြည့်အစုံများကိုထပ်မံ၍မရနိုင်တော့ပါ။ နောက်မှထပ်မံပို့ကြည့်ပါ။");
                 return;
             }
+            var article = Article_1.default.find(id);
+            if (!article)
+                return res.send("\u101E\u1010\u1004\u103A\u1038 " + id + " \u1000\u102D\u102F \u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B");
             var text = String(article["content"]);
             var n = Math.floor(text.length / 600);
             var x = text.split(" ");
-            var c = [];
+            var c = ["စာလုံးရေ" + text.length + "လုံးရှိပြီးအချိန်ကြာမြင့်နိုင်ပါ။"];
             var z = Math.floor(x.length / n);
             for (var i = 0; i < n; i++) {
                 var p = i + 1;
@@ -123,70 +109,76 @@ router.get("/call", function (req, res) {
                     c.push(x.slice(i * z, p * z).join(" ") + " (" + p + "/" + n + ")");
                 }
             }
-            _tasks[inputMessage.phone.number] = c;
+            _tasks[message.phone.number] = c;
             res.send("");
         });
         keyword.onAskCount(function () {
-            if (!(inputMessage.phone.number in db_1["phone"])) {
-                db_1["phone"][inputMessage.phone.number] = {
-                    times: 0,
-                    first_date: Date.now(),
-                    last_date: Date.now(),
-                    headlines: [],
-                };
-            }
-            var sent = db_1["phone"][inputMessage.phone.number]["headlines"];
-            var tdy = Headline_1.default.getLatest(0, sent);
+            var tdy = Headline_1.default.latest(0, []);
             var text = tdy.length
-                ? "\u1014\u1031\u102C\u1000\u103A\u1011\u1015\u103A\u101E\u1010\u1004\u103A\u1038 " + tdy.length + " \u1001\u102F \u1000\u103B\u1014\u103A\u1015\u102B\u1010\u101A\u103A\u104B \u101E\u1010\u1004\u103A\u1038\u1010\u1005\u103A\u1015\u102F\u1012\u103A\u1005\u102E\u1016\u1010\u103A\u101B\u1014\u103A \"read [id]\" \u101F\u102F\u1015\u102D\u102F\u1037\u1015\u102B\u104B \u1015\u102D\u102F\u1019\u102D\u102F\u101E\u102D\u101B\u103E\u102D\u101B\u1014\u103A \"help\" \u101F\u102F\u1015\u102D\u102F\u1037\u1015\u102B\u104B"
-                : 'နောက်ထပ်သတင်းများပို့ရန်မကျန်တော့ပါ။ သတင်းတစ်ပုဒ်စီဖတ်ရန် "read [id]" ဟုပို့ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။';
-            db_1["phone"][inputMessage.phone.number]["times"]++;
-            db_1["phone"][inputMessage.phone.number]["last_date"] = Date.now();
+                ? "\u1014\u1031\u102C\u1000\u103A\u1011\u1015\u103A\u101E\u1010\u1004\u103A\u1038 " + tdy.length + " \u1001\u102F \u1000\u103B\u1014\u103A\u1015\u102B\u1010\u101A\u103A\u104B"
+                : "နောက်ထပ်သတင်းများမရှိပါ။";
+            phone
+                .incr({
+                total_action: 1,
+                read_count: 0,
+                character_count: text.length,
+            })
+                .save();
             res.send(text);
         });
         keyword.onAskReset(function () {
-            if (!(inputMessage.phone.number in db_1["phone"])) {
-                db_1["phone"][inputMessage.phone.number] = {
-                    times: 0,
-                    first_date: Date.now(),
-                    last_date: Date.now(),
-                    headlines: [],
-                };
-            }
-            db_1["phone"][inputMessage.phone.number]["times"]++;
-            db_1["phone"][inputMessage.phone.number]["last_date"] = Date.now();
-            db_1["phone"][inputMessage.phone.number]["headlines"] = [];
-            DB_1.default.save(db_1);
-            res.send("သတင်းများကိုအစကနေပြန်လည်ရယူနိုင်ပါပြီ။");
+            var text = "သတင်းများကိုအစကနေပြန်လည်ရယူနိုင်ပါပြီ။";
+            phone
+                .incr({
+                total_action: 1,
+                read_count: 0,
+                character_count: text.length,
+            })
+                .save();
+            res.send(text);
         });
         keyword.onUnexisted(function () {
-            return res.send('လုပ်ဆောင်ချက်မအောင်မြင်ပါ။ ပိုမိုသိရှိရန် "help" ဟုပို့ပါ။');
+            var text = "မှားယွင်းနေပါတယ်။ အကူညီရယူလိုပါက help ဟုပို့ပါ။";
+            phone
+                .incr({
+                total_action: 1,
+                character_count: text.length,
+                read_count: 0,
+            })
+                .save();
+            res.send(text);
         });
     }
     keyword.onUnexisted(function () { return res.status(400).end(); });
 });
-router.get("/action/:token", function (req, res) {
-    var token = req.params.token;
-    if (!(String(token) in _tasks)) {
-        return res.send("");
+router.get("/action", function (req, res) {
+    var text;
+    var number = req["phone"];
+    if (!(number in _tasks)) {
+        res.status(400);
+        return;
     }
-    res.send(_tasks[String(token)].shift());
+    var phone = new Phone_1.default(number);
+    text = _tasks[number].shift();
+    if (!_tasks[number].length) {
+        _tasks[number] = undefined;
+        delete _tasks[number];
+    }
+    phone
+        .incr({
+        total_action: 1,
+        character_count: text.length,
+        read_count: 1,
+    })
+        .save();
+    res.send(text);
 });
 router.get("/update", function (req, res) {
-    return Headline_1.default.fetch()
-        .then(function (headlines) {
-        Headline_1.default.store(headlines);
-        Article_1.default.fetch()
-            .then(function (articles) {
-            Article_1.default.store(articles);
-            res.status(201).json({ status: "updated" });
-        })
-            .catch(function (e) {
-            e.response ? res.send(e.response["data"]) : res.send(e.message);
-        });
+    return Article_1.default.fetch()
+        .then(function (articles) {
+        Article_1.default.store(articles);
+        res.status(201).send("0");
     })
-        .catch(function (e) {
-        return e.response ? res.send(e.response["data"]) : res.send(e.message);
-    });
+        .catch(function (e) { return res.status(400); });
 });
 exports.default = router;
