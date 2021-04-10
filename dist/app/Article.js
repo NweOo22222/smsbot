@@ -29,8 +29,9 @@ var Article = (function () {
         });
     };
     Article.store = function (articles) {
+        var _a;
         var db = DB_1.default.read();
-        db["articles"] = Object.values(articles);
+        (_a = db["articles"]).push.apply(_a, Object.values(articles));
         DB_1.default.save(db);
     };
     return Article;

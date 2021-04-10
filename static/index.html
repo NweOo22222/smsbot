@@ -9,7 +9,6 @@
     <script src="axios.min.js"></script>
     <script src="vue.min.js"></script>
     <script src="/vue-router.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
   </head>
 
   <body>
@@ -17,7 +16,7 @@
       <main>
         <section>
           <h2>Users</h2>
-          <table class="table table-hover">
+          <table class="table table-hover table-sm">
             <thead>
               <tr>
                 <th>Headline Title</th>
@@ -37,7 +36,7 @@
               </tr>
             </tbody>
           </table>
-          <ul class="pagination">
+          <ul class="pagination" v-show="0">
             <li class="page-item disabled">
               <a class="page-link" href="#" tabindex="-1" aria-disabled="true"
                 >Previous</a
@@ -80,7 +79,6 @@
     </div>
 
     <script>
-      const socket = io();
       const app = new Vue({
         el: "main",
         data: {
@@ -88,15 +86,26 @@
           articles: [],
           pages: 0,
         },
+        methods: {
+          fetchUsers() {
+            axios("/api/users").then(({ data: { data, size } }) => {
+              this.pages = Math.floor(size / 10);
+              this.users = data.reverse();
+            });
+          },
+          fetchArticles() {
+            axios("/api/articles").then(({ data }) => {
+              this.articles = data.reverse();
+            });
+          },
+        },
         beforeMount() {
-          axios("/api/articles").then(({ data }) => {
-            this.articles = data.reverse();
-          });
-
-          axios("/api/users").then(({ data: { data, size } }) => {
-            this.pages = Math.floor(size / 10);
-            this.users = data.reverse();
-          });
+          this.fetchArticles();
+          this.fetchUsers();
+          setInterval(() => {
+            this.fetchArticles();
+            this.fetchUsers();
+          }, 10000);
         },
       });
     </script>

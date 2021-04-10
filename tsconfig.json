@@ -17,9 +17,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "types": [
-      "@types/express",
-      "@types/lodash",
-      "@types/download"
+      "@types/express"
     ]
   }
 }

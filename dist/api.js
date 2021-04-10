@@ -7,10 +7,12 @@ var express_1 = require("express");
 var DB_1 = __importDefault(require("./app/DB"));
 var api = express_1.Router();
 api.get("/articles", function (req, res) {
-    res.json(DB_1.default.read()["articles"]);
+    var per_page = 30;
+    var page = Number(req.query.page) || 1;
+    res.json(DB_1.default.read()["articles"].slice(page - 1, page * per_page));
 });
 api.get("/users", function (req, res) {
-    var per_page = 10;
+    var per_page = 20;
     var users = DB_1.default.read()["phone"];
     var page = Number(req.query.page) || 1;
     res.json({

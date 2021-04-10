@@ -4,7 +4,7 @@ import Headline from "./app/Headline";
 import Keyword from "./app/Keyword";
 import Message from "./app/Message";
 import Phone from "./app/Phone";
-import api from "./api";
+import { MAX_CHARACTER_PER_SMS } from "./config";
 
 const _tasks = {};
 const router = Router();
@@ -24,62 +24,40 @@ router.get("/call", (req, res) => {
 
   if (message.via("Telenor")) {
     keyword.onAskHelp(() => {
-      let text: string | string[];
       if (keyword.meta.slice(0, 4) == "read") {
-        text = [
+        _tasks[message.phone.number] = [
           "<နံပါတ်၆လုံး> ဆိုတဲ့နေရာမှာသတင်းအရှေ့မှာပါတဲ့နံပါတ်ကိုပြောင်းထည့်ပေးပါ။",
         ];
       } else {
-        text = [
-          "1.သတင်းများရယူရန်  -  news  /  သတင်း  /  ဘာထူးလဲ",
-          "2.သတင်းအပြည့်အစုံကိုဖတ်ရန်  -  read <နံပါတ်၆လုံး>  /  <နံပါတ်၆လုံး> ဖတ်ရန်",
-          "3.ကျန်ရှိသည့်အရေအတွက်ကိုသိရန်  - count  /  ကျန်သေးလား",
+        _tasks[message.phone.number] = [
+          "သတင်းများရယူရန် - news / သတင်း / ဘာထူးလဲ",
+          "သတင်းအပြည့်အစုံကိုဖတ်ရန် - read <နံပါတ်၆လုံး>  / <နံပါတ်၆လုံး> ဖတ်ရန်",
+          "ကျန်ရှိသည့်အရေအတွက်ကိုသိရန် - count / ကျန်သေးလား",
           "တို့ပို့ပြီးရယူနိုင်ပါတယ်။ <နံပါတ်၆လုံး> ဆိုတာသတင်းခေါင်းစဥ်အရှေ့ကအမှတ်စဥ်ကိုဆိုလိုတာပါ။",
         ];
       }
-      text = text.join("\n");
-      phone
-        .incr({
-          total_action: 1,
-          read_count: 0,
-          character_count: text.length,
-        })
-        .save();
-      res.send(text);
+      res.send("");
     });
 
     keyword.onAskHeadlines(() => {
-      let text: string | string[];
+      let text: string[] = [];
       const latest = Headline.latest(5, phone.headlines);
       const remain = Headline.latest(0, phone.headlines).length - latest.length;
       if (latest.length) {
-        text = latest.map(({ id, title }) => `[${id}] ${title}`).join("\n");
-        if (remain > 0) {
-          text += "\n- နောက်ထပ်သတင်းများရယူလိုပါက news ဟုပို့ပါ။";
-        }
+        text.push(...latest.map(({ id, title }) => `${id} -${title}`));
+        if (remain > 0) text.push("- နောက်ထပ်ရယူလိုပါက news ဟုပို့ပါ။");
+        _tasks[message.phone.number] = text;
         phone
           .markAsSent(latest)
           .incr({
-            total_action: 1,
+            total_action: 0,
             read_count: 0,
-            character_count: text.length,
+            character_count: 0,
           })
           .save();
-        res.send(text);
+        res.send("");
       } else {
-        text = "နောက်ထပ်သတင်းများမရှိပါ။";
-        if (phone.session.canReadArticle()) {
-          text +=
-            " read <နံပါတ်၆လုံး> ဟုပို့ပြီးတစ်ပုဒ်စီတိုင်းကိုဖတ်နိုင်ပါတယ်။";
-        }
-        phone
-          .incr({
-            total_action: 1,
-            read_count: 0,
-            character_count: text.length,
-          })
-          .save();
-        res.send(text);
+        res.send("နောက်ထပ်သတင်းများမရှိပါ။");
       }
     });
 
@@ -87,26 +65,35 @@ router.get("/call", (req, res) => {
       if (!phone.session.canReadArticle()) {
         res.status(419);
         res.send(
-          "<#419> သတင်းအပြည့်အစုံများကိုထပ်မံ၍မရနိုင်တော့ပါ။ နောက်မှထပ်မံပို့ကြည့်ပါ။"
+          "<#419> သတင်းအပြည့်အစုံများကိုထပ်မံ၍မရနိုင်ပါ။ နောက်မှထပ်မံပို့ကြည့်ပါ။"
         );
         return;
       }
       const article = Article.find(id);
       if (!article) return res.send(`သတင်း ${id} ကို ရှာမတွေ့ပါ။`);
       let text = String(article["content"]);
-      let n = Math.floor(text.length / 600);
+      let n = Math.floor(text.length / MAX_CHARACTER_PER_SMS);
       let x = text.split(" ");
-      let c = ["စာလုံးရေ" + text.length + "လုံးရှိပြီးအချိန်ကြာမြင့်နိုင်ပါ။"];
+      let c = [
+        "စာလုံးရေ" + text.length + "လုံးရှိတဲ့အတွက်အချိန်ကြာမြင့်နိုင်ပါ။",
+      ];
       let z = Math.floor(x.length / n);
       for (let i = 0; i < n; i++) {
         let p = i + 1;
         if (p === n) {
           c.push(x.slice(i * z).join(" ") + " -" + article["source"]);
         } else {
-          c.push(x.slice(i * z, p * z).join(" ") + " (" + p + "/" + n + ")");
+          c.push(x.slice(i * z, p * z).join("") + " " + p + "/" + n);
         }
       }
       _tasks[message.phone.number] = c;
+      phone
+        .incr({
+          total_action: 1,
+          character_count: 0,
+          read_count: 1,
+        })
+        .save();
       res.send("");
     });
 
@@ -158,7 +145,7 @@ router.get("/action", (req, res) => {
   let number = req["phone"];
   if (!(number in _tasks)) {
     res.status(400);
-    res.send("0");
+    res.end();
     return;
   }
   const phone = new Phone(number);
@@ -169,9 +156,9 @@ router.get("/action", (req, res) => {
   }
   phone
     .incr({
-      total_action: 1,
+      total_action: 0,
       character_count: text.length,
-      read_count: 1,
+      read_count: 0,
     })
     .save();
   res.send(text || "0");
@@ -185,7 +172,5 @@ router.get("/update", (req, res) =>
     })
     .catch((e) => res.status(400).end())
 );
-
-router.use("/api", api);
 
 export default router;

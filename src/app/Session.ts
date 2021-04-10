@@ -27,7 +27,7 @@ export default class Session {
   incr(action: UserAction) {
     this.total_action += action.total_action;
     this.read_count += action.read_count;
-    this.character_count += action.character_count;
+    this.character_count += action.character_count * 2;
     return this;
   }
 

@@ -2,20 +2,21 @@ import { Router } from "express";
 import DB from "./app/DB";
 
 const api = Router();
+// const per_page = 30;
 
 api.get("/articles", (req, res) => {
-  const per_page = 30;
-  const page = Number(req.query.page) || 1;
-  res.json(DB.read()["articles"].slice(page - 1, page * per_page));
+  const articles = DB.read()["articles"].sort((a, b) => {
+    return new Date(b.datetime) > new Date(a.datetime);
+  });
+  res.json(articles.reverse());
 });
 
 api.get("/users", (req, res) => {
-  const per_page = 20;
-  const users = DB.read()["phone"];
-  const page = Number(req.query.page) || 1;
+  const users = DB.read()["phone"].sort((a, b) => {
+    return new Date(b.datetime) > new Date(a.datetime);
+  });
   res.json({
-    size: users.length,
-    data: users.slice(page - 1, page * per_page),
+    data: users,
   });
 });
 
