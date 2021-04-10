@@ -1,113 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NweOo SMS</title>
-    <link rel="stylesheet" href="bootstrap.min.css" />
-    <script src="axios.min.js"></script>
-    <script src="vue.min.js"></script>
-    <script src="/vue-router.min.js"></script>
-  </head>
 
-  <body>
-    <div class="container mt-2">
-      <main>
-        <section>
-          <h2>Users</h2>
-          <table class="table table-hover table-sm">
-            <thead>
-              <tr>
-                <th>Headline Title</th>
-                <th>Recieved</th>
-                <th colspan="3">Quota</th>
-                <th>Expired On</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="user in users" :key="user.id">
-                <td>{{ user.id }}</td>
-                <td>{{ user.total_count }}</td>
-                <td>{{ user.session.read_count }}/6</td>
-                <td>{{ user.session.total_action }}/21</td>
-                <td>{{ user.session.character_count }}/10001</td>
-                <td>{{ new Date(user.session.expired).toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <ul class="pagination" v-show="0">
-            <li class="page-item disabled">
-              <a class="page-link" href="#" tabindex="-1" aria-disabled="true"
-                >Previous</a
-              >
-            </li>
-            <li class="page-item active">
-              <a class="page-link" href="#">1</a>
-            </li>
-            <li class="page-item" aria-current="page">
-              <a class="page-link" href="#">2</a>
-            </li>
-            <li class="page-item">
-              <a class="page-link" href="#">Next</a>
-            </li>
-          </ul>
-        </section>
-        <div class="mt-4"></div>
-        <section>
-          <h2>Articles</h2>
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Headline Title</th>
-                <th>Count</th>
-                <th>Published</th>
-                <th>Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="article in articles" :key="article.id">
-                <td>{{ article.title }}</td>
-                <td>{{ article.content.length }}</td>
-                <td>{{ new Date(article.datetime).toLocaleString() }}</td>
-                <td>{{ article.source }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-      </main>
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NweOo SMS</title>
+  <link rel="stylesheet" href="bootstrap.min.css" />
+  <script src="axios.min.js"></script>
+  <script src="vue.min.js"></script>
+</head>
 
-    <script>
-      const app = new Vue({
-        el: "main",
-        data: {
-          users: [],
-          articles: [],
-          pages: 0,
+<body>
+  <div class="container mt-2">
+    <main>
+      <section>
+        <h2>Actions</h2>
+        <div class="alert alert-success" v-show="message">
+          {{ message }}
+        </div>
+        <div class="alert alert-danger" v-show="error">
+          {{ error }}
+        </div>
+        <button @click="updateArticles" :disabled="disabled" class="btn btn-primary">
+          Update Articles
+        </button>
+      </section>
+      <hr>
+      <section>
+        <h2>Users</h2>
+        <table class="table table-hover table-sm">
+          <thead>
+            <tr>
+              <th>Mobile</th>
+              <th>Count</th>
+              <th>Actions</th>
+              <th>Characters</th>
+              <th>Expired</th>
+              <th><span class="sr-only">action</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in users" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.total_count }}</td>
+              <td>{{ user.session?.total_action }}/21</td>
+              <td>{{ user.session?.character_count }}/10001</td>
+              <td>{{ new Date(user.session?.expired).toLocaleString() }}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary" @click="resetUsage(user.number)"
+                  :disabled="loading">reset</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <hr>
+      <div class="mt-4"></div>
+      <section>
+        <h2>Articles</h2>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Headline Title</th>
+              <th>Published</th>
+              <th>Source</th>
+              <th><span class="sr-only">action</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="article in articles" :key="article.id">
+              <td>{{ article.title }}</td>
+              <td>{{ new Date(article.datetime).toLocaleString() }}</td>
+              <td>{{ article.source }}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-danger" @click="removeArticle(article.id)"
+                  :disabled="loading">delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const app = new Vue({
+      el: "main",
+      data: {
+        users: [],
+        articles: [],
+        pages: 0,
+        loading: false,
+        disabled: false,
+        message: null,
+        error: null,
+      },
+      methods: {
+        removeArticle(id) {
+          this.loading = true;
+          this.error = null;
+          this.message = null;
+          axios.delete('/api/articles/' + id).then(() => {
+            this.fetchArticles();
+          }).finally(() => this.loading = false);
         },
-        methods: {
-          fetchUsers() {
-            axios("/api/users").then(({ data: { data, size } }) => {
-              this.pages = Math.floor(size / 10);
-              this.users = data.reverse();
-            });
-          },
-          fetchArticles() {
-            axios("/api/articles").then(({ data }) => {
-              this.articles = data.reverse();
-            });
-          },
+        updateArticles() {
+          this.disabled = true;
+          this.error = null;
+          this.message = null;
+          axios('/update').then(({ data }) => {
+            if (data == '0') {
+              this.message = 'Updating completed.';
+            } else {
+              this.error = 'Updating failed. Please try again!!!';
+            }
+            this.fetchArticles();
+          })
+            .catch(e => this.error = 'Failed to update! Error`' + e.message + '`')
+            .finally(() => this.disabled = false)
         },
-        beforeMount() {
+        resetUsage(number) {
+          this.loading = true;
+          this.error = null;
+          this.message = null;
+          axios('/call?phone=' + number + '&message=.reset').then(() => {
+            this.message = 'Success!'
+            this.fetchUsers();
+          }).catch(e => this.error = 'Failed, ' + e.message)
+            .finally(() => this.loading = false);
+        },
+        fetchUsers() {
+          axios("/api/users").then(({ data: { data, size } }) => {
+            this.pages = Math.floor(size / 10);
+            this.users = data.reverse();
+          });
+        },
+        fetchArticles() {
+          axios("/api/articles").then(({ data }) => {
+            this.articles = data.reverse();
+          });
+        },
+      },
+      beforeMount() {
+        this.fetchArticles();
+        this.fetchUsers();
+        setInterval(() => {
           this.fetchArticles();
           this.fetchUsers();
-          setInterval(() => {
-            this.fetchArticles();
-            this.fetchUsers();
-          }, 10000);
-        },
-      });
-    </script>
-  </body>
+        }, 10000);
+      },
+    });
+  </script>
+</body>
+
 </html>

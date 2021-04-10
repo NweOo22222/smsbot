@@ -16,6 +16,8 @@
 
 အဆင့်(၁) `Termux` App ကိုဖွင့်ပါ။
 
+> ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်ဝင်တဲ့အခါ အဆင်(၅) နဲ့ အဆင့် (၈) ပဲလိုပါတယ်။
+
 အဆင့်(၂) `pkg update`
 
 အဆင့်(၃) `pkg install git nodejs --yes`
@@ -36,14 +38,16 @@
 
 အဆင့်(၂) SMS နဲ့ ပတ်သက်တဲ့ Permission များပေးပါ။
 
-အဆင့်(၃) Export/Import ထဲ၀င်ပြီး Import ကိုရွေးချယ်ပါ။
+အဆင့်(၃) [smsbot-macro.mdr](https://nweoofact.page.link/smsbot) ကိုဒေါင်းလုပ်ဆွဲပါ။
 
-အဆင့်(၄) [nweoofact.page.link/smsbot-macro](https://nweoofact.page.link/smsbot-macro)
+အဆင့်(၄) Export/Import ထဲ၀င်ပြီး Import ကိုရွေးချယ်ပါ။
 
-အဆင့်(၅) `cd smsbot`
+အဆင့်(၅) ဒေါင်းလုပ်ဆွဲခဲ့တဲ့ဖိုင်ကိုရွေးပြီးသွင်းလိုက်ပါ။
 
-အဆင့်(၆) `npm install`
+အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။
 
-အဆင့်(၇) `npm run build`
+အဆင့်(၇) SMS Bot ကိုစတင်ရန် `macros` ထဲက `SMS` > `smsbot(telenor)`ကိုဖွင့်ပါ။
 
-အဆင့်(၈) `npm run start`
+### အခြား
+
+အပေါ်ကလုပ်ဆောင်ရမဲ့ (၂) ခုလုံးလုပ်ဆောင်ပြီးပြိဆို Browser ထဲကနေ [`http://localhost:3001`](http://localhost:3001) ကိုဝင်ပြီး `Update Articles` ကိုနှိပ်ပြီး သတင်းတွေကို Update တင်ပြီးအသုံးပြုနိုင်ပါပြီ။
