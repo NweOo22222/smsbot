@@ -45,6 +45,10 @@ export default class Phone {
     return this;
   }
 
+  reset() {
+    this.headlines = [];
+  }
+
   save() {
     this.total_count++;
     const db = DB.read();
