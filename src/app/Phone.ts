@@ -50,7 +50,6 @@ export default class Phone {
   }
 
   save() {
-    this.total_count++;
     const db = DB.read();
     const i = db["phone"]?.findIndex(({ id }) => id == this.id);
     if (i === -1) {

@@ -4,6 +4,7 @@ import morgan from "morgan";
 import middleware from "./middleware";
 import router from "./routes";
 import api from "./api";
+import { connect } from "./socket";
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -20,6 +21,6 @@ app.use("/api", api);
 
 app.use(express.static(join(dirname(__dirname), "static")));
 
-app.listen(PORT, () =>
+connect(app).listen(PORT, () =>
   console.log("server is running on http://localhost:%d", PORT)
 );

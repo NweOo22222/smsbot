@@ -14,144 +14,130 @@
 <body>
   <div class="container mt-2">
     <main>
-      <section>
-        <h2>Actions</h2>
+      <section class="mb-4">
         <div class="alert alert-success" v-show="message">
           {{ message }}
         </div>
         <div class="alert alert-danger" v-show="error">
           {{ error }}
         </div>
+        <a href="articles.html" class="btn btn-primary mr-2">
+          View articles
+        </a>
         <button @click="updateArticles" :disabled="disabled" class="btn btn-primary">
-          Update Articles
+          Update articles
         </button>
       </section>
-      <hr>
+
       <section>
         <h2>Users</h2>
-        <table class="table table-hover table-sm">
-          <thead>
-            <tr>
-              <th>Mobile</th>
-              <th>Count</th>
-              <th>Actions</th>
-              <th>Characters</th>
-              <th>Expired</th>
-              <th><span class="sr-only">action</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in users" :key="user.id">
-              <td>{{ user.id }}</td>
-              <td>{{ user.total_count }}</td>
-              <td>{{ user.session?.total_action }}/21</td>
-              <td>{{ user.session?.character_count }}/10001</td>
-              <td>{{ new Date(user.session?.expired).toLocaleString() }}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary" @click="resetUsage(user.number)"
-                  :disabled="loading">reset</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <hr>
-      <div class="mt-4"></div>
-      <section>
-        <h2>Articles</h2>
-        <table class="table table-hover">
-          <thead>
-            <tr>
-              <th>Headline Title</th>
-              <th>Published</th>
-              <th>Source</th>
-              <th><span class="sr-only">action</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="article in articles" :key="article.id">
-              <td>{{ article.title }}</td>
-              <td>{{ new Date(article.datetime).toLocaleString() }}</td>
-              <td>{{ article.source }}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-danger" @click="removeArticle(article.id)"
-                  :disabled="loading">delete</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table table-hover table-sm">
+            <thead>
+              <tr>
+                <th>Mobile</th>
+                <th>Count</th>
+                <th>Actions</th>
+                <th>Characters</th>
+                <th>Expired</th>
+                <th><span class="sr-only">action</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in users" :key="user.id" :class="user['flash'] && 'flash' || ''">
+                <td>{{ user.id }}</td>
+                <td>{{ user.total_count }}</td>
+                <td>{{ user.session?.total_action }}/21</td>
+                <td>{{ user.session?.character_count }}/10001</td>
+                <td>{{ new Date(user.session?.expired).toLocaleString() }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary" @click="resetUsage(user.number)"
+                    :disabled="loading">reset</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   </div>
 
+  <script src="socket.io/socket.io.min.js"></script>
   <script>
-    const app = new Vue({
+    const socket = io();
+
+    new Vue({
       el: "main",
       data: {
         users: [],
-        articles: [],
-        pages: 0,
         loading: false,
         disabled: false,
         message: null,
         error: null,
       },
       methods: {
-        removeArticle(id) {
-          this.loading = true;
-          this.error = null;
-          this.message = null;
-          axios.delete('/api/articles/' + id).then(() => {
-            this.fetchArticles();
-          }).finally(() => this.loading = false);
-        },
-        updateArticles() {
-          this.disabled = true;
-          this.error = null;
-          this.message = null;
-          axios('/update').then(({ data }) => {
-            if (data == '0') {
-              this.message = 'Updating completed.';
-            } else {
-              this.error = 'Updating failed. Please try again!!!';
-            }
-            this.fetchArticles();
-          })
-            .catch(e => this.error = 'Failed to update! Error`' + e.message + '`')
-            .finally(() => this.disabled = false)
-        },
         resetUsage(number) {
           this.loading = true;
           this.error = null;
           this.message = null;
-          axios('/call?phone=' + number + '&message=.reset').then(() => {
+          return axios('/call?phone=' + number + '&message=.reset').then(() => {
             this.message = 'Success!'
             this.fetchUsers();
           }).catch(e => this.error = 'Failed, ' + e.message)
             .finally(() => this.loading = false);
         },
         fetchUsers() {
-          axios("/api/users").then(({ data: { data, size } }) => {
-            this.pages = Math.floor(size / 10);
-            this.users = data.reverse();
+          return axios("/api/users").then(({ data }) => {
+            this.users = data.map((user) => ({ ...user, flash: false }));
           });
         },
-        fetchArticles() {
-          axios("/api/articles").then(({ data }) => {
-            this.articles = data.reverse();
-          });
+        updateArticles() {
+          this.disabled = true;
+          this.error = null;
+          this.message = null;
+          return axios('/update').then(({ data }) => this.message = 'Updating completed.')
+            .catch(e => this.error = 'Failed to update! Error`' + e.message + '`')
+            .finally(() => this.disabled = false);
         },
       },
       beforeMount() {
-        this.fetchArticles();
         this.fetchUsers();
-        setInterval(() => {
-          this.fetchArticles();
-          this.fetchUsers();
-        }, 10000);
+
+        socket.on('users:update', ({ id, type }) => {
+          this.fetchUsers().then(() => {
+            const user = this.users.find((user) => user.id == id);
+            user.flash = true;
+            setTimeout(() => user.flash = false, 600);
+          })
+        });
       },
     });
   </script>
+
+  <style>
+    .flash {
+      background: initial;
+      animation: flashlight .5s ease forwards;
+    }
+
+    @keyframes flashlight {
+      0% {
+        background: initial;
+      }
+
+      20% {
+        background-color: bisque;
+      }
+
+      80% {
+        background-color: bisque;
+      }
+
+      100% {
+        background-color: initial;
+      }
+    }
+  </style>
 </body>
 
 </html>

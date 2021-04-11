@@ -4,6 +4,7 @@ import Headline from "./app/Headline";
 import Keyword from "./app/Keyword";
 import Message from "./app/Message";
 import Phone from "./app/Phone";
+import { io } from "./socket";
 
 const _tasks = {};
 const router = Router();
@@ -26,6 +27,7 @@ router.get("/call", (req, res) => {
       read_count: 0,
     });
     res.send(text);
+    io().emit("users:update", { id: phone.id, type: "help" });
   });
 
   keyword.onAskHeadlines(() => {
@@ -48,7 +50,7 @@ router.get("/call", (req, res) => {
       phone
         .markAsSent(latest)
         .incr({
-          total_action: 0,
+          total_action: 1,
           read_count: 0,
           character_count: 0,
         })
@@ -59,13 +61,14 @@ router.get("/call", (req, res) => {
       phone
         .markAsSent(latest)
         .incr({
-          total_action: 0,
+          total_action: 1,
           read_count: 0,
-          character_count: 0,
+          character_count: text.length,
         })
         .save();
       res.send(text);
     }
+    io().emit("users:update", { id: phone.id, type: "news" });
   });
 
   keyword.onAskRead((id) => {
@@ -78,6 +81,7 @@ router.get("/call", (req, res) => {
       })
       .save();
     res.send(text);
+    io().emit("users:update", { id: phone.id, type: "read" });
   });
 
   keyword.onAskReset(() => {
@@ -91,6 +95,7 @@ router.get("/call", (req, res) => {
       })
       .save();
     res.send(text);
+    io().emit("users:update", { id: phone.id, type: "reset" });
   });
 
   keyword.onUnexisted(() => {
@@ -103,6 +108,7 @@ router.get("/call", (req, res) => {
       })
       .save();
     res.send(text);
+    io().emit("users:update", { id: phone.id, type: "unexisted" });
   });
 });
 
@@ -125,7 +131,8 @@ router.get("/action", (req, res) => {
       read_count: 0,
     })
     .save();
-  res.send(text || "0");
+  res.send(text);
+  io().emit("users:update", { id: phone.id, type: "action" });
 });
 
 router.get("/update", (req, res) =>

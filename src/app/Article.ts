@@ -4,17 +4,17 @@ import DB from "./DB";
 export default class Article {
   public id: string;
   public title: string;
-  public content: string;
+  // public content: string;
   public source: string;
   public link: string;
-  public image: string;
+  // public image: string;
   public datetime: Date;
 
   constructor({ id, content, source, datetime, title, link, image }) {
     this.id = id;
     this.title = title;
-    this.content = content.replace(/\n/gm, " ").replace(/\s\s/gm, "");
-    this.image = image;
+    // this.content = content.replace(/\n/gm, " ").replace(/\s\s/gm, "");
+    // this.image = image;
     this.source = source;
     this.link = link;
     this.datetime = new Date(datetime);
@@ -37,7 +37,7 @@ export default class Article {
 
   static store(articles: Article[]) {
     const db = DB.read();
-    db["articles"].push(...Object.values(articles));
+    db["articles"] = articles;
     DB.save(db);
   }
 }

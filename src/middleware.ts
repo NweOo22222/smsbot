@@ -12,16 +12,19 @@ export default function middleware(
     const message = decodeURIComponent(String(req.query["message"] || ""));
     if (phone) {
       const session = phone.session;
-      const reset = () => {
+      const reset = (): boolean => {
         session.restart();
         phone.save();
-        next();
+        return true;
       };
-      if (message.match(/\.update/) || message.match(/\.reset/)) {
-        return reset();
+      if (message.match(/\.update/)) {
+        return next();
+      }
+      if (message.match(/\.reset/)) {
+        return reset() && res.end();
       }
       if (session.isExpired()) {
-        return reset();
+        return reset() && next();
       }
       if (session.isDenied()) {
         return res

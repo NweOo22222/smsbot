@@ -14,20 +14,16 @@ api.delete("/articles/:id", (req, res) => {
 
 api.get("/articles", (req, res) => {
   const articles = DB.read()["articles"].sort((a, b) => {
-    return new Date(b.datetime) > new Date(a.datetime);
+    return new Date(a.datetime) > new Date(b.datetime);
   });
-  res.json(
-    articles.sort((a, b) => new Date(b.datetime) < new Date(a.datetime))
-  );
+  res.json(articles);
 });
 
 api.get("/users", (req, res) => {
   const users = DB.read()["phone"].sort((a, b) => {
-    return new Date(b.datetime) > new Date(a.datetime);
+    return new Date(a.datetime) > new Date(b.datetime);
   });
-  res.json({
-    data: users,
-  });
+  res.json(users);
 });
 
 export default api;
