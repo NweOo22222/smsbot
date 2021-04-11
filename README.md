@@ -1,6 +1,6 @@
 # SMS Bot လုပ်ချင်သူများအတွက်
 
-`#nweoosmsbot` - `v1.1.2`
+`#nweoosmsbot` - `v1.1.1`
 
 ## လိုအပ်သည့်အရာများ
 
@@ -63,6 +63,8 @@
 အပေါ်ကလုပ်ဆောင်ရမဲ့ (၂) ခုလုံးလုပ်ဆောင်ပြီးမှ အဆင့်သင့်ဖြစ်ပြီဆိုရင် Browser ထဲကနေတဆင့် [`http://localhost:3001`](http://localhost:3001) သွားရောက်ပြီး `Update Articles` ကိုနှိပ်၍ DVB က သတင်းတွေကို ကျွန်တော်တို့ [api.nweoo.com/articles](http://api.nweoo.com/articles) ကနေတဆင့် update တင်ပြီးစတင်အသုံးပြုနိုင်ပါပြီ။
 
 **အင်တာနက်ရတာမသေချာတဲ့အတွက် Articles တွေကို Auto Update လုပ်တဲ့စနစ်မပါပါဘူး။ ရတဲ့အချိန် Offline သိမ်းထားရန် `.update` လို့ Message ပို့၍ဖြစ်စေ၊ Browser ကနေတဆင့်ဖြစ်စေ၊ [`http://localhost:3001/update`](http://localhost:3001/update) ကို ၀င်ရောက်ပြီး Update တင်ပေးပါ။**
+
+<a id="Update" href="#Update"></a>
 
 ### Version Update
 
