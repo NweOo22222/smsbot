@@ -48,10 +48,30 @@
 
 အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။
 
-အဆင့်(၇) SMS Bot ကိုစတင်ရန် `macros` ထဲက `SMS` > `smsbot(telenor)`ကိုဖွင့်ပါ။
+အဆင့်(၇) SMS Bot ကိုစတင်ရန် `macros` ထဲက `SMS` > `smsbot(telenor)` သို့မဟုတ် `smsbot(ooredoo)` ကိုဖွင့်ပါ။
+
+#### အသံပိတ်ရန်
+
+အဆင့်(၁) `Macrodroid` App ကိုဖွင့်ပါ။
+
+အဆင့်(၂) `Variables` ထဲကိုဝင်ပါ။
+
+အဆင့်(၃) `muted` ကို `true` ဟုရွေးချယ်ပါ။
 
 ### အခြား
 
 အပေါ်ကလုပ်ဆောင်ရမဲ့ (၂) ခုလုံးလုပ်ဆောင်ပြီးမှ အဆင့်သင့်ဖြစ်ပြီဆိုရင် Browser ထဲကနေတဆင့် [`http://localhost:3001`](http://localhost:3001) သွားရောက်ပြီး `Update Articles` ကိုနှိပ်၍ DVB က သတင်းတွေကို ကျွန်တော်တို့ [api.nweoo.com/articles](http://api.nweoo.com/articles) ကနေတဆင့် update တင်ပြီးစတင်အသုံးပြုနိုင်ပါပြီ။
 
-**အင်တာနက်ရတာမသေချာတဲ့အတွက် Auto Upload လုပ်တဲ့စနစ်မပါပါဘူး။ ရတဲ့အချိန် Offline သိမ်းထားရန် `.update` လို့ Message ပို့၍ဖြစ်စေ၊ Browser ကနေတဆင့်ဖြစ်စေ၊ [`http://localhost:3001/update`](http://localhost:3001/update) ကို ၀င်ရောက်ပြီး Update တင်ပေးပါ။**
+**အင်တာနက်ရတာမသေချာတဲ့အတွက် Articles တွေကို Auto Update လုပ်တဲ့စနစ်မပါပါဘူး။ ရတဲ့အချိန် Offline သိမ်းထားရန် `.update` လို့ Message ပို့၍ဖြစ်စေ၊ Browser ကနေတဆင့်ဖြစ်စေ၊ [`http://localhost:3001/update`](http://localhost:3001/update) ကို ၀င်ရောက်ပြီး Update တင်ပေးပါ။**
+
+### Version Update
+
+အဆင့်(၁) `Termux` App ကိုဖွင့်ပါ။
+
+အဆင့်(၂) `cd smsbot`
+
+အဆင့်(၃) `git pull --ff`
+
+အဆင့်(၇) `npm run build`
+
+အဆင့်(၈) `npm run server`
