@@ -11,7 +11,7 @@ import {
   ON_HELP,
   ON_RESET,
   ON_UNEXISTED,
-} from "../config.js";
+} from "./config.js";
 
 const _tasks = {};
 const router = Router();

@@ -32,7 +32,7 @@
 
 အဆင့်(၇) `npm run build`
 
-အဆင့်(၈) `npm start`
+အဆင့်(၈) `npm run server`
 
 ### Macrodroid (App)
 

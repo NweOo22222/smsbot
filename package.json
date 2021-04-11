@@ -5,6 +5,7 @@
   "main": "dest/index.js",
   "scripts": {
     "start": "node dist/index.js",
+    "server": "node dist/index.js | xdg-open http://localhost:3001",
     "build": "tsc --project tsconfig.json",
     "watch": "npm run build -- --watch",
     "dev": "nodemon src/index.ts"
