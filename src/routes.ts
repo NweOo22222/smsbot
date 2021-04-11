@@ -57,7 +57,8 @@ router.get("/call", (req, res) => {
         .save();
       res.send("");
     } else {
-      text = "သတင်းများနောက်ထပ်မရှိပါ။";
+      text =
+        "သတင်းများနောက်ထပ်မရှိပါ။ သတင်းများမရရှိပါက reset လို့ပို့ပြီးအစကနေပြန်လည်ရယူနိုင်ပါတယ်။";
       phone
         .markAsSent(latest)
         .incr({
