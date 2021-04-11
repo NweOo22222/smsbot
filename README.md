@@ -16,19 +16,21 @@
 
 အဆင့်(၁) `Termux` App ကိုဖွင့်ပါ။
 
-> ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်ဝင်တဲ့အခါ အဆင်(၄) နဲ့ အဆင့် (၇) ပဲလိုပါတယ်။
+> ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်ဝင်တဲ့အခါ အဆင်(၅) နဲ့ အဆင့် (၈) ပဲလိုပါတယ်။
 
-အဆင့်(၂) `pkg install git nodejs --yes`
+အဆင့်(၂) `pkg update`
 
-အဆင့်(၃) `git clone https://github.com/nweoo22222/smsbot`
+အဆင့်(၃) `pkg install git nodejs --yes`
 
-အဆင့်(၄) `cd smsbot`
+အဆင့်(၄) `git clone https://github.com/nweoo22222/smsbot`
 
-အဆင့်(၅) `npm install`
+အဆင့်(၅) `cd smsbot`
 
-အဆင့်(၆) `npm run build`
+အဆင့်(၆) `npm install`
 
-အဆင့်(၇) `npm start`
+အဆင့်(၇) `npm run build`
+
+အဆင့်(၈) `npm start`
 
 ### Macrodroid (App)
 
