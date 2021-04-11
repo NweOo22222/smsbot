@@ -29,7 +29,7 @@
             <td>{{ article.source }}</td>
             <td>{{ new Date(article.datetime).toLocaleString() }}</td>
             <td>
-              <a href="#" class="btn-link text-danger">Delete</a>
+              <a @click="removeArticle(article.id)" class="btn-link text-danger">Delete</a>
             </td>
           </tr>
         </tbody>
