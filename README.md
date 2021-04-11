@@ -18,29 +18,33 @@
 
 အဆင့်(၁) `Termux` App ကိုဖွင့်ပါ။
 
-> ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်ဝင်တဲ့အခါ အဆင်(၄) နဲ့ အဆင့် (၆) ပဲလိုပါတယ်။
+> ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်ဝင်တဲ့အခါ အဆင်(၅) နဲ့ အဆင့် (၈) ပဲလိုပါတယ်။
 
-အဆင့်(၂) `pkg install git nodejs --yes`
+အဆင့်(၂) `pkg update`
 
-အဆင့်(၃) `git clone https://github.com/nweoo22222/smsbot`
+အဆင့်(၃) `pkg install git nodejs --yes`
 
-အဆင့်(၄) `cd smsbot`
+အဆင့်(၄) `git clone https://github.com/nweoo22222/smsbot`
 
-အဆင့်(၅) `npm install`
+အဆင့်(၅) `cd smsbot`
 
-အဆင့်(၆) `npm start`
+အဆင့်(၆) `npm install`
+
+အဆင့်(၇) `npm run build`
+
+အဆင့်(၈) `npm start`
 
 ### Macrodroid (App)
 
 အဆင့်(၁) `Macrodroid` App ကိုဖွင့်ပါ။
 
-အဆင့်(၂) SMS နဲ့ ပတ်သက်တဲ့ Permission များပေးပါ။
+အဆင့်(၂) [smsbot-macro-v1.1.2.mdr](https://nweoofact.page.link/smsbot) ကိုဒေါင်းလုပ်ဆွဲပါ။
 
-အဆင့်(၃) [smsbot-macro.mdr](https://nweoofact.page.link/smsbot) ကိုဒေါင်းလုပ်ဆွဲပါ။
+အဆင့်(၃) Export/Import ထဲ၀င်ပြီး Import ကိုရွေးချယ်ပါ။
 
-အဆင့်(၄) Export/Import ထဲ၀င်ပြီး Import ကိုရွေးချယ်ပါ။
+အဆင့်(၄) ဒေါင်းလုပ်ဆွဲခဲ့တဲ့ဖိုင်ကိုရွေးပြီးသွင်းလိုက်ပါ။
 
-အဆင့်(၅) ဒေါင်းလုပ်ဆွဲခဲ့တဲ့ဖိုင်ကိုရွေးပြီးသွင်းလိုက်ပါ။
+အဆင့်(၅) SMS, Call & Notification နဲ့ ပတ်သက်တဲ့ Permission များပေးပါ။
 
 အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။
 
