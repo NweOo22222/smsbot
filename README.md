@@ -16,21 +16,17 @@
 
 အဆင့်(၁) `Termux` App ကိုဖွင့်ပါ။
 
-> ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်ဝင်တဲ့အခါ အဆင်(၅) နဲ့ အဆင့် (၈) ပဲလိုပါတယ်။
+> ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်ဝင်တဲ့အခါ အဆင်(၄) နဲ့ အဆင့် (၆) ပဲလိုပါတယ်။
 
-အဆင့်(၂) `pkg update`
+အဆင့်(၂) `pkg install git nodejs --yes`
 
-အဆင့်(၃) `pkg install git nodejs --yes`
+အဆင့်(၃) `git clone https://github.com/nweoo22222/smsbot`
 
-အဆင့်(၄) `git clone https://github.com/nweoo22222/smsbot`
+အဆင့်(၄) `cd smsbot`
 
-အဆင့်(၅) `cd smsbot`
+အဆင့်(၅) `npm install`
 
-အဆင့်(၆) `npm install`
-
-အဆင့်(၇) `npm run build`
-
-အဆင့်(၈) `npm run start`
+အဆင့်(၆) `npm start`
 
 ### Macrodroid (App)
 
@@ -50,4 +46,6 @@
 
 ### အခြား
 
-အပေါ်ကလုပ်ဆောင်ရမဲ့ (၂) ခုလုံးလုပ်ဆောင်ပြီးပြိဆို Browser ထဲကနေ [`http://localhost:3001`](http://localhost:3001) ကိုဝင်ပြီး `Update Articles` ကိုနှိပ်ပြီး သတင်းတွေကို Update တင်ပြီးအသုံးပြုနိုင်ပါပြီ။
+အပေါ်ကလုပ်ဆောင်ရမဲ့ (၂) ခုလုံးလုပ်ဆောင်ပြီးမှ အဆင့်သင့်ဖြစ်ပြီဆိုရင် Browser ထဲကနေတဆင့် [`http://localhost:3001`](http://localhost:3001) သွားရောက်ပြီး `Update Articles` ကိုနှိပ်၍ DVB က သတင်းတွေကို ကျွန်တော်တို့ [api.nweoo.com/articles](http://api.nweoo.com/articles) ကနေတဆင့် update တင်ပြီးစတင်အသုံးပြုနိုင်ပါပြီ။
+
+**အင်တာနက်ရတာမသေချာတဲ့အတွက် Auto Upload လုပ်တဲ့စနစ်မပါပါဘူး။ ရတဲ့အချိန် Offline သိမ်းထားရန် `.update` လို့ Message ပို့၍ဖြစ်စေ၊ Browser ကနေတဆင့်ဖြစ်စေ၊ [`http://localhost:3001/update`](http://localhost:3001/update) ကို ၀င်ရောက်ပြီး Update တင်ပေးပါ။**

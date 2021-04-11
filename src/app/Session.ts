@@ -3,7 +3,7 @@ import {
   MAX_CHARACTER_COUNT,
   MAX_READ_COUNT,
   MAX_TOTAL_ACTION,
-} from "../config";
+} from "../settings";
 
 export interface UserAction {
   total_action: number;

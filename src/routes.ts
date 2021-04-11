@@ -5,6 +5,13 @@ import Keyword from "./app/Keyword";
 import Message from "./app/Message";
 import Phone from "./app/Phone";
 import { io } from "./socket";
+import {
+  ON_HEADLINES_NEXT,
+  ON_HEADLINES_NULL,
+  ON_HELP,
+  ON_RESET,
+  ON_UNEXISTED,
+} from "../config.js";
 
 const _tasks = {};
 const router = Router();
@@ -17,16 +24,13 @@ router.get("/call", (req, res) => {
   const phone = message.phone;
   const keyword = new Keyword(message.body);
 
-  let text: string;
-
   keyword.onAskHelp(() => {
-    text = "သတင်းများရယူရန် news (သို့) သတင်း လို့ပို့ပါ။";
     phone.incr({
       total_action: 1,
-      character_count: text.length,
+      character_count: ON_HELP.length,
       read_count: 0,
     });
-    res.send(text);
+    res.send(ON_HELP);
     io().emit("users:update", { id: phone.id, type: "help" });
   });
 
@@ -45,7 +49,7 @@ router.get("/call", (req, res) => {
             title
         )
       );
-      if (remain > 0) actions.push("- နောက်ထပ်ရယူလိုပါက news ဟုပို့ပါ။");
+      if (remain > 0) actions.push(ON_HEADLINES_NEXT);
       _tasks[message.phone.number] = actions;
       phone
         .markAsSent(latest)
@@ -57,58 +61,41 @@ router.get("/call", (req, res) => {
         .save();
       res.send("");
     } else {
-      text =
-        "သတင်းများနောက်ထပ်မရှိပါ။ သတင်းများမရရှိပါက reset လို့ပို့ပြီးအစကနေပြန်လည်ရယူနိုင်ပါတယ်။";
       phone
         .markAsSent(latest)
         .incr({
           total_action: 1,
           read_count: 0,
-          character_count: text.length,
+          character_count: ON_HEADLINES_NULL.length,
         })
         .save();
-      res.send(text);
+      res.send(ON_HEADLINES_NULL);
     }
     io().emit("users:update", { id: phone.id, type: "news" });
   });
 
-  keyword.onAskRead((id) => {
-    text = "သတင်းအပြည့်အစုံကိုပို့လို့အဆင်မပြေလို့ဖျက်သိမ်းလိုက်ပါပြီ။";
-    phone
-      .incr({
-        total_action: 1,
-        character_count: text.length,
-        read_count: 0,
-      })
-      .save();
-    res.send(text);
-    io().emit("users:update", { id: phone.id, type: "read" });
-  });
-
   keyword.onAskReset(() => {
-    const text = "သတင်းများကိုအစကနေပြန်လည်ရယူနိုင်ပါပြီ။";
     phone.reset();
     phone
       .incr({
         total_action: 1,
         read_count: 0,
-        character_count: text.length,
+        character_count: ON_RESET.length,
       })
       .save();
-    res.send(text);
+    res.send(ON_RESET);
     io().emit("users:update", { id: phone.id, type: "reset" });
   });
 
   keyword.onUnexisted(() => {
-    const text = "မှားနေပါတယ်။ သတင်းများရယူလိုပါက news ဟုပို့ပါ။";
     phone
       .incr({
         total_action: 1,
-        character_count: text.length,
+        character_count: ON_UNEXISTED.length,
         read_count: 0,
       })
       .save();
-    res.send(text);
+    res.send(ON_UNEXISTED);
     io().emit("users:update", { id: phone.id, type: "unexisted" });
   });
 });

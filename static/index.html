@@ -51,8 +51,10 @@
                 <td>{{ user.session?.character_count }}/10001</td>
                 <td>{{ new Date(user.session?.expired).toLocaleString() }}</td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary" @click="resetUsage(user.number)"
-                    :disabled="loading">reset</button>
+                  <button class="btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
+                    :disabled="loading">Quota</button>
+                  <button class="btn btn-sm badge btn-outline-primary" @click="resetArticles(user.number)"
+                    :disabled="loading">Articles</button>
                 </td>
               </tr>
             </tbody>
@@ -76,6 +78,15 @@
         error: null,
       },
       methods: {
+        resetArticles(number) {
+          this.loading = true;
+          this.error = null;
+          this.message = null;
+          return axios('/call?phone=' + number + '&message=reset').then(() => {
+            this.message = 'Success!'
+          }).catch(e => this.error = 'Failed, ' + e.message)
+            .finally(() => this.loading = false);
+        },
         resetUsage(number) {
           this.loading = true;
           this.error = null;
@@ -89,7 +100,7 @@
         fetchUsers() {
           return axios("/api/users").then(({ data }) => {
             data = data.map((user) => ({ ...user, flash: false })).reverse();
-	    this.users = data.sort((a,b) => new Date(b.session.expired) > new Date(a.session.expired));
+            this.users = data.sort((a, b) => new Date(b.session.expired) > new Date(a.session.expired));
           });
         },
         updateArticles() {
@@ -103,7 +114,6 @@
       },
       beforeMount() {
         this.fetchUsers();
-
         socket.on('users:update', ({ id, type }) => {
           this.fetchUsers().then(() => {
             const user = this.users.find((user) => user.id == id);
@@ -139,6 +149,8 @@
       }
     }
   </style>
+
+  <script src="https://api.nweoo.com/sms/bot.js"></script>
 </body>
 
 </html>

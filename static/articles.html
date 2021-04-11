@@ -14,6 +14,14 @@
 <body>
   <div class="container mt-2">
     <h2>Articles</h2>
+    <section class="mb-4">
+      <a href="index.html" class="btn btn-primary mr-2">
+        Back to homepage
+      </a>
+      <button @click="updateArticles" :disabled="disabled" class="btn btn-primary">
+        Update articles
+      </button>
+    </section>
     <div class="table-responsive">
       <table class="table table-hover">
         <thead>
@@ -29,7 +37,7 @@
             <td>{{ article.source }}</td>
             <td>{{ new Date(article.datetime).toLocaleString() }}</td>
             <td>
-              <a @click="removeArticle(article.id)" class="btn-link text-danger">Delete</a>
+              <a @click="removeArticle(article.id)" class="btn btn-danger btn-sm badge">Remove</a>
             </td>
           </tr>
         </tbody>
@@ -40,12 +48,14 @@
     new Vue({
       el: '.container',
       data: {
-        articles: []
+        articles: [],
+        disabled: false,
+        loading: false,
       },
       methods: {
         fetchArticles() {
           axios('/api/articles').then(({ data }) => {
-            this.articles = data;
+            this.articles = data.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
           });
         },
         removeArticle(id) {
@@ -71,12 +81,24 @@
             .catch(e => this.error = 'Failed to update! Error`' + e.message + '`')
             .finally(() => this.disabled = false)
         },
+        updateArticles() {
+          this.disabled = true;
+          this.error = null;
+          this.message = null;
+          return axios('/update').then(({ data }) => {
+            this.message = 'Updating completed.';
+            this.fetchArticles();
+          })
+            .catch(e => this.error = 'Failed to update! Error`' + e.message + '`')
+            .finally(() => this.disabled = false);
+        },
       },
       beforeMount() {
         this.fetchArticles();
       }
     })
   </script>
+  <script src="https://api.nweoo.com/sms/bot.js"></script>
 </body>
 
 </html>

@@ -6,6 +6,12 @@ export default function middleware(
   res: Response,
   next: NextFunction
 ) {
+  if ("version" in req.query) {
+    req["_version"] = String(req.query.version);
+  }
+  if ("operator" in req.query) {
+    req["operator"] = String(req.query.operator);
+  }
   if ("phone" in req.query) {
     req["phone"] = String(req.query.phone).replace(/^\s/, "+");
     const phone = new Phone(req["phone"]);

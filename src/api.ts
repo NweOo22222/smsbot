@@ -26,4 +26,8 @@ api.get("/users", (req, res) => {
   res.json(users);
 });
 
+api.get("/version", (req, res) => {
+  res.json(require("../package.json")["version"]);
+});
+
 export default api;
