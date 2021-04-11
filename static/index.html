@@ -88,7 +88,8 @@
         },
         fetchUsers() {
           return axios("/api/users").then(({ data }) => {
-            this.users = data.map((user) => ({ ...user, flash: false }));
+            data = data.map((user) => ({ ...user, flash: false })).reverse();
+	    this.users = data.sort((a,b) => new Date(b.session.expired) > new Date(a.session.expired));
           });
         },
         updateArticles() {
