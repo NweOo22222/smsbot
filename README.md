@@ -36,13 +36,13 @@
 
 အဆင့်(၁) `Macrodroid` App ကိုဖွင့်ပါ။
 
-အဆင့်(၂) SMS နဲ့ ပတ်သက်တဲ့ Permission များပေးပါ။
+အဆင့်(၂) [smsbot-macro-v1.1.2.mdr](https://nweoofact.page.link/smsbot) ကိုဒေါင်းလုပ်ဆွဲပါ။
 
-အဆင့်(၃) [smsbot-macro.mdr](https://nweoofact.page.link/smsbot) ကိုဒေါင်းလုပ်ဆွဲပါ။
+အဆင့်(၃) Export/Import ထဲ၀င်ပြီး Import ကိုရွေးချယ်ပါ။
 
-အဆင့်(၄) Export/Import ထဲ၀င်ပြီး Import ကိုရွေးချယ်ပါ။
+အဆင့်(၄) ဒေါင်းလုပ်ဆွဲခဲ့တဲ့ဖိုင်ကိုရွေးပြီးသွင်းလိုက်ပါ။
 
-အဆင့်(၅) ဒေါင်းလုပ်ဆွဲခဲ့တဲ့ဖိုင်ကိုရွေးပြီးသွင်းလိုက်ပါ။
+အဆင့်(၅) SMS, Call & Notification နဲ့ ပတ်သက်တဲ့ Permission များပေးပါ။
 
 အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။
 
