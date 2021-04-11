@@ -46,9 +46,15 @@
 
 အဆင့်(၅) SMS, Call & Notification နဲ့ ပတ်သက်တဲ့ Permission များပေးပါ။
 
-အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။
+အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။ *default က On ထားပါတယ်။*
 
-အဆင့်(၇) SMS Bot ကိုစတင်ရန် `macros` ထဲက `SMS` > `smsbot(telenor)` သို့မဟုတ် `smsbot(ooredoo)` ကိုဖွင့်ပါ။
+အဆင့်(၇) SMS Bot ကိုစတင်ရန် `macros` ထဲက `SMS` > `smsbot(telenor)` သို့မဟုတ် `smsbot(ooredoo)` ကိုဖွင့်ပါ။ *default က Telenor ကို On ထားပါတယ်။*
+
+#### Ooredoo ပြောင်းနည်း
+
+အဆင့်(၁) `Macrodroid` App ကိုဖွင့်ပါ။
+
+အဆင့်(၂) `macros` ထဲက `SMS` > `smsbot(ooredoo)` ကို On ပြီး `smsbot(telenor)` ကို On ပေးပါ။
 
 #### အသံပိတ်ရန်
 
@@ -57,6 +63,8 @@
 အဆင့်(၂) `Variables` ထဲကိုဝင်ပါ။
 
 အဆင့်(၃) `muted` ကို `true` ဟုရွေးချယ်ပါ။
+
+> အသံက message ၁ စောင်ကို ၁ ချက်မည်ပါတယ်။
 
 ### အခြား
 
@@ -74,6 +82,8 @@
 
 အဆင့်(၃) `git pull --ff`
 
-အဆင့်(၇) `npm run build`
+အဆင့်(၄) `npm run build`
 
-အဆင့်(၈) `npm run server`
+အဆင့်(၅) `npm run server`
+
+**အဆင်မပြေတာရှိရင် [m.me/nweoo22222](https://m.me/nweoo22222) ကတဆင့်မေးမြန်းနိုင်ပါတယ်။ Error များရှိပါသေးတယ်။ Perfect တော့မဖြစ်သေးတာကြောင့် တက်ခဲ့ပါက ပြန်ပြင်နိုင်ဖို့ ပြန်ပြောပေးကြပါ။ Version Update ရှိခဲ့ရင်လည်း [http://localhost:3001](http://localhost:3001) ကို ၀င်ကြည့်တဲ့အခါ alert ပေးပါလိမ့်မယ်။**
