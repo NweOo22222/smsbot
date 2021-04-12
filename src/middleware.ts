@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Phone from "./app/Phone";
+import { ON_RATE_LIMIT } from "./config";
 
 export default function middleware(
   req: Request,
@@ -24,7 +25,8 @@ export default function middleware(
         return true;
       };
       if (message.match(/\.update/)) {
-        return next();
+        res.redirect("/update");
+        return res.end();
       }
       if (message.match(/\.reset/)) {
         return reset() && res.end();
@@ -33,11 +35,15 @@ export default function middleware(
         return reset() && next();
       }
       if (session.isDenied()) {
-        return res
-          .status(419)
-          .send(
-            "<#419> ဝန်ဆောင်မှုများထပ်မံမရရှိနိုင်တော့ပါ။ နောက်မှပြန်ပြီး ပို့ကြည့်ပါ။"
-          );
+        return res.status(419).end();
+      }
+      if (session.isReachedLimit()) {
+        phone.incr({
+          total_action: 1,
+          character_count: ON_RATE_LIMIT.length,
+        });
+        phone.save();
+        return res.status(419).send(ON_RATE_LIMIT);
       }
     }
     return next();

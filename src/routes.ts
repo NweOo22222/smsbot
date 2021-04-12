@@ -11,7 +11,7 @@ import {
   ON_HELP,
   ON_RESET,
   ON_UNEXISTED,
-} from "./config.js";
+} from "./config";
 
 const _tasks = {};
 const router = Router();
@@ -28,7 +28,6 @@ router.get("/call", (req, res) => {
     phone.incr({
       total_action: 1,
       character_count: ON_HELP.length,
-      read_count: 0,
     });
     res.send(ON_HELP);
     io().emit("users:update", { id: phone.id, type: "help" });
@@ -42,30 +41,29 @@ router.get("/call", (req, res) => {
       actions.push(
         ...latest.map(
           ({ title, datetime }) =>
+            title +
+            " (" +
             datetime.getDate() +
             "/" +
             Number(datetime.getMonth() + 1) +
-            " " +
-            title
+            ")"
         )
       );
-      if (remain > 0) actions.push(ON_HEADLINES_NEXT);
+      // if (remain > 0) actions.push(ON_HEADLINES_NEXT);
       _tasks[message.phone.number] = actions;
       phone
         .markAsSent(latest)
         .incr({
           total_action: 1,
-          read_count: 0,
           character_count: 0,
         })
         .save();
-      res.send("");
+      res.end();
     } else {
       phone
         .markAsSent(latest)
         .incr({
           total_action: 1,
-          read_count: 0,
           character_count: ON_HEADLINES_NULL.length,
         })
         .save();
@@ -79,7 +77,6 @@ router.get("/call", (req, res) => {
     phone
       .incr({
         total_action: 1,
-        read_count: 0,
         character_count: ON_RESET.length,
       })
       .save();
@@ -92,7 +89,6 @@ router.get("/call", (req, res) => {
       .incr({
         total_action: 1,
         character_count: ON_UNEXISTED.length,
-        read_count: 0,
       })
       .save();
     res.send(ON_UNEXISTED);
@@ -116,7 +112,6 @@ router.get("/action", (req, res) => {
     .incr({
       total_action: 0,
       character_count: text.length,
-      read_count: 0,
     })
     .save();
   res.send(text);

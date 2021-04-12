@@ -14,16 +14,20 @@ api.delete("/articles/:id", (req, res) => {
 
 api.get("/articles", (req, res) => {
   const articles = DB.read()["articles"].sort((a, b) => {
-    return new Date(a.datetime) > new Date(b.datetime);
+    return new Date(a.datetime).getTime() - new Date(b.datetime).getTime();
   });
   res.json(articles);
 });
 
 api.get("/users", (req, res) => {
+  const limit = req.query["limit"] || 15;
   const users = DB.read()["phone"].sort((a, b) => {
-    return new Date(a.datetime) > new Date(b.datetime);
+    return (
+      new Date(a.session["expired"]).getTime() -
+      new Date(b.session["expired"]).getTime()
+    );
   });
-  res.json(users);
+  res.json(users.reverse().slice(0, limit));
 });
 
 api.get("/version", (req, res) => {
