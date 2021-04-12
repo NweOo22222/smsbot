@@ -1,5 +1,4 @@
 import { Router } from "express";
-import Article from "./app/Article";
 import Headline from "./app/Headline";
 import Keyword from "./app/Keyword";
 import Message from "./app/Message";
@@ -119,9 +118,9 @@ router.get("/action", (req, res) => {
 });
 
 router.get("/update", (req, res) =>
-  Article.fetch()
+  Headline.fetch()
     .then((articles) => {
-      Article.store(articles);
+      Headline.store(articles);
       res.status(201).send("0");
     })
     .catch((e) => res.status(400).end())

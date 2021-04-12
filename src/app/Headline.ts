@@ -1,13 +1,13 @@
 import axios from "axios";
 import DB from "./DB";
 
-export default class Article {
+export default class Headline {
   public id: string;
   public title: string;
   public source: string;
   public datetime: Date;
 
-  constructor({ id, content, source, datetime, title, link, image }) {
+  constructor({ id, source, datetime, title }) {
     this.id = id;
     this.title = title;
     this.source = source;
@@ -19,7 +19,7 @@ export default class Article {
     return articles.find((article) => article["id"] !== id);
   }
 
-  static fetch(): Promise<Article[]> {
+  static fetch(): Promise<Headline[]> {
     return axios
       .get(
         'https://rtdb.nweoo.com/v1/_articles.json?orderBy="timestamp"&limitToLast=30'
@@ -33,9 +33,17 @@ export default class Article {
       });
   }
 
-  static store(articles: Article[]) {
+  static store(headlines: Headline[]) {
     const db = DB.read();
-    db["articles"] = articles;
+    db["articles"] = headlines;
     DB.save(db);
+  }
+
+  static latest(limit = 0, diff = []): Headline[] {
+    const articles = DB.read()
+      ["articles"].map((article) => new Headline(article))
+      .sort((a, b) => b.datetime > a.datetime)
+      .filter((headline) => !diff.includes(headline["id"]));
+    return limit ? articles.reverse().slice(0, limit) : articles.reverse();
   }
 }
