@@ -22,7 +22,7 @@ export default class Headline {
   static fetch(): Promise<Headline[]> {
     return axios
       .get(
-        'https://rtdb.nweoo.com/v1/_articles.json?orderBy="timestamp"&limitToLast=30'
+        'https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=30'
       )
       .then(({ data }) => {
         const articles = [];
