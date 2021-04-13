@@ -14,11 +14,14 @@ import {
 } from "./config";
 import printf from "printf";
 import { MOBILE_NUMBER } from "./settings";
+import DB from "./app/DB";
+import BreakingNews from "./app/BreakingNews";
+import verfiySIM from "./verfiySIM";
 
 const _tasks = {};
 const router = Router();
 
-router.get("/call", (req, res) => {
+router.get("/call", verfiySIM, (req, res) => {
   const message = new Message({
     body: decodeURIComponent(String(req.query.message)),
     address: req["phone"],
@@ -38,26 +41,34 @@ router.get("/call", (req, res) => {
 
   keyword.onAskHeadlines(() => {
     let actions: string[] = [];
-    const latest = Headline.latest(5, phone.headlines);
+    const highlights = BreakingNews.get(
+      5,
+      new Date(),
+      phone.highlights
+    ).reverse();
+    const latest = Headline.latest(
+      5 - highlights.length,
+      phone.headlines
+    ).reverse();
     const remain = Headline.latest(0, phone.headlines).length;
-    if (latest.length) {
+    const result = [...highlights, ...latest];
+    if (result.length) {
       actions.push(
-        ...latest.map(
+        ...result.map(
           ({ title, datetime }) =>
             title +
-            " (" +
+            " " +
             datetime.getDate() +
             "/" +
-            Number(datetime.getMonth() + 1) +
-            ")"
+            Number(datetime.getMonth() + 1)
         )
       );
-      if (remain > 0) {
+      if (remain > 0 && phone.session.total_action < 1) {
         actions.push(printf(ON_HEADLINES_NEXT, remain - latest.length));
       }
       _tasks[message.phone.number] = actions;
       phone
-        .markAsSent(latest)
+        .markAsSent(highlights, latest)
         .incr({
           total_action: 1,
           character_count: 0,
@@ -65,14 +76,15 @@ router.get("/call", (req, res) => {
         .save();
       res.end();
     } else {
+      let text = printf(ON_HEADLINES_NULL, MOBILE_NUMBER);
       phone
-        .markAsSent(latest)
+        .markAsSent(highlights, latest)
         .incr({
           total_action: 1,
-          character_count: ON_HEADLINES_NULL.length,
+          character_count: text.length,
         })
         .save();
-      res.send(ON_HEADLINES_NULL);
+      res.send(text);
     }
     io().emit("users:update", { id: phone.id, type: "news" });
   });
@@ -90,8 +102,8 @@ router.get("/call", (req, res) => {
   });
 
   keyword.onAskReset(() => {
-    phone.reset();
     phone
+      .reset()
       .incr({
         total_action: 1,
         character_count: ON_RESET.length,
@@ -150,11 +162,19 @@ router.post("/update", (req, res) => {
   if (!(title && source && timestamp)) {
     return res.redirect(req.headers["referer"] || "/articles.html");
   }
-  Headline.fetch().then((articles) => {
-    articles.push(new Headline({ id: timestamp, title, source, timestamp }));
-    Headline.store(articles);
-    res.redirect("/articles.html");
-  });
+  const db = DB.read();
+  if (!("highlights" in db)) db["highlights"] = [];
+  const highlights = db["highlights"];
+  highlights.push(
+    new BreakingNews({
+      id: highlights.length + 1,
+      title,
+      source,
+      timestamp,
+    })
+  );
+  DB.save(db);
+  res.redirect("/articles.html");
 });
 
 export default router;

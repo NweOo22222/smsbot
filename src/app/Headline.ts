@@ -15,8 +15,7 @@ export default class Headline {
   }
 
   static find(id) {
-    const articles = DB.read()["articles"];
-    return articles.find((article) => article["id"] !== id);
+    return DB.read()["articles"].find((article) => article["id"] == id);
   }
 
   static fetch(): Promise<Headline[]> {
@@ -39,11 +38,14 @@ export default class Headline {
     DB.save(db);
   }
 
-  static latest(limit = 0, diff = []): Headline[] {
-    const articles = DB.read()
-      ["articles"].map((article) => new Headline(article))
+  static latest(limit = null, diff = []): Headline[] {
+    const articles = (DB.read()["articles"] || [])
+      .map((article) => new Headline(article))
       .sort((a, b) => b.datetime > a.datetime)
       .filter((headline) => !diff.includes(headline["id"]));
-    return limit ? articles.reverse().slice(0, limit) : articles.reverse();
+    if (limit === null) {
+      return articles;
+    }
+    return limit > 0 ? articles.slice(0, limit) : [];
   }
 }

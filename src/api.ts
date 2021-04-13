@@ -14,6 +14,17 @@ api.delete("/articles/:id", (req, res) => {
   res.status(201).end();
 });
 
+api.get("/highlights", (req, res) => {
+  res.json(DB.read()["highlights"]);
+});
+
+api.delete("/highlights/:id", (req, res) => {
+  const db = DB.read();
+  db["highlights"] = db["highlights"].filter(({ id }) => id != req.params.id);
+  DB.save(db);
+  res.status(201).end();
+});
+
 api.get("/articles", (req, res) => {
   res.json(DB.read()["articles"]);
 });

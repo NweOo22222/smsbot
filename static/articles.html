@@ -13,19 +13,42 @@
 
 <body>
   <div class="container mt-2">
-    <h2>Articles</h2>
     <section class="mb-4">
       <a href="index.html" class="btn btn-primary mr-2">
         Back to homepage
       </a>
       <a href="add-articles.html" class="btn btn-primary mr-2">
-        Add new articles
+        Add new highlight
       </a>
       <button @click="updateArticles" :disabled="disabled" class="btn btn-primary">
         Update articles
       </button>
     </section>
     <div class="table-responsive">
+      <h2>Highlights</h2>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th colspan="2">Title</th>
+            <th>Published</th>
+            <th><span class="sr-only">actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="highlight in highlights" :key="highlight.id">
+            <td>{{ highlight.title }}</td>
+            <td>{{ highlight.source }}</td>
+            <td>{{ new Date(highlight.datetime).toLocaleString() }}</td>
+            <td>
+              <a @click="removeHighlight(highlight.id)" class="btn btn-danger btn-sm badge">Remove</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <hr>
+    <div class="table-responsive">
+      <h2>Headlines</h2>
       <table class="table table-hover">
         <thead>
           <tr>
@@ -52,10 +75,24 @@
       el: '.container',
       data: {
         articles: [],
+        highlights: [],
         disabled: false,
         loading: false,
       },
       methods: {
+        fetchHighlights() {
+          axios('/api/highlights').then(({ data }) => {
+            this.highlights = data.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+          });
+        },
+        removeHighlight(id) {
+          this.loading = true;
+          this.error = null;
+          this.message = null;
+          axios.delete('/api/highlights/' + id).then(() => {
+            this.fetchHighlights();
+          }).finally(() => this.loading = false);
+        },
         fetchArticles() {
           axios('/api/articles').then(({ data }) => {
             this.articles = data.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
@@ -98,6 +135,7 @@
       },
       beforeMount() {
         this.fetchArticles();
+        this.fetchHighlights();
       }
     })
   </script>

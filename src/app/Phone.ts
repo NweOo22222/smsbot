@@ -1,3 +1,4 @@
+import BreakingNews from "./BreakingNews";
 import DB from "./DB";
 import Headline from "./Headline";
 import Session, { UserAction } from "./Session";
@@ -10,6 +11,7 @@ export default class Phone {
   public first_date: Date;
   public last_date: Date;
   public headlines: string[];
+  public highlights: string[];
   public articles: string[];
   public operator: Operator;
   public session: Session;
@@ -25,6 +27,7 @@ export default class Phone {
     this.last_date = new Date(phone.last_date || Date.now());
     this.total_count = phone.total_count || 0;
     this.headlines = phone.headlines || [];
+    this.highlights = phone.highlights || [];
     this.articles = phone.articles || [];
   }
 
@@ -38,15 +41,21 @@ export default class Phone {
     return this;
   }
 
-  markAsSent(headlines: Headline[]) {
-    headlines.forEach((headline) => {
-      this.headlines.push(headline.id);
+  markAsSent(highlights: BreakingNews[], headlines: Headline[]) {
+    highlights.forEach(({ id }) => {
+      this.highlights.push(id);
+    });
+    headlines.forEach(({ id }) => {
+      this.headlines.push(id);
     });
     return this;
   }
 
   reset() {
     this.headlines = [];
+    this.articles = [];
+    this.highlights = [];
+    return this;
   }
 
   save() {
@@ -58,6 +67,7 @@ export default class Phone {
       db["phone"][i] = this.toJSON();
     }
     DB.save(db);
+    return this;
   }
 
   get localNumber() {

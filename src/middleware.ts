@@ -13,13 +13,16 @@ export default function middleware(
   if ("version" in req.query) {
     req["_version"] = String(req.query.version);
   }
+
   if ("operator" in req.query) {
     req["operator"] = String(req.query.operator);
   }
+
   if ("phone" in req.query) {
     req["phone"] = String(req.query.phone).replace(/^\s/, "+");
     const phone = new Phone(req["phone"]);
     const message = decodeURIComponent(String(req.query["message"] || ""));
+
     if (phone) {
       const session = phone.session;
       const reset = (): boolean => {
@@ -27,18 +30,22 @@ export default function middleware(
         phone.save();
         return true;
       };
+
       if (message.match(/\.update/)) {
         res.redirect("/update");
         return res.end();
       }
+
       if (message.match(/\.reset/)) {
         reset();
         return res.end();
       }
+
       if (session.isExpired()) {
         reset();
         return next();
       }
+
       if (session.isReachedLimit()) {
         if (session.isDenied()) {
           return res.status(419).end();
@@ -58,7 +65,6 @@ export default function middleware(
         return res.send(response);
       }
     }
-    return next();
   }
   return next();
 }
