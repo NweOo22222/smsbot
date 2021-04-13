@@ -16,12 +16,11 @@ import printf from "printf";
 import { MOBILE_NUMBER } from "./settings";
 import DB from "./app/DB";
 import BreakingNews from "./app/BreakingNews";
-import verfiySIM from "./verfiySIM";
 
 const _tasks = {};
 const router = Router();
 
-router.get("/call", verfiySIM, (req, res) => {
+router.get("/call", (req, res) => {
   const message = new Message({
     body: decodeURIComponent(String(req.query.message)),
     address: req["phone"],
@@ -113,6 +112,11 @@ router.get("/call", verfiySIM, (req, res) => {
     io().emit("users:update", { id: phone.id, type: "reset" });
   });
 
+  keyword.onAskCredit(() => {
+    res.end();
+    io().emit("users:update", { id: phone.id, type: "credit" });
+  });
+
   keyword.onUnexisted(() => {
     let text = printf(ON_UNEXISTED, MOBILE_NUMBER);
     phone
@@ -158,21 +162,23 @@ router.get("/update", (req, res) =>
 );
 
 router.post("/update", (req, res) => {
-  const { title, source, timestamp } = req.body;
+  let { title, source, timestamp } = req.body;
   if (!(title && source && timestamp)) {
     return res.redirect(req.headers["referer"] || "/articles.html");
   }
   const db = DB.read();
   if (!("highlights" in db)) db["highlights"] = [];
   const highlights = db["highlights"];
-  highlights.push(
-    new BreakingNews({
-      id: highlights.length + 1,
-      title,
-      source,
-      timestamp,
-    })
-  );
+  title.split("\n").forEach((title) => {
+    highlights.push(
+      new BreakingNews({
+        id: highlights.length + 1,
+        title,
+        source,
+        timestamp,
+      })
+    );
+  });
   DB.save(db);
   res.redirect("/articles.html");
 });

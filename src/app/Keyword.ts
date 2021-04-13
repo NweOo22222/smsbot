@@ -1,3 +1,4 @@
+const CREDIT_POINT = [/credit/i, /point/i];
 const RESET_COMMAND = [/^\.reset/];
 const UPDATE_COMMAND = [/^\.update/];
 const RESET_SENT = [/ပြန်စ/, /^reset/i];
@@ -8,9 +9,9 @@ const READ_NEWS = [
   /read ?[\[\<\("'#](\d+)['"\)\>\]]/i,
   /(\d+)$/,
 ];
-const LATEST_NEWS = [/^ဘာထူးလဲ/, /^သတင်း/, /^news/i];
-const ARTICLES_COUNT = [/^(ကျန်|ရှိ)သေးလား/, /^ဒါပဲလား/, /^count/i];
-const HELP_INFO = [/^အကူအညီ/, /^ကူ(ညီ)?/, /^help/i, /^info/i];
+const LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
+const ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
+const HELP_INFO = [/ကူ(ညီ)?/, /help/i, /info/i];
 
 export default class Keyword {
   protected sent: boolean;
@@ -47,6 +48,14 @@ export default class Keyword {
     if (ARTICLES_COUNT.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback(this);
+    }
+  }
+
+  onAskCredit(callback: Function) {
+    if (this.sent) return;
+    if (CREDIT_POINT.filter((keyword) => this.meta.match(keyword)).length) {
+      this.sent = true;
+      callback();
     }
   }
 
