@@ -51,4 +51,8 @@ export default class Session {
   get exceedCharacterCount() {
     return this.character_count > MAX_CHARACTER_COUNT;
   }
+
+  get remaining() {
+    return Math.round((this.expired.getTime() - Date.now()) / 1000);
+  }
 }

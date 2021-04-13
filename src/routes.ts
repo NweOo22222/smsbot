@@ -8,9 +8,12 @@ import {
   ON_HEADLINES_NEXT,
   ON_HEADLINES_NULL,
   ON_HELP,
+  ON_REMAINING_COUNT,
   ON_RESET,
   ON_UNEXISTED,
 } from "./config";
+import printf from "printf";
+import { MOBILE_NUMBER } from "./settings";
 
 const _tasks = {};
 const router = Router();
@@ -24,18 +27,19 @@ router.get("/call", (req, res) => {
   const keyword = new Keyword(message.body);
 
   keyword.onAskHelp(() => {
+    let text = printf(ON_HELP, MOBILE_NUMBER);
     phone.incr({
       total_action: 1,
-      character_count: ON_HELP.length,
+      character_count: text.length,
     });
-    res.send(ON_HELP);
+    res.send(text);
     io().emit("users:update", { id: phone.id, type: "help" });
   });
 
   keyword.onAskHeadlines(() => {
     let actions: string[] = [];
     const latest = Headline.latest(5, phone.headlines);
-    const remain = Headline.latest(0, phone.headlines).length - latest.length;
+    const remain = Headline.latest(0, phone.headlines).length;
     if (latest.length) {
       actions.push(
         ...latest.map(
@@ -48,7 +52,9 @@ router.get("/call", (req, res) => {
             ")"
         )
       );
-      // if (remain > 0) actions.push(ON_HEADLINES_NEXT);
+      if (remain > 0) {
+        actions.push(printf(ON_HEADLINES_NEXT, remain - latest.length));
+      }
       _tasks[message.phone.number] = actions;
       phone
         .markAsSent(latest)
@@ -71,6 +77,18 @@ router.get("/call", (req, res) => {
     io().emit("users:update", { id: phone.id, type: "news" });
   });
 
+  keyword.onAskCount(() => {
+    let remain = Headline.latest(0, phone.headlines).length;
+    let text = printf(ON_REMAINING_COUNT, remain);
+    phone
+      .incr({
+        total_action: 1,
+        character_count: text.length,
+      })
+      .save();
+    res.send(text);
+  });
+
   keyword.onAskReset(() => {
     phone.reset();
     phone
@@ -84,13 +102,14 @@ router.get("/call", (req, res) => {
   });
 
   keyword.onUnexisted(() => {
+    let text = printf(ON_UNEXISTED, MOBILE_NUMBER);
     phone
       .incr({
         total_action: 1,
-        character_count: ON_UNEXISTED.length,
+        character_count: text.length,
       })
       .save();
-    res.send(ON_UNEXISTED);
+    res.send(text);
     io().emit("users:update", { id: phone.id, type: "unexisted" });
   });
 });
@@ -125,5 +144,17 @@ router.get("/update", (req, res) =>
     })
     .catch((e) => res.status(400).end())
 );
+
+router.post("/update", (req, res) => {
+  const { title, source, timestamp } = req.body;
+  if (!(title && source && timestamp)) {
+    return res.redirect(req.headers["referer"] || "/articles.html");
+  }
+  Headline.fetch().then((articles) => {
+    articles.push(new Headline({ id: timestamp, title, source, timestamp }));
+    Headline.store(articles);
+    res.redirect("/articles.html");
+  });
+});
 
 export default router;

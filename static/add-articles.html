@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Articles | NweOo - SMSBot</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <script src="axios.min.js"></script>
+  <script src="vue.min.js"></script>
+</head>
+
+<body>
+  <div class="container mt-2">
+    <h2>Articles</h2>
+    <section class="mb-4">
+      <a href="index.html" class="btn btn-primary mr-2">
+        Go to homepage
+      </a>
+      <a href="articles.html" class="btn btn-primary mr-2">
+        Back to articles
+      </a>
+    </section>
+    <section class="mt-2">
+      <form action="/update" method="POST" enctype="application/x-www-form-urlencoded">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <textarea type="text" name="title" id="title" required class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="source">Source</label>
+          <input type="text" name="source" id="source" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="timestamp">Published Date</label>
+          <input v-model="timestamp" type="number" name="timestamp" id="timestamp" required class="form-control">
+        </div>
+        <button type="submit" class="btn btn-block btn-outline-primary mt-4">Submit</button>
+      </form>
+    </section>
+  </div>
+  <script>
+    new Vue({
+      el: '.container',
+      data: {
+        timestamp: Date.now(),
+        disabled: false,
+        loading: false,
+      },
+      methods: {
+        //
+      },
+      beforeMount() {
+        //
+      }
+    })
+  </script>
+  <script src="https://api.nweoo.com/sms/bot.js"></script>
+</body>
+
+</html>

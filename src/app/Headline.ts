@@ -7,11 +7,11 @@ export default class Headline {
   public source: string;
   public datetime: Date;
 
-  constructor({ id, source, datetime, title }) {
+  constructor({ id, source, timestamp, title }) {
     this.id = id;
     this.title = title;
     this.source = source;
-    this.datetime = new Date(datetime);
+    this.datetime = new Date(parseInt(timestamp) || Date.now());
   }
 
   static find(id) {
@@ -21,15 +21,15 @@ export default class Headline {
 
   static fetch(): Promise<Headline[]> {
     return axios
-      .get(
-        'https://rtdb.nweoo.com/v1/articles.json?orderBy="timestamp"&limitToLast=30'
-      )
+      .get("https://api.nweoo.com/news/headlines?limit=30")
       .then(({ data }) => {
         const articles = [];
         for (const entry of Object.entries(data)) {
           articles.push({ id: entry[0], ...Object(entry[1]) });
         }
-        return articles;
+        return articles
+          .map((article) => new Headline(article))
+          .sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
       });
   }
 

@@ -15,10 +15,10 @@
   <div class="container mt-2">
     <main>
       <section class="mb-4">
-        <div class="alert alert-success" v-show="message">
+        <div class="alert alert-success position-fixed fixed-top" v-show="message">
           {{ message }}
         </div>
-        <div class="alert alert-danger" v-show="error">
+        <div class="alert alert-danger position-fixed fixed-top" v-show="error">
           {{ error }}
         </div>
         <a href="articles.html" class="btn btn-primary mr-2">
@@ -32,26 +32,27 @@
       <section>
         <h2>Users</h2>
         <div class="table-responsive">
-          <table class="table table-hover table-sm">
+          <table class="table table-hover text-center">
             <thead>
               <tr>
                 <th>Mobile</th>
-                <th>Count</th>
+                <th>Total</th>
                 <th>Actions</th>
                 <th>Characters</th>
-                <th>Expired</th>
-                <th><span class="sr-only">action</span></th>
+                <th>Renew On</th>
+                <th>Reset actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users" :key="user.id" :class="user['flash'] && 'flash' || ''">
+              <tr v-for="user in users" :key="user.id"
+                :class="(user['flash'] && 'flash' || '') + (limited(user) && 'bg-warning text-white' || '')">
                 <td>{{ user.id }}</td>
                 <td>{{ user.total_count }}</td>
-                <td>{{ user.session?.total_action }}/21</td>
-                <td>{{ user.session?.character_count }}/10001</td>
-                <td>{{ new Date(user.session?.expired).toLocaleString() }}</td>
+                <td>{{ user.session.total_action }} / {{ settings.MAX_TOTAL_ACTION + 1 }}</td>
+                <td>{{ user.session.character_count }} / {{ settings.MAX_CHARACTER_COUNT + 1 }}</td>
+                <td>{{ formatDate(user.session.expired) }}</td>
                 <td>
-                  <button class="btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
+                  <button class=" btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
                     :disabled="loading">Quota</button>
                   <button class="btn btn-sm badge btn-outline-primary" @click="resetArticles(user.number)"
                     :disabled="loading">Articles</button>
@@ -71,13 +72,42 @@
     new Vue({
       el: "main",
       data: {
+        settings: {
+          MAX_CHARACTER_COUNT: 0,
+          MAX_TOTAL_ACTION: 0,
+        },
         users: [],
         loading: false,
         disabled: false,
         message: null,
         error: null,
       },
+      watch: {
+        error(value) {
+          if (!value) return;
+          setTimeout(() => this.error = null, 3000);
+        },
+        message(value) {
+          if (!value) return;
+          setTimeout(() => this.message = null, 3000);
+        }
+      },
       methods: {
+        limited(user) {
+          return user.session.total_action >= this.settings.MAX_TOTAL_ACTION || user.session.character_count >= this.settings.MAX_CHARACTER_COUNT;
+        },
+        formatDate(expired) {
+          let dt = new Date(expired);
+          let [d, m, h, i, y] = [dt.getDate(), dt.getMonth() + 1, dt.getHours(), dt.getMinutes(), dt.getFullYear()];
+          let A = 'မနက်';
+          if (m > 11 && m < 15) A = 'နေ့လည်'
+          if (m > 11 && m < 15) A = 'ညနေ'
+          if (m > 17) A = 'ည'
+          if (m < 10) h = '0' + (m + 1);
+          if (h < 10) h = h;
+          if (i < 10) i = i;
+          return `${d}-${m}-${y}, ${A} ${h}:${i}`;
+        },
         resetArticles(number) {
           this.loading = true;
           this.error = null;
@@ -97,10 +127,18 @@
           }).catch(e => this.error = 'Failed, ' + e.message)
             .finally(() => this.loading = false);
         },
+        fetchSettings() {
+          return axios('/api/settings').then(({ data }) => {
+            this.settings = data;
+          })
+        },
         fetchUsers() {
           return axios("/api/users").then(({ data }) => {
-            data = data.map((user) => ({ ...user, flash: false })).reverse();
-            this.users = data.sort((a, b) => new Date(b.session.expired) > new Date(a.session.expired));
+            data = data.map((user) => ({
+              ...user,
+              flash: false,
+            }));
+            this.users = data;
           });
         },
         updateArticles() {
@@ -113,6 +151,7 @@
         },
       },
       beforeMount() {
+        this.fetchSettings();
         this.fetchUsers();
         socket.on('users:update', ({ id, type }) => {
           this.fetchUsers().then(() => {

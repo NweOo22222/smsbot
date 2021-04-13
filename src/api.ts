@@ -1,5 +1,7 @@
 import { Router } from "express";
+import { MAX_CHARACTER_COUNT, MAX_TOTAL_ACTION } from "./settings";
 import DB from "./app/DB";
+import Headline from "./app/Headline";
 
 const api = Router();
 // const per_page = 30;
@@ -13,10 +15,7 @@ api.delete("/articles/:id", (req, res) => {
 });
 
 api.get("/articles", (req, res) => {
-  const articles = DB.read()["articles"].sort((a, b) => {
-    return new Date(a.datetime).getTime() - new Date(b.datetime).getTime();
-  });
-  res.json(articles);
+  res.json(DB.read()["articles"]);
 });
 
 api.get("/users", (req, res) => {
@@ -32,6 +31,13 @@ api.get("/users", (req, res) => {
 
 api.get("/version", (req, res) => {
   res.json(require("../package.json")["version"]);
+});
+
+api.get("/settings", (req, res) => {
+  res.json({
+    MAX_CHARACTER_COUNT,
+    MAX_TOTAL_ACTION,
+  });
 });
 
 export default api;
