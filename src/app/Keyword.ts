@@ -1,26 +1,23 @@
-const CREDIT_POINT = [/credit/i, /point/i];
 const RESET_COMMAND = [/^\.reset/];
 const UPDATE_COMMAND = [/^\.update/];
 const RESET_SENT = [/ပြန်စ/, /^reset/i];
-const READ_NEWS = [
-  /(\d+) ?(?:ကို)?ပို့(?:ပေးပါ)?/,
-  /(\d+) ?(?:ကို)?ဖတ်(?:ရန်)?/,
-  /read ?(\d+)/i,
-  /read ?[\[\<\("'#](\d+)['"\)\>\]]/i,
-  /(\d+)$/,
-];
 const LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
 const ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
-const HELP_INFO = [/ကူ(ညီ)?/, /help/i, /info/i];
+const USAGE_HELP = [/ကူ(ညီ)?/, /help/i];
+const SHOW_INFO = [/info/i];
 
 export default class Keyword {
   protected sent: boolean;
 
   constructor(public text: string) {}
 
+  get meta(): string {
+    return this.text.substr(0, 64);
+  }
+
   onAskHelp(callback: Function) {
     if (this.sent) return;
-    if (HELP_INFO.filter((keyword) => this.meta.match(keyword)).length) {
+    if (USAGE_HELP.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
     }
@@ -34,28 +31,11 @@ export default class Keyword {
     }
   }
 
-  onAskRead(callback: Function) {
-    if (this.sent) return;
-    const index = READ_NEWS.findIndex((keyword) => this.meta.match(keyword));
-    if (index === -1) return;
-    const matched = this.meta.match(READ_NEWS[index]);
-    this.sent = true;
-    callback(matched[1]);
-  }
-
   onAskCount(callback: Function) {
     if (this.sent) return;
     if (ARTICLES_COUNT.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback(this);
-    }
-  }
-
-  onAskCredit(callback: Function) {
-    if (this.sent) return;
-    if (CREDIT_POINT.filter((keyword) => this.meta.match(keyword)).length) {
-      this.sent = true;
-      callback();
     }
   }
 
@@ -67,9 +47,9 @@ export default class Keyword {
     }
   }
 
-  onUpdate(callback: Function) {
+  onAskInfo(callback: Function) {
     if (this.sent) return;
-    if (UPDATE_COMMAND.filter((keyword) => this.meta.match(keyword)).length) {
+    if (SHOW_INFO.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
     }
@@ -83,13 +63,17 @@ export default class Keyword {
     }
   }
 
+  onUpdate(callback: Function) {
+    if (this.sent) return;
+    if (UPDATE_COMMAND.filter((keyword) => this.meta.match(keyword)).length) {
+      this.sent = true;
+      callback();
+    }
+  }
+
   onUnexisted(callback: Function) {
     if (this.sent) return;
     this.sent = true;
     callback();
-  }
-
-  get meta(): string {
-    return this.text.substr(0, 64);
   }
 }

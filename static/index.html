@@ -14,17 +14,21 @@
 <body>
   <div class="container mt-2">
     <main>
+      <div class="alert alert-success position-fixed fixed-bottom" v-show="message">
+        {{ message }}
+      </div>
+      <div class="alert alert-danger position-fixed fixed-bottom" v-show="error">
+        {{ error }}
+      </div>
+
       <section class="mb-4">
-        <div class="alert alert-success position-fixed fixed-top" v-show="message">
-          {{ message }}
-        </div>
-        <div class="alert alert-danger position-fixed fixed-top" v-show="error">
-          {{ error }}
-        </div>
-        <a href="articles.html" class="btn btn-primary mr-2">
+        <a href="articles.html" class="btn btn-outline-primary ma-2">
           View articles
         </a>
-        <button @click="updateArticles" :disabled="disabled" class="btn btn-primary">
+        <a href="settings.html" class="btn btn-outline-primary ma-2">
+          View settings
+        </a>
+        <button @click="updateArticles" :disabled="disabled" class="ma-2 btn btn-primary">
           Update articles
         </button>
       </section>
@@ -100,12 +104,13 @@
           let dt = new Date(expired);
           let [d, m, h, i, y] = [dt.getDate(), dt.getMonth() + 1, dt.getHours(), dt.getMinutes(), dt.getFullYear()];
           let A = 'မနက်';
-          if (m > 11 && m < 15) A = 'နေ့လည်'
-          if (m > 11 && m < 15) A = 'ညနေ'
-          if (m > 17) A = 'ည'
-          if (m < 10) h = '0' + (m + 1);
-          if (h < 10) h = h;
-          if (i < 10) i = i;
+          if (m > 11 && m < 15) A = 'နေ့လည်';
+          if (m > 11 && m < 15) A = 'ညနေ';
+          if (m > 17) A = 'ည';
+          if (m < 10) m = '0' + m;
+          if (h > 12) h -= 12;
+          if (h < 10) h = '0' + h;
+          if (i < 10) i = '0' + i;
           return `${d}-${m}-${y}, ${A} ${h}:${i}`;
         },
         resetArticles(number) {

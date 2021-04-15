@@ -3,14 +3,18 @@ import { join, dirname } from "path";
 import { connect } from "./socket";
 import express from "express";
 import morgan from "morgan";
-import middleware from "./middleware";
 import router from "./routes";
 import api from "./api";
+import DB from "./app/DB";
+import Config from "./app/Config";
 
 const PORT = process.env.PORT || 3001;
 const app = express();
 
 config();
+
+DB.init();
+Config.init();
 
 app.use(morgan("dev"));
 
@@ -18,9 +22,12 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", api);
+app.use((req, res, next) => {
+  req["phone"] = String(req.query.phone).replace(/^\s/, "+");
+  next();
+});
 
-app.use(middleware);
+app.use("/api", api);
 
 app.use(router);
 

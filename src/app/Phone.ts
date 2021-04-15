@@ -1,4 +1,5 @@
-import BreakingNews from "./BreakingNews";
+import Highlight from "./Highlight";
+import Credit from "./Credit";
 import DB from "./DB";
 import Headline from "./Headline";
 import Session, { UserAction } from "./Session";
@@ -12,7 +13,7 @@ export default class Phone {
   public last_date: Date;
   public headlines: string[];
   public highlights: string[];
-  public articles: string[];
+  public credit: Credit;
   public operator: Operator;
   public session: Session;
 
@@ -28,11 +29,7 @@ export default class Phone {
     this.total_count = phone.total_count || 0;
     this.headlines = phone.headlines || [];
     this.highlights = phone.highlights || [];
-    this.articles = phone.articles || [];
-  }
-
-  toJSON(): object {
-    return this;
+    this.credit = new Credit(phone.credit || {});
   }
 
   incr(action: UserAction) {
@@ -41,7 +38,7 @@ export default class Phone {
     return this;
   }
 
-  markAsSent(highlights: BreakingNews[], headlines: Headline[]) {
+  markAsSent(highlights: Highlight[], headlines: Headline[]) {
     highlights.forEach(({ id }) => {
       this.highlights.push(id);
     });
@@ -53,7 +50,6 @@ export default class Phone {
 
   reset() {
     this.headlines = [];
-    this.articles = [];
     this.highlights = [];
     return this;
   }
@@ -62,9 +58,9 @@ export default class Phone {
     const db = DB.read();
     const i = db["phone"]?.findIndex(({ id }) => id == this.id);
     if (i === -1) {
-      db["phone"].push(this.toJSON());
+      db["phone"].push(this);
     } else {
-      db["phone"][i] = this.toJSON();
+      db["phone"][i] = this;
     }
     DB.save(db);
     return this;

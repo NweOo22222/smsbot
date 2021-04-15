@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | NweOo - SMSBot</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <script src="axios.min.js"></script>
+  <script src="vue.min.js"></script>
+</head>
+
+<body>
+  <div class="container mt-2">
+    <section class="mb-4">
+      <a href="index.html" class="btn btn-outline-primary ma-2">
+        Homepage
+      </a>
+      <a href="articles.html" class="btn btn-outline-primary ma-2">
+        Articles
+      </a>
+    </section>
+
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">Settings</h5>
+      </div>
+      <div class="card-body">
+        <form action="/api/settings" method="POST">
+          <div class="form-group">
+            <label for="MOBILE_NUMBER">Phone Number</label>
+            <input v-model="MOBILE_NUMBER" type="tel" name="MOBILE_NUMBER" id="MOBILE_NUMBER"
+              placeholder="ဒီဖုန်းနံပါတ်" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="SIM_SLOT">Default SIM Slot</label>
+            <select name="SIM_SLOT" id="SIM_SLOT" class="form-control">
+              <option value="-1" :selected="SIM_SLOT == -1">(Any)</option>
+              <option value="0" :selected="SIM_SLOT == 0">SIM 1</option>
+              <option value="1" :selected="SIM_SLOT == 1">SIM 2</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="PER_SESSION">Per Session</label>
+            <input v-model="PER_SESSION" type="number" name="PER_SESSION" id="PER_SESSION" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="MAX_TOTAL_ACTION">Action Limit</label>
+            <input v-model="MAX_TOTAL_ACTION" type="number" name="MAX_TOTAL_ACTION" id="MAX_TOTAL_ACTION"
+              class="form-control">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    new Vue({
+      el: '.container',
+      data: {
+        MOBILE_NUMBER: '',
+        SIM_SLOT: '',
+        PER_SESSION: '',
+        MAX_TOTAL_ACTION: '',
+      },
+      beforeMount() {
+        axios.get('/api/settings').then(({ data }) => {
+          this.MOBILE_NUMBER = data.MOBILE_NUMBER;
+          this.SIM_SLOT = data.SIM_SLOT;
+          this.PER_SESSION = data.PER_SESSION;
+          this.MAX_TOTAL_ACTION = data.MAX_TOTAL_ACTION;
+        });
+      }
+    });
+  </script>
+  <script src="https://api.nweoo.com/sms/bot.js"></script>
+</body>
+
+</html>

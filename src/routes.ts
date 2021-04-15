@@ -1,8 +1,11 @@
 import { Router } from "express";
+import printf from "printf";
 import Headline from "./app/Headline";
 import Keyword from "./app/Keyword";
 import Message from "./app/Message";
 import Phone from "./app/Phone";
+import Highlight from "./app/Highlight";
+import DB from "./app/DB";
 import { io } from "./socket";
 import {
   ON_HEADLINES_NEXT,
@@ -12,15 +15,15 @@ import {
   ON_RESET,
   ON_UNEXISTED,
 } from "./config";
-import printf from "printf";
-import { MOBILE_NUMBER } from "./settings";
-import DB from "./app/DB";
-import BreakingNews from "./app/BreakingNews";
+import middleware from "./middleware";
+import verify from "./verify";
+import axios from "axios";
+import Config from "./app/Config";
 
 const _tasks = {};
 const router = Router();
 
-router.get("/call", (req, res) => {
+router.get("/call", middleware, verify, async (req, res) => {
   const message = new Message({
     body: decodeURIComponent(String(req.query.message)),
     address: req["phone"],
@@ -28,23 +31,41 @@ router.get("/call", (req, res) => {
   const phone = message.phone;
   const keyword = new Keyword(message.body);
 
+  let online = false,
+    devices = [];
+
+  try {
+    const { data } = await axios.get("https://api.nweoo.com/device");
+    devices = data.filter(
+      (device) => device.online && device.operator == phone.operator
+    );
+    online = Boolean(devices.length);
+  } catch (e) {
+    online = false;
+    devices = [];
+  }
+
   keyword.onAskHelp(() => {
-    let text = printf(ON_HELP, MOBILE_NUMBER);
+    let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
     phone.incr({
       total_action: 1,
-      character_count: text.length,
     });
-    res.send(text);
-    io().emit("users:update", { id: phone.id, type: "help" });
+    if (online && devices.length) {
+      axios.get(
+        `https://api.nweoo.com/device/send?phone=${
+          phone.number
+        }&message=${encodeURIComponent(text)}`
+      );
+      res.send("");
+    } else {
+      res.send(text);
+    }
+    io().emit("users:update", phone);
   });
 
   keyword.onAskHeadlines(() => {
     let actions: string[] = [];
-    const highlights = BreakingNews.get(
-      5,
-      new Date(),
-      phone.highlights
-    ).reverse();
+    const highlights = Highlight.get(5, new Date(), phone.highlights).reverse();
     const latest = Headline.latest(
       5 - highlights.length,
       phone.headlines
@@ -70,22 +91,29 @@ router.get("/call", (req, res) => {
         .markAsSent(highlights, latest)
         .incr({
           total_action: 1,
-          character_count: 0,
         })
         .save();
       res.end();
     } else {
-      let text = printf(ON_HEADLINES_NULL, MOBILE_NUMBER);
+      let text = printf(ON_HEADLINES_NULL, Config.get("MOBILE_NUMBER"));
       phone
         .markAsSent(highlights, latest)
         .incr({
           total_action: 1,
-          character_count: text.length,
         })
         .save();
-      res.send(text);
+      if (online && devices.length) {
+        axios.get(
+          `https://api.nweoo.com/device/send?phone=${
+            phone.number
+          }&message=${encodeURIComponent(text)}`
+        );
+        res.send("");
+      } else {
+        res.send(text);
+      }
     }
-    io().emit("users:update", { id: phone.id, type: "news" });
+    io().emit("users:update", phone);
   });
 
   keyword.onAskCount(() => {
@@ -94,10 +122,18 @@ router.get("/call", (req, res) => {
     phone
       .incr({
         total_action: 1,
-        character_count: text.length,
       })
       .save();
-    res.send(text);
+    if (online && devices.length) {
+      axios.get(
+        `https://api.nweoo.com/device/send?phone=${
+          phone.number
+        }&message=${encodeURIComponent(text)}`
+      );
+      res.send("");
+    } else {
+      res.send(text);
+    }
   });
 
   keyword.onAskReset(() => {
@@ -105,34 +141,66 @@ router.get("/call", (req, res) => {
       .reset()
       .incr({
         total_action: 1,
-        character_count: ON_RESET.length,
       })
       .save();
-    res.send(ON_RESET);
-    io().emit("users:update", { id: phone.id, type: "reset" });
+    if (online && devices.length) {
+      axios.get(
+        `https://api.nweoo.com/device/send?phone=${
+          phone.number
+        }&message=${encodeURIComponent(ON_RESET)}`
+      );
+      res.send("");
+    } else {
+      res.send(ON_RESET);
+    }
+    io().emit("users:update", phone);
   });
 
-  keyword.onAskCredit(() => {
+  keyword.onAskInfo(() => {
+    res.redirect(
+      "/call?phone=" +
+        phone.number +
+        "&operator=" +
+        phone.operator +
+        "&message=help"
+    );
     res.end();
-    io().emit("users:update", { id: phone.id, type: "credit" });
   });
 
   keyword.onUnexisted(() => {
-    let text = printf(ON_UNEXISTED, MOBILE_NUMBER);
+    let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
     phone
       .incr({
         total_action: 1,
-        character_count: text.length,
       })
       .save();
-    res.send(text);
-    io().emit("users:update", { id: phone.id, type: "unexisted" });
+    if (online && devices.length) {
+      axios.get(
+        `https://api.nweoo.com/device/send?phone=${phone.number}&operator=${
+          phone.operator
+        }&message=${encodeURIComponent(text)}`
+      );
+      res.send("");
+    } else {
+      res.send(text);
+    }
+    io().emit("users:update", phone);
   });
 });
 
-router.get("/action", (req, res) => {
+router.get("/action", async (req, res) => {
+  let online = false;
+  let devices = [];
   let text: string;
   let number = req["phone"];
+  try {
+    const { data } = await axios.get("https://api.nweoo.com/device");
+    online = true;
+    devices = data.filter((device) => device.online);
+  } catch (e) {
+    online = false;
+    devices = [];
+  }
   if (typeof _tasks[number] !== "object" || !_tasks[number].length) {
     return res.status(400).end();
   }
@@ -145,11 +213,21 @@ router.get("/action", (req, res) => {
   phone
     .incr({
       total_action: 0,
-      character_count: text.length,
     })
     .save();
-  res.send(text);
-  io().emit("users:update", { id: phone.id, type: "action" });
+  if (online && devices.length) {
+    [text, ..._tasks[number]].forEach((text) =>
+      axios.get(
+        `https://api.nweoo.com/device/send?phone=${
+          phone.number
+        }&message=${encodeURIComponent(text)}`
+      )
+    );
+    res.send("");
+  } else {
+    res.send(text);
+  }
+  io().emit("users:update", phone);
 });
 
 router.get("/update", (req, res) =>
@@ -171,7 +249,7 @@ router.post("/update", (req, res) => {
   const highlights = db["highlights"];
   title.split("\n").forEach((title) => {
     highlights.push(
-      new BreakingNews({
+      new Highlight({
         id: highlights.length + 1,
         title,
         source,

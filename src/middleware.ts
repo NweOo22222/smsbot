@@ -10,61 +10,45 @@ export default function middleware(
   res: Response,
   next: NextFunction
 ) {
-  if ("version" in req.query) {
-    req["_version"] = String(req.query.version);
+  if (!("phone" in req.query)) {
+    return res.status(400).end();
   }
-
-  if ("operator" in req.query) {
-    req["operator"] = String(req.query.operator);
+  const phone = new Phone(req["phone"]);
+  const message = decodeURIComponent(String(req.query["message"] || ""));
+  const session = phone.session;
+  const reset = (): boolean => {
+    session.restart();
+    phone.save();
+    return true;
+  };
+  if (message.match(/\.update/)) {
+    res.redirect("/update");
+    return res.end();
   }
-
-  if ("phone" in req.query) {
-    req["phone"] = String(req.query.phone).replace(/^\s/, "+");
-    const phone = new Phone(req["phone"]);
-    const message = decodeURIComponent(String(req.query["message"] || ""));
-
-    if (phone) {
-      const session = phone.session;
-      const reset = (): boolean => {
-        session.restart();
-        phone.save();
-        return true;
-      };
-
-      if (message.match(/\.update/)) {
-        res.redirect("/update");
-        return res.end();
-      }
-
-      if (message.match(/\.reset/)) {
-        reset();
-        return res.end();
-      }
-
-      if (session.isExpired()) {
-        reset();
-        return next();
-      }
-
-      if (session.isReachedLimit()) {
-        if (session.isDenied()) {
-          return res.status(419).end();
-        }
-        let remain = Math.round(session.remaining / 60);
-        let response = printf(
-          ON_RATE_LIMIT,
-          MOBILE_NUMBER,
-          "နောက် " + remain + " မိနစ်နေမှ"
-        );
-        phone.incr({
-          total_action: 1,
-          character_count: response.length,
-        });
-        phone.save();
-        io().emit("users:update", { id: phone.id, type: "limited" });
-        return res.send(response);
-      }
-    }
+  if (message.match(/\.reset/)) {
+    reset();
+    return res.end();
   }
-  return next();
+  if (session.isExpired()) {
+    reset();
+    return next();
+  }
+  if (session.isDenied()) {
+    return res.status(419).end();
+  }
+  if (session.isReachedLimit()) {
+    let remain = Math.round(session.remaining / 60);
+    let response = printf(
+      ON_RATE_LIMIT,
+      MOBILE_NUMBER,
+      "နောက် " + remain + " မိနစ်နေမှ"
+    );
+    phone.incr({
+      total_action: 1,
+    });
+    phone.save();
+    io().emit("users:update", { id: phone.id, type: "limited" });
+    return res.send(response);
+  }
+  next();
 }

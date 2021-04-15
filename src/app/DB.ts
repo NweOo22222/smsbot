@@ -1,10 +1,15 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
 
 const DATABASE_FILENAME = ".db.json";
-const DATABASE_PATH = resolve(process.cwd(), DATABASE_FILENAME);
+const DATABASE_PATH = resolve(dirname(dirname(__dirname)), DATABASE_FILENAME);
 
 export default class DB {
+  static init() {
+    existsSync(DATABASE_PATH) ||
+      this.save({ phone: [], articles: [], highlights: [] });
+  }
+
   static read(): object {
     return JSON.parse(readFileSync(DATABASE_PATH, "utf-8"));
   }
@@ -13,5 +18,3 @@ export default class DB {
     writeFileSync(DATABASE_PATH, JSON.stringify(db), "utf-8");
   }
 }
-
-existsSync(DATABASE_PATH) || DB.save({ phone: [], articles: [] });

@@ -1,7 +1,6 @@
 import { Router } from "express";
-import { MAX_CHARACTER_COUNT, MAX_TOTAL_ACTION } from "./settings";
 import DB from "./app/DB";
-import Headline from "./app/Headline";
+import Config from "./app/Config";
 
 const api = Router();
 // const per_page = 30;
@@ -45,10 +44,16 @@ api.get("/version", (req, res) => {
 });
 
 api.get("/settings", (req, res) => {
-  res.json({
-    MAX_CHARACTER_COUNT,
-    MAX_TOTAL_ACTION,
+  res.json(Config.read());
+});
+
+api.post("/settings", (req, res) => {
+  const db = Config.read();
+  Object.entries(req.body).forEach(([id, value]) => {
+    db[id] = value;
   });
+  Config.save(db);
+  res.status(201).redirect(req.headers["referer"] || "/settings.html");
 });
 
 export default api;
