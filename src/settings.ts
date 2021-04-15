@@ -5,3 +5,4 @@ export const MAX_TOTAL_ACTION = 6;
 export const MOBILE_NUMBER = "ဒီဖုန်းနံပါတ်";
 export const USE_SIM_SLOT = "-1";
 export const DEFAULT_CREDIT_POINT = 100;
+export const USE_ONLINE = false;

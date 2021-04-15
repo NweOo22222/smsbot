@@ -55,12 +55,11 @@ var DB_1 = __importDefault(require("./app/DB"));
 var socket_1 = require("./socket");
 var config_1 = require("./config");
 var middleware_1 = __importDefault(require("./middleware"));
-var verify_1 = __importDefault(require("./verify"));
 var axios_1 = __importDefault(require("axios"));
 var Config_1 = __importDefault(require("./app/Config"));
 var _tasks = {};
 var router = express_1.Router();
-router.get("/call", middleware_1.default, verify_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+router.get("/call", middleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var message, phone, keyword, online, devices, data, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {

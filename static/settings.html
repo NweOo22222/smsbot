@@ -35,11 +35,10 @@
           </div>
 
           <div class="form-group">
-            <label for="SIM_SLOT">Default SIM Slot</label>
-            <select name="SIM_SLOT" id="SIM_SLOT" class="form-control">
-              <option value="-1" :selected="SIM_SLOT == -1">(Any)</option>
-              <option value="0" :selected="SIM_SLOT == 0">SIM 1</option>
-              <option value="1" :selected="SIM_SLOT == 1">SIM 2</option>
+            <label for="USE_ONLINE">Connection (Mode)</label>
+            <select name="USE_ONLINE" id="USE_ONLINE" class="form-control">
+              <option value="0" :selected="USE_ONLINE == 0">Offline</option>
+              <option value="1" :selected="USE_ONLINE != 0">Online</option>
             </select>
           </div>
 
@@ -65,14 +64,14 @@
       el: '.container',
       data: {
         MOBILE_NUMBER: '',
-        SIM_SLOT: '',
+        USE_ONLINE: '',
         PER_SESSION: '',
         MAX_TOTAL_ACTION: '',
       },
       beforeMount() {
         axios.get('/api/settings').then(({ data }) => {
           this.MOBILE_NUMBER = data.MOBILE_NUMBER;
-          this.SIM_SLOT = data.SIM_SLOT;
+          this.USE_ONLINE = data.USE_ONLINE;
           this.PER_SESSION = data.PER_SESSION;
           this.MAX_TOTAL_ACTION = data.MAX_TOTAL_ACTION;
         });

@@ -16,14 +16,13 @@ import {
   ON_UNEXISTED,
 } from "./config";
 import middleware from "./middleware";
-import verify from "./verify";
 import axios from "axios";
 import Config from "./app/Config";
 
 const _tasks = {};
 const router = Router();
 
-router.get("/call", middleware, verify, async (req, res) => {
+router.get("/call", middleware, async (req, res) => {
   const message = new Message({
     body: decodeURIComponent(String(req.query.message)),
     address: req["phone"],
@@ -31,35 +30,12 @@ router.get("/call", middleware, verify, async (req, res) => {
   const phone = message.phone;
   const keyword = new Keyword(message.body);
 
-  let online = false,
-    devices = [];
-
-  try {
-    const { data } = await axios.get("https://api.nweoo.com/device");
-    devices = data.filter(
-      (device) => device.online && device.operator == phone.operator
-    );
-    online = Boolean(devices.length);
-  } catch (e) {
-    online = false;
-    devices = [];
-  }
-
   keyword.onAskHelp(() => {
     let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
     phone.incr({
       total_action: 1,
     });
-    if (online && devices.length) {
-      axios.get(
-        `https://api.nweoo.com/device/send?phone=${
-          phone.number
-        }&message=${encodeURIComponent(text)}`
-      );
-      res.send("");
-    } else {
-      res.send(text);
-    }
+    res.send(text);
     io().emit("users:update", phone);
   });
 
@@ -102,16 +78,7 @@ router.get("/call", middleware, verify, async (req, res) => {
           total_action: 1,
         })
         .save();
-      if (online && devices.length) {
-        axios.get(
-          `https://api.nweoo.com/device/send?phone=${
-            phone.number
-          }&message=${encodeURIComponent(text)}`
-        );
-        res.send("");
-      } else {
-        res.send(text);
-      }
+      res.send(text);
     }
     io().emit("users:update", phone);
   });
@@ -124,16 +91,7 @@ router.get("/call", middleware, verify, async (req, res) => {
         total_action: 1,
       })
       .save();
-    if (online && devices.length) {
-      axios.get(
-        `https://api.nweoo.com/device/send?phone=${
-          phone.number
-        }&message=${encodeURIComponent(text)}`
-      );
-      res.send("");
-    } else {
-      res.send(text);
-    }
+    res.send(text);
   });
 
   keyword.onAskReset(() => {
@@ -143,16 +101,7 @@ router.get("/call", middleware, verify, async (req, res) => {
         total_action: 1,
       })
       .save();
-    if (online && devices.length) {
-      axios.get(
-        `https://api.nweoo.com/device/send?phone=${
-          phone.number
-        }&message=${encodeURIComponent(ON_RESET)}`
-      );
-      res.send("");
-    } else {
-      res.send(ON_RESET);
-    }
+    res.send(ON_RESET);
     io().emit("users:update", phone);
   });
 
@@ -174,33 +123,14 @@ router.get("/call", middleware, verify, async (req, res) => {
         total_action: 1,
       })
       .save();
-    if (online && devices.length) {
-      axios.get(
-        `https://api.nweoo.com/device/send?phone=${phone.number}&operator=${
-          phone.operator
-        }&message=${encodeURIComponent(text)}`
-      );
-      res.send("");
-    } else {
-      res.send(text);
-    }
+    res.send(text);
     io().emit("users:update", phone);
   });
 });
 
 router.get("/action", async (req, res) => {
-  let online = false;
-  let devices = [];
   let text: string;
   let number = req["phone"];
-  try {
-    const { data } = await axios.get("https://api.nweoo.com/device");
-    online = true;
-    devices = data.filter((device) => device.online);
-  } catch (e) {
-    online = false;
-    devices = [];
-  }
   if (typeof _tasks[number] !== "object" || !_tasks[number].length) {
     return res.status(400).end();
   }
@@ -215,18 +145,7 @@ router.get("/action", async (req, res) => {
       total_action: 0,
     })
     .save();
-  if (online && devices.length) {
-    [text, ..._tasks[number]].forEach((text) =>
-      axios.get(
-        `https://api.nweoo.com/device/send?phone=${
-          phone.number
-        }&message=${encodeURIComponent(text)}`
-      )
-    );
-    res.send("");
-  } else {
-    res.send(text);
-  }
+  res.send(text);
   io().emit("users:update", phone);
 });
 
