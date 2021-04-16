@@ -1,6 +1,6 @@
 import { UserAction } from "./Session";
 
-const DAILY_SESSION = 24 * 3600 * 1000; // 24 hours
+const DAILY_SESSION = 12 * 3600 * 1000; // 12 hours
 const MAX_DAILY_ACTION = 10;
 
 export default class DailySession {
@@ -33,7 +33,7 @@ export default class DailySession {
   }
 
   isExpired() {
-    return new Date() > this.expired;
+    return Date.now() > this.expired.getTime();
   }
 
   isDenied() {

@@ -1,4 +1,3 @@
-import { PER_SESSION, MAX_TOTAL_ACTION } from "../settings";
 import DailySession from "./DailySession";
 import HourlySession from "./HourlySession";
 

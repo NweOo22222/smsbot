@@ -3,6 +3,8 @@ const LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
 const ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
 const USAGE_HELP = [/ကူ(ညီ)?/, /info/i, /help/i];
 const SHOW_INFO = [/info/i];
+const THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
+const REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
 
 export default class Keyword {
   protected sent: boolean;
@@ -11,6 +13,28 @@ export default class Keyword {
 
   get meta(): string {
     return this.text.substr(0, 64);
+  }
+
+  onThanks(callback: Function) {
+    if (this.sent) return;
+    if (THANKS.filter((keyword) => this.meta.match(keyword)).length) {
+      this.sent = true;
+      callback();
+    }
+  }
+
+  onUnexisted(callback: Function) {
+    if (this.sent) return;
+    this.sent = true;
+    callback();
+  }
+
+  onAskReporter(callback: Function) {
+    if (this.sent) return;
+    if (REPORTER.filter((keyword) => this.meta.match(keyword)).length) {
+      this.sent = true;
+      callback();
+    }
   }
 
   onAskHelp(callback: Function) {
@@ -51,11 +75,5 @@ export default class Keyword {
       this.sent = true;
       callback();
     }
-  }
-
-  onUnexisted(callback: Function) {
-    if (this.sent) return;
-    this.sent = true;
-    callback();
   }
 }

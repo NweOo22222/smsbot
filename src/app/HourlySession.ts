@@ -1,5 +1,7 @@
-import { MAX_TOTAL_ACTION, PER_SESSION } from "../settings";
 import { UserAction } from "./Session";
+
+const PER_SESSION = 7200000;
+const MAX_TOTAL_ACTION = 5;
 
 export default class HourlySession {
   public expired: Date;
@@ -31,7 +33,7 @@ export default class HourlySession {
   }
 
   isExpired() {
-    return new Date() > this.expired;
+    return Date.now() > this.expired.getTime();
   }
 
   isDenied() {

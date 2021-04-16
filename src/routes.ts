@@ -11,6 +11,7 @@ import {
   ON_HEADLINES_NEXT,
   ON_HEADLINES_NULL,
   ON_HELP,
+  ON_HELP_REPORTER,
   ON_REMAINING_COUNT,
   ON_RESET,
   ON_UNEXISTED,
@@ -211,6 +212,15 @@ router.get("/call", middleware, async (req, res) => {
   });
   const phone = message.phone;
   const keyword = new Keyword(message.body);
+
+  keyword.onAskReporter(() => {
+    let text = printf(ON_HELP_REPORTER, Config.get("MOBILE_NUMBER"));
+    phone.incr({
+      total_action: 1,
+    });
+    res.send(text);
+    io().emit("users:update", phone);
+  });
 
   keyword.onAskHelp(() => {
     let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));

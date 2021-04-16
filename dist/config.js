@@ -1,10 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ON_RATE_LIMIT = exports.ON_UNEXISTED = exports.ON_RESET = exports.ON_HEADLINES_NULL = exports.ON_HEADLINES_NEXT = exports.ON_REMAINING_COUNT = exports.ON_HELP = void 0;
-exports.ON_HELP = "သတင်းများရယူရန် %s ကို news (သို့) သတင်း လို့ပို့ပါ။\nကျန်ရှိသည့်အရေတွက်ကိုသိရန် count (သို့) ကျန်သေးလား လို့ပို့ပါ။ - nweoo.com";
-exports.ON_REMAINING_COUNT = "မပို့ရသေးသောသတင်းခေါင်းစဥ်(%d)ခုကျန်ပါတယ်။ - nweoo.com";
+exports.ON_HELP_REPORTER = exports.ON_THANKS = exports.ON_RATE_LIMIT = exports.ON_UNEXISTED = exports.ON_RESET = exports.ON_HEADLINES_NULL = exports.ON_HEADLINES_NEXT = exports.ON_REMAINING_COUNT = exports.ON_HELP = void 0;
+exports.ON_HELP = "ဖုန်းနံပါတ် %s ကို သတင်းခေါင်းစဥ်များရယူရန် news ဟုပို့ပါ။\nကျန်ရှိသည့်အရေတွက်ကိုသိရန် count ဟုပို့ပါ။\nသတင်းများကိုအစမှပြန်လည်ရယူရန် reset ဟုပို့ပါ။\nSMS Chatbot ကိုပိတ်ရန်​ OFF ဟုပို့ပါ။ - nweoo.com";
+exports.ON_REMAINING_COUNT = "မပို့ရသေးသောသတင်းခေါင်းစဥ် %d ခုကျန်ပါတယ်။ - nweoo.com";
 exports.ON_HEADLINES_NEXT = exports.ON_REMAINING_COUNT;
 exports.ON_HEADLINES_NULL = "သတင်းများနောက်ထပ်မရှိသေးပါ။ - nweoo.com";
 exports.ON_RESET = "သတင်းများကိုအစမှပြန်လည်ရယူနိုင်ပါပြီ။ - nweoo.com";
 exports.ON_UNEXISTED = "မှားယွင်းနေပါတယ်။ သတင်းများရယူလိုပါက %s ကို news ဟုပို့ပါ။ - nweoo.com";
-exports.ON_RATE_LIMIT = "%s ကို %s မှပြန်ပြီးပို့ဆောင်ပေးပါ။ - nweoo.com";
+exports.ON_RATE_LIMIT = "SMS limit ပြည့်သွားပါသဖြင့် %s ကို %s ပြည့်မှပြန်ပို့ပေးပါ။ - nweoo.com";
+exports.ON_THANKS = "ကျေးဇူးတင်ပါတယ်။ - nweoo.com";
+exports.ON_HELP_REPORTER = "ဖုန်နံပါတ် %s ကို #nweoo ထည့်ပြီးပို့လိုက်တာနဲ့ nweoo.com/reports နဲ့ fb.com/nweoo22222 တို့ပေါ်ကို သတင်းတွေပေးပို့နိုင်ပါတယ်။";

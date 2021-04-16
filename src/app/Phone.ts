@@ -1,5 +1,4 @@
 import Highlight from "./Highlight";
-import Credit from "./Credit";
 import DB from "./DB";
 import Headline from "./Headline";
 import Session, { UserAction } from "./Session";
@@ -12,7 +11,6 @@ export default class Phone {
   public first_date: Date;
   public headlines: string[];
   public highlights: string[];
-  public credit: Credit;
   public operator: Operator;
   public session: Session;
 
@@ -69,24 +67,26 @@ export default class Phone {
 }
 
 function guessOperator(phone: Phone) {
-  let matched = phone.number.match(/^(?:\+95|0)?9(\d)(\d)(\d{5,7})/) || [];
-  if (!matched) return;
-  switch (matched[1]) {
-    case "2":
-    case "3":
-    case "4":
-    case "5":
-    case "8":
-      phone.operator = "MPT";
-      break;
-    case "6":
-      phone.operator = "MYTEL";
-      break;
-    case "7":
-      phone.operator = "Telenor";
-      break;
-    case "9":
-      phone.operator = "Ooredoo";
-      break;
-  }
+  try {
+    let matched = phone.number.match(/^(?:\+95|0)?9(\d)(\d)(\d{5,7})/) || [];
+    if (!matched) return;
+    switch (matched[1]) {
+      case "2":
+      case "3":
+      case "4":
+      case "5":
+      case "8":
+        phone.operator = "MPT";
+        break;
+      case "6":
+        phone.operator = "MYTEL";
+        break;
+      case "7":
+        phone.operator = "Telenor";
+        break;
+      case "9":
+        phone.operator = "Ooredoo";
+        break;
+    }
+  } catch (e) {}
 }

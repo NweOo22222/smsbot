@@ -1,6 +1,7 @@
 import { Router } from "express";
 import DB from "./app/DB";
 import Config from "./app/Config";
+import Phone from "./app/Phone";
 
 const api = Router();
 // const per_page = 30;
@@ -30,12 +31,7 @@ api.get("/articles", (req, res) => {
 
 api.get("/users", (req, res) => {
   const limit = req.query["limit"] || 15;
-  const users = DB.read()["phone"].sort((a, b) => {
-    return (
-      new Date(a.session["expired"]).getTime() -
-      new Date(b.session["expired"]).getTime()
-    );
-  });
+  const users = DB.read()["phone"];
   res.json(users.reverse().slice(0, limit));
 });
 

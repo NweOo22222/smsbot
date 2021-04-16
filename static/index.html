@@ -35,8 +35,14 @@
 
       <section>
         <h2>Users</h2>
-        <select v-model="showUsers" class="form-control form-control-sm" style="width: 40px;">
+        <select v-model="showUsers" class="form-control form-control-sm" style="width: 80px;">
           <option value="15" selected>15</option>
+          <option value="20" selected>20</option>
+          <option value="25" selected>25</option>
+          <option value="30" selected>30</option>
+          <option value="50" selected>50</option>
+          <option value="100" selected>100</option>
+          <option value="100" selected>500</option>
         </select>
         <div class="table-responsive">
           <table class="table table-hover text-center">
@@ -52,12 +58,15 @@
             </thead>
             <tbody>
               <tr v-for="user in users" :key="user.id"
-                :class="(user['flash'] && 'flash' || '') + (limited(user) && 'bg-warning text-white' || '')">
-                <td>{{ user.id }}</td>
+                :class="(user['flash'] && 'flash ' || '') + (reachedDailyLimit(user) ? 'bg-danger text-white' : '') + (reachedHourlyLimit(user) ? 'bg-warning text-white' : '')">
+                <td>{{ user.number }}</td>
                 <td>{{ user.total_count }}</td>
-                <td>{{ user.session.total_action }} / {{ settings.MAX_TOTAL_ACTION + 1 }}</td>
-                <td>{{ user.session.character_count }} / {{ settings.MAX_CHARACTER_COUNT + 1 }}</td>
-                <td>{{ formatDate(user.session.expired) }}</td>
+                <td>{{ user.session.hourly.total_action }} / 5</td>
+                <td>{{ user.session.daily.total_action }} / 10</td>
+                <td>
+                  <p>{{ formatDate(user.session.hourly.expired) }}</p>
+                  <p>{{ formatDate(user.session.daily.expired) }}</p>
+                </td>
                 <td>
                   <button class=" btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
                     :disabled="loading">Quota</button>
@@ -79,10 +88,6 @@
     new Vue({
       el: "main",
       data: {
-        settings: {
-          MAX_CHARACTER_COUNT: 0,
-          MAX_TOTAL_ACTION: 0,
-        },
         users: [],
         loading: false,
         disabled: false,
@@ -98,11 +103,17 @@
         message(value) {
           if (!value) return;
           setTimeout(() => this.message = null, 3000);
+        },
+        showUsers(value) {
+          this.fetchUsers();
         }
       },
       methods: {
-        limited(user) {
-          return user.session.total_action >= this.settings.MAX_TOTAL_ACTION || user.session.character_count >= this.settings.MAX_CHARACTER_COUNT;
+        reachedDailyLimit(user) {
+          return user.session.daily.total_action >= 10;
+        },
+        reachedHourlyLimit(user) {
+          return user.session.hourly.total_action >= 5;
         },
         formatDate(expired) {
           let dt = new Date(expired);
@@ -136,13 +147,8 @@
           }).catch(e => this.error = 'Failed, ' + e.message)
             .finally(() => this.loading = false);
         },
-        fetchSettings() {
-          return axios('/api/settings').then(({ data }) => {
-            this.settings = data;
-          })
-        },
         fetchUsers() {
-          return axios("/api/users").then(({ data }) => {
+          return axios("/api/users?limit=" + this.showUsers).then(({ data }) => {
             data = data.map((user) => ({
               ...user,
               flash: false,
@@ -160,13 +166,13 @@
         },
       },
       beforeMount() {
-        this.fetchSettings();
         this.fetchUsers();
-        socket.on('users:update', ({ id, type }) => {
+        socket.on('users:update', (phone) => {
           this.fetchUsers().then(() => {
-            const user = this.users.find((user) => user.id == id);
-            user.flash = true;
-            setTimeout(() => user.flash = false, 600);
+            this.users = this.users.filter((user) => user.id != phone.id);
+            this.users.unshift(phone);
+            phone.flash = true;
+            setTimeout(() => phone.flash = false, 600);
           })
         });
       },

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var DAILY_SESSION = 24 * 3600 * 1000;
+var DAILY_SESSION = 12 * 3600 * 1000;
 var MAX_DAILY_ACTION = 10;
 var DailySession = (function () {
     function DailySession(action) {
@@ -22,7 +22,7 @@ var DailySession = (function () {
         this.notified = false;
     };
     DailySession.prototype.isExpired = function () {
-        return new Date() > this.expired;
+        return Date.now() > this.expired.getTime();
     };
     DailySession.prototype.isDenied = function () {
         return this.total_action >= MAX_DAILY_ACTION;

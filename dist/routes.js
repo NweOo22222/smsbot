@@ -215,6 +215,14 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         });
         phone = message.phone;
         keyword = new Keyword_1.default(message.body);
+        keyword.onAskReporter(function () {
+            var text = printf_1.default(config_1.ON_HELP_REPORTER, Config_1.default.get("MOBILE_NUMBER"));
+            phone.incr({
+                total_action: 1,
+            });
+            res.send(text);
+            socket_1.io().emit("users:update", phone);
+        });
         keyword.onAskHelp(function () {
             var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
             phone.incr({

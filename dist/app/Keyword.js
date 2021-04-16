@@ -5,6 +5,8 @@ var LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
 var ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
 var USAGE_HELP = [/ကူ(ညီ)?/, /info/i, /help/i];
 var SHOW_INFO = [/info/i];
+var THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
+var REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
 var Keyword = (function () {
     function Keyword(text) {
         this.text = text;
@@ -16,6 +18,30 @@ var Keyword = (function () {
         enumerable: false,
         configurable: true
     });
+    Keyword.prototype.onThanks = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        if (THANKS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+            this.sent = true;
+            callback();
+        }
+    };
+    Keyword.prototype.onUnexisted = function (callback) {
+        if (this.sent)
+            return;
+        this.sent = true;
+        callback();
+    };
+    Keyword.prototype.onAskReporter = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        if (REPORTER.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+            this.sent = true;
+            callback();
+        }
+    };
     Keyword.prototype.onAskHelp = function (callback) {
         var _this = this;
         if (this.sent)
@@ -60,12 +86,6 @@ var Keyword = (function () {
             this.sent = true;
             callback();
         }
-    };
-    Keyword.prototype.onUnexisted = function (callback) {
-        if (this.sent)
-            return;
-        this.sent = true;
-        callback();
     };
     return Keyword;
 }());

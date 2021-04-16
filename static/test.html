@@ -28,10 +28,14 @@
       </div>
       <div class="card-body">
         <input type="tel" name="phone" id="phone" class="form-control" placeholder="Phone Number" v-model="phone">
+        <select v-model="mode" class="form-control">
+          <option value="online">Online</option>
+          <option value="offline">Offline</option>
+        </select>
         <ul class="list-group list-group-flush">
           <li class="list-group-item" v-for="(message, i) in messages" :key="i">
             <div :class="message.bot ? 'text-right' : 'text-left'">
-              {{ message.body }}
+              <span v-html="message.body.replace(/\r/gm, '<br>')"></span>
               <span class="text-muted text-monospace" style="font-size: .5rem;">{{ message.body.length }}
                 Characters</span>
             </div>
@@ -50,9 +54,10 @@
     new Vue({
       el: '.container',
       data: {
-        phone: 'testing',
+        phone: '',
         message: '',
-        messages: []
+        messages: [],
+        mode: ''
       },
       watch: {
         phone(value) {
@@ -61,17 +66,21 @@
       },
       methods: {
         send() {
-          this.chat()
-            .finally(() => this.message = '');
+          this.chat();
         },
         chat() {
+          let message = this.message;
+          this.message = '';
           this.messages.push({
-            body: this.message,
+            body: message,
             timestamp: Date.now(),
             bot: false,
           });
+          if (message.match(/reset/)) {
+            this.messages = [];
+          }
           return axios
-            .get(`/online?operator=Telenor&phone=${this.phone}&message=${encodeURIComponent(this.message)}`)
+            .get(`/${this.mode === 'online' ? 'online' : 'call'}?operator=Telenor&phone=${this.phone}&message=${encodeURIComponent(message)}`)
             .then(({ data }) => this.reply(data));
         },
         async reply(response) {
