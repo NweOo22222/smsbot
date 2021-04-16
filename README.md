@@ -1,16 +1,43 @@
 # SMS Bot လုပ်ချင်သူများအတွက်
 
-`#nweoosmsbot` - `v1.1.1`
+`#nweoosmsbot` - `v1.2.0`
+
+## Keywords
+
+|        Keywords         | Description                      |
+| :---------------------: | :------------------------------- |
+|    `news` or `သတင်း`    | သတင်းခေါင်းစဥ်များရယူရန်         |
+|    `help` or `info`     | အကူအညီရယူရန်                     |
+| `count` or `ကျန်သေးလား` | ကျန်ရှိသည့်သတင်းအရေအတွက်ကိုသိရန် |
+|   `reset` or `ပြန်စ`    | သတင်းများကိုအစမှပြန်လည်ရယူရန်    |
+
+## Customs
+
+|      Contains      | Description                                 |
+| :----------------: | :------------------------------------------ |
+|     `သတင်းပေး`     | #nweoo ထည့်ပြီးတော့ 09758035929 ကိုပို့ရင်ရ |
+| `thank`, `ကျေးဇူး` |                                             |
+| `ok`, `hok`,`ဟုတ်` |                                             |
 
 ## လိုအပ်သည့်အရာများ
 
 1. Android Phone (Dual-SIM ဆိုပိုကောင်းပါတယ်။)
 2. SIM Card (Telenor/Ooredoo/MPT)
 
+> မြန်မာဘာသာနဲ့ပြန်ပို့တဲ့အတွက် စာလုံးရေ ၆၅ လုံးကို SMS တစ်စောင်နှုန်းကျသင့်မှာဖြစ်တဲ့အတွက် Unlimited Package ရှိတဲ့ Mobile Operator ကိုအသုံးပြုတာပိုအဆင်ပြေပါတယ်။
+
+#### Unlimited SMS Packages
+
+| Operator |    Dial    |
+| -------- | :--------: |
+| Telenor  | `*8069*1#` |
+| Ooredoo  |  `*201#`   |
+| MPT      |  `*2006#`  |
+
 ## လိုအပ်သည့် App များ
 
-1. [Macrodroid](https://nweoofact.page.link/macrodroid)
-2. [Termux](https://nweoofact.page.link/termux)
+1. [Macrodroid](https://nweoo.page.link/macrodroid)
+2. [Termux](https://nweoo.page.link/termux)
 
 ## လုပ်ဆောင်ချက်
 
@@ -46,15 +73,9 @@
 
 အဆင့်(၅) SMS, Call & Notification နဲ့ ပတ်သက်တဲ့ Permission များပေးပါ။
 
-အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။ *default က On ထားပါတယ်။*
+အဆင့်(၆) Incoming Call တွေ Block ချင်ရင် `macros` ထဲက ​`call` > `blocked` ကိုဖွင့်ပါ။ _default က On ထားပါတယ်။_
 
-အဆင့်(၇) SMS Bot ကိုစတင်ရန် `macros` ထဲက `SMS` > `smsbot(telenor)` သို့မဟုတ် `smsbot(ooredoo)` ကိုဖွင့်ပါ။ *default က Telenor ကို On ထားပါတယ်။*
-
-#### Ooredoo ပြောင်းနည်း
-
-အဆင့်(၁) `Macrodroid` App ကိုဖွင့်ပါ။
-
-အဆင့်(၂) `macros` ထဲက `SMS` > `smsbot(ooredoo)` ကို On ပြီး `smsbot(telenor)` ကို On ပေးပါ။
+အဆင့်(၇) SMS Bot ကိုစတင်ရန် `macros` ထဲက `SMS` > `smsbot(telenor)` သို့မဟုတ် `smsbot(ooredoo)` ကိုဖွင့်ပါ။ _default က Telenor ကို On ထားပါတယ်။_
 
 #### အသံပိတ်ရန်
 
@@ -68,7 +89,7 @@
 
 ### အခြား
 
-အပေါ်ကလုပ်ဆောင်ရမဲ့ (၂) ခုလုံးလုပ်ဆောင်ပြီးမှ အဆင့်သင့်ဖြစ်ပြီဆိုရင် Browser ထဲကနေတဆင့် [`http://localhost:3001`](http://localhost:3001) သွားရောက်ပြီး `Update Articles` ကိုနှိပ်၍ DVB က သတင်းတွေကို ကျွန်တော်တို့ [api.nweoo.com/articles](http://api.nweoo.com/articles) ကနေတဆင့် update တင်ပြီးစတင်အသုံးပြုနိုင်ပါပြီ။
+အပေါ်ကလုပ်ဆောင်ရမဲ့ (၂) ခုလုံးလုပ်ဆောင်ပြီးမှ အဆင့်သင့်ဖြစ်ပြီဆိုရင် Browser ထဲကနေတဆင့် [`http://localhost:3001`](http://localhost:3001) သွားရောက်ပြီး `Update Articles` ကိုနှိပ်၍ သတင်းတွေကို [api.nweoo.com/articles](http://api.nweoo.com/articles) ကနေတဆင့် update တင်ပြီးစတင်အသုံးပြုနိုင်ပါပြီ။
 
 **အင်တာနက်ရတာမသေချာတဲ့အတွက် Articles တွေကို Auto Update လုပ်တဲ့စနစ်မပါပါဘူး။ ရတဲ့အချိန် Offline သိမ်းထားရန် `.update` လို့ Message ပို့၍ဖြစ်စေ၊ Browser ကနေတဆင့်ဖြစ်စေ၊ [`http://localhost:3001/update`](http://localhost:3001/update) ကို ၀င်ရောက်ပြီး Update တင်ပေးပါ။**
 
@@ -84,6 +105,6 @@
 
 အဆင့်(၄) `npm run build`
 
-အဆင့်(၅) `npm run server`
+အဆင့်(၅) `npm start`
 
-**အဆင်မပြေတာရှိရင် [m.me/nweoo22222](https://m.me/nweoo22222) ကတဆင့်မေးမြန်းနိုင်ပါတယ်။ Error များရှိပါသေးတယ်။ Perfect တော့မဖြစ်သေးတာကြောင့် တက်ခဲ့ပါက ပြန်ပြင်နိုင်ဖို့ ပြန်ပြောပေးကြပါ။ Version Update ရှိခဲ့ရင်လည်း [http://localhost:3001](http://localhost:3001) ကို ၀င်ကြည့်တဲ့အခါ alert ပေးပါလိမ့်မယ်။**
+အဆင်မပြေတာရှိရင် [m.me/nweoo22222](https://m.me/nweoo22222) ကတဆင့်မေးမြန်းနိုင်ပါတယ်။ Error များတက်ခဲ့ပါကပြန်ပြောပေးကြပါ။ Version Update ရှိခဲ့ရင်လည်း [http://localhost:3001](http://localhost:3001) ကို ၀င်ကြည့်တဲ့အခါ alert ပေးပါလိမ့်မယ်။

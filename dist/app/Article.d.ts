@@ -1,19 +1,22 @@
+import Headline from "./Headline";
 export default class Article {
     id: string;
     content: string;
     image: string;
-    title: string;
     source: string;
     link: string;
-    constructor({ id, content, image, title, source, link }: {
+    title: string;
+    constructor({ id, title, content, image, source }: {
         id: any;
+        title: any;
         content: any;
         image: any;
-        title: any;
         source: any;
-        link: any;
     });
-    static update(): Promise<any>;
-    static store(): void;
+    find(keyword: any): RegExpMatchArray;
+    toHeadline(): Headline;
+    static fetchAll(): Article[];
+    static update(): Promise<Article[]>;
+    static store(articles: Article[]): void;
 }
 //# sourceMappingURL=Article.d.ts.map

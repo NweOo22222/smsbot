@@ -3,8 +3,10 @@ export default class Keyword {
     protected sent: boolean;
     constructor(text: string);
     get meta(): string;
-    onThanks(callback: Function): void;
-    onUnexisted(callback: Function): void;
+    onReplyThanks(callback: Function): void;
+    onReplyOkay(callback: Function): void;
+    onUnmatched(callback: Function): void;
+    onSearchContent(callback: Function): void;
     onAskReporter(callback: Function): void;
     onAskHelp(callback: Function): void;
     onAskHeadlines(callback: Function): void;

@@ -8,6 +8,7 @@ import Highlight from "./app/Highlight";
 import DB from "./app/DB";
 import { io } from "./socket";
 import {
+  ON_SEARCH_EXISTED,
   ON_HEADLINES_NEXT,
   ON_HEADLINES_NULL,
   ON_HELP,
@@ -17,10 +18,10 @@ import {
   ON_UNEXISTED,
 } from "./config";
 import middleware from "./middleware";
-import online from "./online";
 import axios from "axios";
 import Config from "./app/Config";
 import { SMS_GATEWAY_API } from "./settings";
+import Article from "./app/Article";
 
 const _tasks = {};
 const router = Router();
@@ -179,7 +180,7 @@ router.get("/online", middleware, (req, res) => {
     io().emit("users:update", phone);
   });
 
-  keyword.onUnexisted(() => {
+  keyword.onUnmatched(() => {
     let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
     phone
       .incr({
@@ -213,16 +214,28 @@ router.get("/call", middleware, async (req, res) => {
   const phone = message.phone;
   const keyword = new Keyword(message.body);
 
+  keyword.onReplyOkay(() => {
+    phone.incr({ total_action: 0 }).save();
+    res.status(400).end();
+    io().emit("users:update", phone);
+  });
+
+  keyword.onReplyThanks(() => {
+    phone.incr({ total_action: 0 }).save();
+    res.status(400).end();
+    io().emit("users:update", phone);
+  });
+
   keyword.onAskReporter(() => {
     let text = printf(ON_HELP_REPORTER, Config.get("MOBILE_NUMBER"));
-    phone.incr({ total_action: 1 });
+    phone.incr({ total_action: 1 }).save();
     res.send(text);
     io().emit("users:update", phone);
   });
 
   keyword.onAskHelp(() => {
     let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
-    phone.incr({ total_action: 1 });
+    phone.incr({ total_action: 1 }).save();
     res.send(text);
     io().emit("users:update", phone);
   });
@@ -278,7 +291,25 @@ router.get("/call", middleware, async (req, res) => {
     io().emit("users:update", phone);
   });
 
-  keyword.onUnexisted(() => {
+  keyword.onSearchContent((keyword) => {
+    let articles: any = Article.fetchAll().filter((article) =>
+      article.find(keyword)
+    );
+    let total = articles.length;
+    articles = articles
+      .filter((article) => !phone.headlines.includes(article.id))
+      .map((article) => article.toHeadline());
+    let text = printf(ON_SEARCH_EXISTED, keyword, total, articles.length);
+    phone.incr({ total_action: 1 }).markAsSent([], articles).save();
+    articles = [
+      text,
+      ...articles.map((article) => `${article.title} -${article.source}`),
+    ].slice(0, 5);
+    _tasks[phone.number] = articles;
+    res.send("");
+  });
+
+  keyword.onUnmatched(() => {
     let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
     phone.incr({ total_action: 1 }).save();
     res.send(text);
@@ -333,6 +364,13 @@ router.post("/update", (req, res) => {
   });
   DB.save(db);
   res.redirect("/articles.html");
+});
+
+router.get("/indexes", (req, res) => {
+  Article.update()
+    .then((articles) => Article.store(articles))
+    .then(() => res.send("OK"))
+    .catch((e) => res.status(500).send(e.message));
 });
 
 export default router;

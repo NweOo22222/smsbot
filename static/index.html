@@ -8,7 +8,7 @@
   <title>NweOo SMS</title>
   <link rel="stylesheet" href="bootstrap.min.css" />
   <script src="axios.min.js"></script>
-  <script src="vue.min.js"></script>
+  <script src="vue.js"></script>
 </head>
 
 <body>
@@ -50,16 +50,21 @@
               <tr>
                 <th>Mobile</th>
                 <th>Total</th>
-                <th>Actions</th>
-                <th>Characters</th>
+                <th>Hourly</th>
+                <th>Daily</th>
                 <th>Renew On</th>
-                <th>Reset actions</th>
+                <th>
+                  <span class="sr-only">actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="user in users" :key="user.id"
                 :class="(user['flash'] && 'flash ' || '') + (reachedDailyLimit(user) ? 'bg-danger text-white' : '') + (reachedHourlyLimit(user) ? 'bg-warning text-white' : '')">
-                <td>{{ user.number }}</td>
+                <td>
+                  <a :href="'tel:' + user.number">{{ user.number }}</a>
+                  [<a href="#" @click="copy(user.number)">copy</a>]
+                </td>
                 <td>{{ user.total_count }}</td>
                 <td>{{ user.session.hourly.total_action }} / 5</td>
                 <td>{{ user.session.daily.total_action }} / 10</td>
@@ -68,10 +73,17 @@
                   <p>{{ formatDate(user.session.daily.expired) }}</p>
                 </td>
                 <td>
-                  <button class=" btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
+                  <button class="btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
                     :disabled="loading">Quota</button>
                   <button class="btn btn-sm badge btn-outline-primary" @click="resetArticles(user.number)"
                     :disabled="loading">Articles</button>
+                  <button class="btn btn-sm badge" :class="user.session.disabled ? 'btn-danger' : 'btn-success'"
+                    @click="toggleChatbot(user)" :disabled="loading">{{ user.session.disabled ? 'OFF' : 'ON'
+                    }}</button>
+                  <button class="btn btn-sm badge" :class="user.session.banned ? 'btn-secondary' : 'btn-danger'"
+                    @click="toggleBlock(user.number)" :disabled="loading">{{ user.session.banned ? 'Unblocked' :
+                    'Block'
+                    }}</button>
                 </td>
               </tr>
             </tbody>
@@ -81,6 +93,8 @@
     </main>
   </div>
 
+  <script src="jquery.slim.js"></script>
+  <script src="bootstrap.min.js"></script>
   <script src="socket.io/socket.io.min.js"></script>
   <script>
     const socket = io();
@@ -109,6 +123,15 @@
         }
       },
       methods: {
+        toggleChatbot({ number, session }) {
+          let message = session.disabled ? 'ON' : 'OFF';
+          return axios('/call?phone=' + number + '&message=' + message)
+            .finally(() => this.fetchUsers());
+        },
+        toggleBlock(number) {
+          return axios('/call?phone=' + number + '&message=.banned')
+            .finally(() => this.fetchUsers());
+        },
         reachedDailyLimit(user) {
           return user.session.daily.total_action >= 10;
         },
@@ -132,9 +155,8 @@
           this.loading = true;
           this.error = null;
           this.message = null;
-          return axios('/call?phone=' + number + '&message=reset').then(() => {
-            this.message = 'Success!'
-          }).catch(e => this.error = 'Failed, ' + e.message)
+          return axios('/call?phone=' + number + '&message=reset')
+            .catch(e => this.error = 'Failed, ' + e.message)
             .finally(() => this.loading = false);
         },
         resetUsage(number) {
@@ -164,6 +186,16 @@
             .catch(e => this.error = 'Failed to update! Error`' + e.message + '`')
             .finally(() => this.disabled = false);
         },
+        copy(number) {
+          const el = document.createElement('input');
+          document.body.appendChild(el);
+          el.type = 'tel';
+          el.value = (number || '').toString();
+          el.select();
+          document.execCommand('copy');
+          el.remove();
+          this.message = 'Copied to clipboard!'
+        }
       },
       beforeMount() {
         this.fetchUsers();

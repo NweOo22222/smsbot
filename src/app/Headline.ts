@@ -9,7 +9,9 @@ export default class Headline {
 
   constructor({ id, source, datetime, timestamp, title }) {
     this.id = id;
-    this.title = title;
+    this.title = String(title)
+      .replace(/\((?:ရုပ်သံ|ဓာတ်ပုံ)\)/gm, "")
+      .replace(/ /gm, "");
     this.source = source;
     this.datetime = new Date(datetime || parseInt(timestamp) || Date.now());
   }

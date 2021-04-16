@@ -4,16 +4,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var axios_1 = __importDefault(require("axios"));
+var DB_1 = __importDefault(require("./DB"));
+var Headline_1 = __importDefault(require("./Headline"));
 var Article = (function () {
     function Article(_a) {
-        var id = _a.id, content = _a.content, image = _a.image, title = _a.title, source = _a.source, link = _a.link;
+        var id = _a.id, title = _a.title, content = _a.content, image = _a.image, source = _a.source;
         this.id = id;
-        this.content = content;
+        this.title = String(title)
+            .replace(/\((?:ရုပ်သံ|ဓာတ်ပုံ)\)/gm, "")
+            .replace(/\s/gm, "");
+        this.content = String(content).replace(/\n\n\n\n/gm, "\n");
         this.image = image;
-        this.title = title;
         this.source = source;
-        this.link = link;
     }
+    Article.prototype.find = function (keyword) {
+        return this.content.match(new RegExp(keyword, "gmi"));
+    };
+    Article.prototype.toHeadline = function () {
+        return new Headline_1.default({
+            id: this.id,
+            title: this.title,
+            source: this.source,
+            datetime: new Date(),
+            timestamp: Date.now(),
+        });
+    };
+    Article.fetchAll = function () {
+        return (DB_1.default.read()["full_articles"] || []).map(function (article) { return new Article(article); });
+    };
     Article.update = function () {
         return axios_1.default
             .get("https://api.nweoo.com/articles?limit=30")
@@ -22,7 +40,10 @@ var Article = (function () {
             return (data || []).map(function (article) { return new Article(article); });
         });
     };
-    Article.store = function () {
+    Article.store = function (articles) {
+        var db = DB_1.default.read();
+        db["full_articles"] = articles;
+        DB_1.default.save(db);
     };
     return Article;
 }());

@@ -20,7 +20,9 @@ var Headline = (function () {
     function Headline(_a) {
         var id = _a.id, source = _a.source, datetime = _a.datetime, timestamp = _a.timestamp, title = _a.title;
         this.id = id;
-        this.title = title;
+        this.title = String(title)
+            .replace(/\((?:ရုပ်သံ|ဓာတ်ပုံ)\)/gm, "")
+            .replace(/ /gm, "");
         this.source = source;
         this.datetime = new Date(datetime || parseInt(timestamp) || Date.now());
     }

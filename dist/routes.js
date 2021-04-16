@@ -58,6 +58,7 @@ var middleware_1 = __importDefault(require("./middleware"));
 var axios_1 = __importDefault(require("axios"));
 var Config_1 = __importDefault(require("./app/Config"));
 var settings_1 = require("./settings");
+var Article_1 = __importDefault(require("./app/Article"));
 var _tasks = {};
 var router = express_1.Router();
 router.get("/online", middleware_1.default, function (req, res) {
@@ -185,7 +186,7 @@ router.get("/online", middleware_1.default, function (req, res) {
         });
         socket_1.io().emit("users:update", phone);
     });
-    keyword.onUnexisted(function () {
+    keyword.onUnmatched(function () {
         var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
         phone
             .incr({
@@ -215,15 +216,25 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         });
         phone = message.phone;
         keyword = new Keyword_1.default(message.body);
+        keyword.onReplyOkay(function () {
+            phone.incr({ total_action: 0 }).save();
+            res.status(400).end();
+            socket_1.io().emit("users:update", phone);
+        });
+        keyword.onReplyThanks(function () {
+            phone.incr({ total_action: 0 }).save();
+            res.status(400).end();
+            socket_1.io().emit("users:update", phone);
+        });
         keyword.onAskReporter(function () {
             var text = printf_1.default(config_1.ON_HELP_REPORTER, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({ total_action: 1 });
+            phone.incr({ total_action: 1 }).save();
             res.send(text);
             socket_1.io().emit("users:update", phone);
         });
         keyword.onAskHelp(function () {
             var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({ total_action: 1 });
+            phone.incr({ total_action: 1 }).save();
             res.send(text);
             socket_1.io().emit("users:update", phone);
         });
@@ -268,7 +279,23 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             res.send(config_1.ON_RESET);
             socket_1.io().emit("users:update", phone);
         });
-        keyword.onUnexisted(function () {
+        keyword.onSearchContent(function (keyword) {
+            var articles = Article_1.default.fetchAll().filter(function (article) {
+                return article.find(keyword);
+            });
+            var total = articles.length;
+            articles = articles
+                .filter(function (article) { return !phone.headlines.includes(article.id); })
+                .map(function (article) { return article.toHeadline(); });
+            var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
+            phone.incr({ total_action: 1 }).markAsSent([], articles).save();
+            articles = __spreadArray([
+                text
+            ], articles.map(function (article) { return article.title + " -" + article.source; })).slice(0, 5);
+            _tasks[phone.number] = articles;
+            res.send("");
+        });
+        keyword.onUnmatched(function () {
             var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
             phone.incr({ total_action: 1 }).save();
             res.send(text);
@@ -324,5 +351,11 @@ router.post("/update", function (req, res) {
     });
     DB_1.default.save(db);
     res.redirect("/articles.html");
+});
+router.get("/indexes", function (req, res) {
+    Article_1.default.update()
+        .then(function (articles) { return Article_1.default.store(articles); })
+        .then(function () { return res.send("OK"); })
+        .catch(function (e) { return res.status(500).send(e.message); });
 });
 exports.default = router;

@@ -20,10 +20,20 @@ function middleware(req, res, next) {
         res.redirect("/update");
         return res.end();
     }
-    if (message.match(/^\.reset$/)) {
-        session.daily.reset();
-        session.hourly.reset();
+    var match = message.match(/^\.reset ?(hourly|daily)?$/);
+    if (match) {
+        switch (match[1] || "") {
+            case "hourly":
+                session.hourly.reset();
+                break;
+            case "daily":
+                session.daily.reset();
+                break;
+            default:
+                session.reset();
+        }
         phone.save();
+        socket_1.io().emit("users:update", phone);
         return res.end();
     }
     if (message.match(/^\.banned$/)) {
@@ -37,7 +47,7 @@ function middleware(req, res, next) {
     if (message.match(/^on$/i) && session.disabled) {
         session.disabled = false;
         phone.incr({ total_action: 1 });
-        res.send("SMS Chatbot ကို ပြန်လည်စတင်လိုက်ပါပြီ။ - nweoo.com");
+        res.send("NweOo SMS Chatbot ကို စတင်အသုံးပြုနိုင်ပါပြီ။");
         phone.save();
         return res.end();
     }
@@ -47,7 +57,8 @@ function middleware(req, res, next) {
     if (message.match(/^off$/i)) {
         session.disabled = true;
         phone.save();
-        res.send("SMS Chatbot ကို ပြန်လည်ဖွင့်လိုပါက ON ဟုပို့ပါ။ - nweoo.com");
+        res.send("NweOo SMS Chatbot ကို ပြန်လည်ဖွင့်လိုပါက ON ဟုပို့ပါ။");
+        socket_1.io().emit("users:update", phone);
         return res.end();
     }
     if (session.daily.isDenied()) {
@@ -56,27 +67,29 @@ function middleware(req, res, next) {
             var minute = Math.round(session.daily.remaining / 60);
             var hour = Math.round(minute / 60);
             if (hour < 1) {
-                response = printf_1.default(config_1.ON_RATE_LIMIT, Config_1.default.get("MOBILE_NUMBER"), "နောက် " + minute + " မိနစ်နေမှ");
+                response = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက် " + minute + " မိနစ်");
             }
             else {
-                response = printf_1.default(config_1.ON_RATE_LIMIT, Config_1.default.get("MOBILE_NUMBER"), "နောက် " + hour + " နာရီနေမှ");
+                response = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက် " + hour + " နာရီ");
             }
             session.daily.notified = true;
             phone.save();
             socket_1.io().emit("users:update", phone);
             return res.send(response);
         }
+        socket_1.io().emit("users:update", phone);
         return res.status(419).end();
     }
     if (session.hourly.isDenied()) {
         if (!session.hourly.notified) {
             var remain = Math.round(session.hourly.remaining / 60);
-            var response = printf_1.default(config_1.ON_RATE_LIMIT, Config_1.default.get("MOBILE_NUMBER"), "နောက် " + remain + " မိနစ်နေမှ");
+            var response = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", Config_1.default.get("MOBILE_NUMBER"), "နောက် " + remain + " မိနစ်");
             session.hourly.notified = true;
             phone.save();
             socket_1.io().emit("users:update", phone);
             return res.send(response);
         }
+        socket_1.io().emit("users:update", phone);
         return res.status(419).end();
     }
     phone.save();

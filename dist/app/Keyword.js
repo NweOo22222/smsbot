@@ -5,8 +5,10 @@ var LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
 var ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
 var USAGE_HELP = [/ကူ(ညီ)?/, /info/i, /help/i];
 var SHOW_INFO = [/info/i];
-var THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
-var REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
+var ASK_REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
+var ANSWER_THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
+var ANSWER_OKAY = [/သတင်း(တွေ)?(ပေး|ပို့)/];
+var SEARCH_CONTENT = [/^(?:find|search) ["'](.+)['"]/i, /^["'](.+)['"]$/];
 var Keyword = (function () {
     function Keyword(text) {
         this.text = text;
@@ -18,26 +20,49 @@ var Keyword = (function () {
         enumerable: false,
         configurable: true
     });
-    Keyword.prototype.onThanks = function (callback) {
+    Keyword.prototype.onReplyThanks = function (callback) {
         var _this = this;
         if (this.sent)
             return;
-        if (THANKS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+        if (ANSWER_THANKS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
         }
     };
-    Keyword.prototype.onUnexisted = function (callback) {
+    Keyword.prototype.onReplyOkay = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        if (ANSWER_OKAY.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+            this.sent = true;
+            callback();
+        }
+    };
+    Keyword.prototype.onUnmatched = function (callback) {
         if (this.sent)
             return;
         this.sent = true;
         callback();
     };
+    Keyword.prototype.onSearchContent = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        var matched = SEARCH_CONTENT.filter(function (keyword) {
+            return _this.text.match(keyword);
+        });
+        matched = matched.pop();
+        if (matched) {
+            matched = this.text.match(matched);
+            this.sent = true;
+            callback(matched[1]);
+        }
+    };
     Keyword.prototype.onAskReporter = function (callback) {
         var _this = this;
         if (this.sent)
             return;
-        if (REPORTER.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+        if (ASK_REPORTER.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
         }
