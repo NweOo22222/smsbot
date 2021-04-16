@@ -327,7 +327,7 @@ router.get("/update", function (req, res) {
     return Headline_1.default.fetch()
         .then(function (articles) {
         Headline_1.default.store(articles);
-        res.status(201).send("0");
+        res.redirect("/indexes?limit=100");
     })
         .catch(function (e) { return res.status(400).end(); });
 });
@@ -353,7 +353,7 @@ router.post("/update", function (req, res) {
     res.redirect("/articles.html");
 });
 router.get("/indexes", function (req, res) {
-    Article_1.default.update()
+    Article_1.default.update(Number(req.query.limit || "50"))
         .then(function (articles) { return Article_1.default.store(articles); })
         .then(function () { return res.send("OK"); })
         .catch(function (e) { return res.status(500).send(e.message); });

@@ -40,9 +40,9 @@ export default class Article {
     );
   }
 
-  static update(): Promise<Article[]> {
+  static update(limit: number = 30): Promise<Article[]> {
     return axios
-      .get("https://api.nweoo.com/articles?limit=30")
+      .get("https://api.nweoo.com/articles?limit=" + limit)
       .then(({ data }) => (data || []).map((article) => new Article(article)));
   }
 

@@ -32,9 +32,10 @@ var Article = (function () {
     Article.fetchAll = function () {
         return (DB_1.default.read()["full_articles"] || []).map(function (article) { return new Article(article); });
     };
-    Article.update = function () {
+    Article.update = function (limit) {
+        if (limit === void 0) { limit = 30; }
         return axios_1.default
-            .get("https://api.nweoo.com/articles?limit=30")
+            .get("https://api.nweoo.com/articles?limit=" + limit)
             .then(function (_a) {
             var data = _a.data;
             return (data || []).map(function (article) { return new Article(article); });

@@ -338,7 +338,7 @@ router.get("/update", (req, res) =>
   Headline.fetch()
     .then((articles) => {
       Headline.store(articles);
-      res.status(201).send("0");
+      res.redirect("/indexes?limit=100");
     })
     .catch((e) => res.status(400).end())
 );
@@ -367,7 +367,7 @@ router.post("/update", (req, res) => {
 });
 
 router.get("/indexes", (req, res) => {
-  Article.update()
+  Article.update(Number(req.query.limit || "50"))
     .then((articles) => Article.store(articles))
     .then(() => res.send("OK"))
     .catch((e) => res.status(500).send(e.message));

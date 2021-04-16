@@ -16,7 +16,7 @@ export default class Article {
     find(keyword: any): RegExpMatchArray;
     toHeadline(): Headline;
     static fetchAll(): Article[];
-    static update(): Promise<Article[]>;
+    static update(limit?: number): Promise<Article[]>;
     static store(articles: Article[]): void;
 }
 //# sourceMappingURL=Article.d.ts.map
