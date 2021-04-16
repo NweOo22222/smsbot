@@ -7,11 +7,11 @@ export default class Headline {
   public source: string;
   public datetime: Date;
 
-  constructor({ id, source, timestamp, title }) {
+  constructor({ id, source, datetime, timestamp, title }) {
     this.id = id;
     this.title = title;
     this.source = source;
-    this.datetime = new Date(parseInt(timestamp) || Date.now());
+    this.datetime = new Date(datetime || parseInt(timestamp) || Date.now());
   }
 
   static find(id) {
@@ -41,7 +41,7 @@ export default class Headline {
   static latest(limit = null, diff = []): Headline[] {
     const articles = (DB.read()["articles"] || [])
       .map((article) => new Headline(article))
-      .sort((a, b) => b.datetime > a.datetime)
+      .sort((a, b) => b.datetime - a.datetime)
       .filter((headline) => !diff.includes(headline["id"]));
     if (limit === null) {
       return articles;

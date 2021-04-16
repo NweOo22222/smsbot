@@ -217,17 +217,13 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         keyword = new Keyword_1.default(message.body);
         keyword.onAskReporter(function () {
             var text = printf_1.default(config_1.ON_HELP_REPORTER, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({
-                total_action: 1,
-            });
+            phone.incr({ total_action: 1 });
             res.send(text);
             socket_1.io().emit("users:update", phone);
         });
         keyword.onAskHelp(function () {
             var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({
-                total_action: 1,
-            });
+            phone.incr({ total_action: 1 });
             res.send(text);
             socket_1.io().emit("users:update", phone);
         });
@@ -235,68 +231,46 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             var actions = [];
             var highlights = Highlight_1.default.get(5, new Date(), phone.highlights).reverse();
             var latest = Headline_1.default.latest(5 - highlights.length, phone.headlines).reverse();
-            var remain = Headline_1.default.latest(0, phone.headlines).length;
+            var remain = Headline_1.default.latest(null, phone.headlines).length;
             var result = __spreadArray(__spreadArray([], highlights), latest);
             if (result.length) {
                 actions.push.apply(actions, result.map(function (_a) {
-                    var title = _a.title, datetime = _a.datetime;
-                    return title +
+                    var title = _a.title, datetime = _a.datetime, source = _a.source;
+                    return title.split(" ").join("") +
+                        " -" +
+                        source +
                         " " +
                         datetime.getDate() +
                         "/" +
                         Number(datetime.getMonth() + 1);
                 }));
-                if (remain > 0 && phone.session.hourly.total_action <= 1) {
+                if (remain && phone.session.hourly.total_action < 1) {
                     actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, remain - latest.length));
                 }
                 _tasks[message.phone.number] = actions;
-                phone
-                    .markAsSent(highlights, latest)
-                    .incr({
-                    total_action: 1,
-                })
-                    .save();
+                phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
                 res.end();
             }
             else {
                 var text = printf_1.default(config_1.ON_HEADLINES_NULL, Config_1.default.get("MOBILE_NUMBER"));
-                phone
-                    .markAsSent(highlights, latest)
-                    .incr({
-                    total_action: 1,
-                })
-                    .save();
+                phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
                 res.send(text);
             }
             socket_1.io().emit("users:update", phone);
         });
         keyword.onAskCount(function () {
-            var remain = Headline_1.default.latest(0, phone.headlines).length;
-            var text = printf_1.default(config_1.ON_REMAINING_COUNT, remain);
-            phone
-                .incr({
-                total_action: 1,
-            })
-                .save();
+            var text = printf_1.default(config_1.ON_REMAINING_COUNT, Headline_1.default.latest(null, phone.headlines).length);
+            phone.incr({ total_action: 0 }).save();
             res.send(text);
         });
         keyword.onAskReset(function () {
-            phone
-                .reset()
-                .incr({
-                total_action: 1,
-            })
-                .save();
+            phone.reset().incr({ total_action: 1 }).save();
             res.send(config_1.ON_RESET);
             socket_1.io().emit("users:update", phone);
         });
         keyword.onUnexisted(function () {
             var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
-            phone
-                .incr({
-                total_action: 1,
-            })
-                .save();
+            phone.incr({ total_action: 1 }).save();
             res.send(text);
             socket_1.io().emit("users:update", phone);
         });
@@ -316,11 +290,7 @@ router.get("/action", function (req, res) { return __awaiter(void 0, void 0, voi
             _tasks[number] = undefined;
             delete _tasks[number];
         }
-        phone
-            .incr({
-            total_action: 0,
-        })
-            .save();
+        phone.incr({ total_action: 0 }).save();
         res.send(text);
         socket_1.io().emit("users:update", phone);
         return [2];
@@ -343,9 +313,10 @@ router.post("/update", function (req, res) {
     if (!("highlights" in db))
         db["highlights"] = [];
     var highlights = db["highlights"];
+    var i = 0;
     title.split("\n").forEach(function (title) {
         highlights.push(new Highlight_1.default({
-            id: highlights.length + 1,
+            id: (Date.now() + i++).toString(),
             title: title,
             source: source,
             timestamp: timestamp,

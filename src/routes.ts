@@ -215,18 +215,14 @@ router.get("/call", middleware, async (req, res) => {
 
   keyword.onAskReporter(() => {
     let text = printf(ON_HELP_REPORTER, Config.get("MOBILE_NUMBER"));
-    phone.incr({
-      total_action: 1,
-    });
+    phone.incr({ total_action: 1 });
     res.send(text);
     io().emit("users:update", phone);
   });
 
   keyword.onAskHelp(() => {
     let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
-    phone.incr({
-      total_action: 1,
-    });
+    phone.incr({ total_action: 1 });
     res.send(text);
     io().emit("users:update", phone);
   });
@@ -238,72 +234,53 @@ router.get("/call", middleware, async (req, res) => {
       5 - highlights.length,
       phone.headlines
     ).reverse();
-    const remain = Headline.latest(0, phone.headlines).length;
+    const remain = Headline.latest(null, phone.headlines).length;
     const result = [...highlights, ...latest];
     if (result.length) {
       actions.push(
         ...result.map(
-          ({ title, datetime }) =>
-            title +
+          ({ title, datetime, source }) =>
+            title.split(" ").join("") +
+            " -" +
+            source +
             " " +
             datetime.getDate() +
             "/" +
             Number(datetime.getMonth() + 1)
         )
       );
-      if (remain > 0 && phone.session.hourly.total_action <= 1) {
+      if (remain && phone.session.hourly.total_action < 1) {
         actions.push(printf(ON_HEADLINES_NEXT, remain - latest.length));
       }
       _tasks[message.phone.number] = actions;
-      phone
-        .markAsSent(highlights, latest)
-        .incr({
-          total_action: 1,
-        })
-        .save();
+      phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
       res.end();
     } else {
       let text = printf(ON_HEADLINES_NULL, Config.get("MOBILE_NUMBER"));
-      phone
-        .markAsSent(highlights, latest)
-        .incr({
-          total_action: 1,
-        })
-        .save();
+      phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
       res.send(text);
     }
     io().emit("users:update", phone);
   });
 
   keyword.onAskCount(() => {
-    let remain = Headline.latest(0, phone.headlines).length;
-    let text = printf(ON_REMAINING_COUNT, remain);
-    phone
-      .incr({
-        total_action: 1,
-      })
-      .save();
+    let text = printf(
+      ON_REMAINING_COUNT,
+      Headline.latest(null, phone.headlines).length
+    );
+    phone.incr({ total_action: 0 }).save();
     res.send(text);
   });
 
   keyword.onAskReset(() => {
-    phone
-      .reset()
-      .incr({
-        total_action: 1,
-      })
-      .save();
+    phone.reset().incr({ total_action: 1 }).save();
     res.send(ON_RESET);
     io().emit("users:update", phone);
   });
 
   keyword.onUnexisted(() => {
     let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
-    phone
-      .incr({
-        total_action: 1,
-      })
-      .save();
+    phone.incr({ total_action: 1 }).save();
     res.send(text);
     io().emit("users:update", phone);
   });
@@ -321,11 +298,7 @@ router.get("/action", async (req, res) => {
     _tasks[number] = undefined;
     delete _tasks[number];
   }
-  phone
-    .incr({
-      total_action: 0,
-    })
-    .save();
+  phone.incr({ total_action: 0 }).save();
   res.send(text);
   io().emit("users:update", phone);
 });
@@ -347,10 +320,11 @@ router.post("/update", (req, res) => {
   const db = DB.read();
   if (!("highlights" in db)) db["highlights"] = [];
   const highlights = db["highlights"];
+  let i = 0;
   title.split("\n").forEach((title) => {
     highlights.push(
       new Highlight({
-        id: highlights.length + 1,
+        id: (Date.now() + i++).toString(),
         title,
         source,
         timestamp,

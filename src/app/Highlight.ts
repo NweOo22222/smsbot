@@ -1,16 +1,26 @@
 import DB from "./DB";
 
+interface NewsArticle {
+  id: string;
+  title: string;
+  source: string;
+  datetime?: Date;
+  timestamp?: number;
+}
+
 export default class Highlight {
   public id: string;
   public title: string;
   public source: string;
   public datetime: Date;
 
-  constructor({ id, source, timestamp, title }) {
-    this.id = id;
-    this.title = title;
-    this.source = source;
-    this.datetime = new Date(parseInt(timestamp) || Date.now());
+  constructor(highlight: NewsArticle) {
+    this.id = highlight.id.toString();
+    this.title = highlight.title;
+    this.source = highlight.source;
+    this.datetime = new Date(
+      highlight.datetime || Number(highlight.timestamp) || Date.now()
+    );
   }
 
   static find(id) {

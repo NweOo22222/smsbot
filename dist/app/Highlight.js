@@ -5,12 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var DB_1 = __importDefault(require("./DB"));
 var Highlight = (function () {
-    function Highlight(_a) {
-        var id = _a.id, source = _a.source, timestamp = _a.timestamp, title = _a.title;
-        this.id = id;
-        this.title = title;
-        this.source = source;
-        this.datetime = new Date(parseInt(timestamp) || Date.now());
+    function Highlight(highlight) {
+        this.id = highlight.id.toString();
+        this.title = highlight.title;
+        this.source = highlight.source;
+        this.datetime = new Date(highlight.datetime || Number(highlight.timestamp) || Date.now());
     }
     Highlight.find = function (id) {
         return DB_1.default.read()["highlights"].find(function (highlight) { return highlight["id"] == id; });

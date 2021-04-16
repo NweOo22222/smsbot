@@ -3,9 +3,10 @@ export default class Headline {
     title: string;
     source: string;
     datetime: Date;
-    constructor({ id, source, timestamp, title }: {
+    constructor({ id, source, datetime, timestamp, title }: {
         id: any;
         source: any;
+        datetime: any;
         timestamp: any;
         title: any;
     });
