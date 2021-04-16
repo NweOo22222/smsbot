@@ -1,43 +1,30 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var settings_1 = require("../settings");
+var DailySession_1 = __importDefault(require("./DailySession"));
+var HourlySession_1 = __importDefault(require("./HourlySession"));
 var Session = (function () {
-    function Session(_a) {
-        var expired = _a.expired, total_action = _a.total_action;
-        this.expired = new Date(expired ? expired : Date.now() + settings_1.PER_SESSION);
-        this.total_action = total_action || 0;
+    function Session(session) {
+        this.daily = new DailySession_1.default(session.daily || {});
+        this.hourly = new HourlySession_1.default(session.hourly || {});
+        this.banned = Boolean(session.banned);
+        this.disabled = Boolean(session.disabled);
     }
+    Session.prototype.extend = function () {
+        this.daily.extend();
+        this.hourly.extend();
+    };
+    Session.prototype.reset = function () {
+        this.daily.reset();
+        this.hourly.reset();
+    };
     Session.prototype.incr = function (action) {
-        this.total_action += action.total_action;
+        this.daily.incr(action);
+        this.hourly.incr(action);
         return this;
     };
-    Session.prototype.restart = function () {
-        this.expired = new Date(Date.now() + settings_1.PER_SESSION);
-        this.total_action = 0;
-    };
-    Session.prototype.isExpired = function () {
-        return new Date() > this.expired;
-    };
-    Session.prototype.isDenied = function () {
-        return this.exceedTotalAction;
-    };
-    Session.prototype.isReachedLimit = function () {
-        return this.total_action == settings_1.MAX_TOTAL_ACTION;
-    };
-    Object.defineProperty(Session.prototype, "exceedTotalAction", {
-        get: function () {
-            return this.total_action > settings_1.MAX_TOTAL_ACTION;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Session.prototype, "remaining", {
-        get: function () {
-            return Math.round((this.expired.getTime() - Date.now()) / 1000);
-        },
-        enumerable: false,
-        configurable: true
-    });
     return Session;
 }());
 exports.default = Session;

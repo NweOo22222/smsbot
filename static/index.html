@@ -35,6 +35,9 @@
 
       <section>
         <h2>Users</h2>
+        <select v-model="showUsers" class="form-control form-control-sm" style="width: 40px;">
+          <option value="15" selected>15</option>
+        </select>
         <div class="table-responsive">
           <table class="table table-hover text-center">
             <thead>
@@ -85,6 +88,7 @@
         disabled: false,
         message: null,
         error: null,
+        showUsers: 15,
       },
       watch: {
         error(value) {

@@ -1,9 +1,7 @@
-const RESET_COMMAND = [/^\.reset/];
-const UPDATE_COMMAND = [/^\.update/];
 const RESET_SENT = [/ပြန်စ/, /^reset/i];
 const LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
 const ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
-const USAGE_HELP = [/ကူ(ညီ)?/, /help/i];
+const USAGE_HELP = [/ကူ(ညီ)?/, /info/i, /help/i];
 const SHOW_INFO = [/info/i];
 
 export default class Keyword {
@@ -50,22 +48,6 @@ export default class Keyword {
   onAskInfo(callback: Function) {
     if (this.sent) return;
     if (SHOW_INFO.filter((keyword) => this.meta.match(keyword)).length) {
-      this.sent = true;
-      callback();
-    }
-  }
-
-  onReset(callback: Function) {
-    if (this.sent) return;
-    if (RESET_COMMAND.filter((keyword) => this.meta.match(keyword)).length) {
-      this.sent = true;
-      callback();
-    }
-  }
-
-  onUpdate(callback: Function) {
-    if (this.sent) return;
-    if (UPDATE_COMMAND.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
     }

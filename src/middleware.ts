@@ -3,7 +3,7 @@ import Phone from "./app/Phone";
 import { ON_RATE_LIMIT } from "./config";
 import printf from "printf";
 import { io } from "./socket";
-import { MOBILE_NUMBER } from "./settings";
+import Config from "./app/Config";
 
 export default function middleware(
   req: Request,
@@ -16,11 +16,11 @@ export default function middleware(
   const phone = new Phone(req["phone"]);
   const message = decodeURIComponent(String(req.query["message"] || ""));
   const session = phone.session;
-  const reset = (): boolean => {
-    session.restart();
+  const reset = () => {
+    session.reset();
     phone.save();
-    return true;
   };
+  session.extend();
   if (message.match(/\.update/)) {
     res.redirect("/update");
     return res.end();
@@ -29,26 +29,46 @@ export default function middleware(
     reset();
     return res.end();
   }
-  if (session.isExpired()) {
-    reset();
-    return next();
-  }
-  if (session.isDenied()) {
+  if (session.daily.isDenied()) {
+    if (!session.daily.notified) {
+      let response;
+      let minute = Math.round(session.daily.remaining / 60);
+      let hour = Math.round(minute / 60);
+
+      if (hour < 1) {
+        response = printf(
+          ON_RATE_LIMIT,
+          Config.get("MOBILE_NUMBER"),
+          "နောက် " + minute + " မိနစ်နေမှ"
+        );
+      } else {
+        response = printf(
+          ON_RATE_LIMIT,
+          Config.get("MOBILE_NUMBER"),
+          "နောက် " + hour + " နာရီနေမှ"
+        );
+      }
+      session.daily.notified = true;
+      phone.save();
+      io().emit("users:update", phone);
+      return res.send(response);
+    }
     return res.status(419).end();
   }
-  if (session.isReachedLimit()) {
-    let remain = Math.round(session.remaining / 60);
-    let response = printf(
-      ON_RATE_LIMIT,
-      MOBILE_NUMBER,
-      "နောက် " + remain + " မိနစ်နေမှ"
-    );
-    phone.incr({
-      total_action: 1,
-    });
-    phone.save();
-    io().emit("users:update", { id: phone.id, type: "limited" });
-    return res.send(response);
+  if (session.hourly.isDenied()) {
+    if (!session.hourly.notified) {
+      let remain = Math.round(session.hourly.remaining / 60);
+      let response = printf(
+        ON_RATE_LIMIT,
+        Config.get("MOBILE_NUMBER"),
+        "နောက် " + remain + " မိနစ်နေမှ"
+      );
+      session.hourly.notified = true;
+      phone.save();
+      io().emit("users:update", phone);
+      return res.send(response);
+    }
+    return res.status(419).end();
   }
   next();
 }

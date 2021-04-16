@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Credit_1 = __importDefault(require("./Credit"));
 var DB_1 = __importDefault(require("./DB"));
 var Session_1 = __importDefault(require("./Session"));
 var Phone = (function () {
@@ -20,11 +19,9 @@ var Phone = (function () {
         var phone = i === -1 ? {} : clients[i];
         this.session = new Session_1.default(phone.session || {});
         this.first_date = new Date(phone.first_date || Date.now());
-        this.last_date = new Date(phone.last_date || Date.now());
         this.total_count = phone.total_count || 0;
         this.headlines = phone.headlines || [];
         this.highlights = phone.highlights || [];
-        this.credit = new Credit_1.default(phone.credit || {});
     }
     Phone.prototype.incr = function (action) {
         this.session.incr(action);

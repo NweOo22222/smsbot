@@ -44,7 +44,11 @@ api.get("/version", (req, res) => {
 });
 
 api.get("/settings", (req, res) => {
-  res.json(Config.read());
+  res.json(Config.getAll());
+});
+
+api.get("/online", (req, res) => {
+  res.send(Boolean(Config.get("USE_ONLINE")) ? "1" : "0");
 });
 
 api.post("/settings", (req, res) => {

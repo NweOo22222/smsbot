@@ -1,11 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var RESET_COMMAND = [/^\.reset/];
-var UPDATE_COMMAND = [/^\.update/];
 var RESET_SENT = [/ပြန်စ/, /^reset/i];
 var LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
 var ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
-var USAGE_HELP = [/ကူ(ညီ)?/, /help/i];
+var USAGE_HELP = [/ကူ(ညီ)?/, /info/i, /help/i];
 var SHOW_INFO = [/info/i];
 var Keyword = (function () {
     function Keyword(text) {
@@ -59,24 +57,6 @@ var Keyword = (function () {
         if (this.sent)
             return;
         if (SHOW_INFO.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            this.sent = true;
-            callback();
-        }
-    };
-    Keyword.prototype.onReset = function (callback) {
-        var _this = this;
-        if (this.sent)
-            return;
-        if (RESET_COMMAND.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            this.sent = true;
-            callback();
-        }
-    };
-    Keyword.prototype.onUpdate = function (callback) {
-        var _this = this;
-        if (this.sent)
-            return;
-        if (UPDATE_COMMAND.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
         }

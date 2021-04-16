@@ -54,6 +54,11 @@
         message: '',
         messages: []
       },
+      watch: {
+        phone(value) {
+          localStorage.setItem('test_phone_number', value);
+        }
+      },
       methods: {
         send() {
           this.chat()
@@ -66,7 +71,7 @@
             bot: false,
           });
           return axios
-            .get(`/call?operator=Telenor&phone=${this.phone}&message=${encodeURIComponent(this.message)}`)
+            .get(`/online?operator=Telenor&phone=${this.phone}&message=${encodeURIComponent(this.message)}`)
             .then(({ data }) => this.reply(data));
         },
         async reply(response) {
@@ -96,6 +101,12 @@
           })
         }
       },
+      beforeMount() {
+        let testPhoneNumber = localStorage.getItem('test_phone_number');
+        if (testPhoneNumber) {
+          this.phone = testPhoneNumber;
+        }
+      }
     });
 
     function sleep(sec = 1) {

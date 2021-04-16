@@ -8,7 +8,6 @@ export default class Phone {
     id: string;
     total_count: number;
     first_date: Date;
-    last_date: Date;
     headlines: string[];
     highlights: string[];
     credit: Credit;

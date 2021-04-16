@@ -41,7 +41,10 @@ api.get("/version", function (req, res) {
     res.json(require("../package.json")["version"]);
 });
 api.get("/settings", function (req, res) {
-    res.json(Config_1.default.read());
+    res.json(Config_1.default.getAll());
+});
+api.get("/online", function (req, res) {
+    res.send(Boolean(Config_1.default.get("USE_ONLINE")));
 });
 api.post("/settings", function (req, res) {
     var db = Config_1.default.read();

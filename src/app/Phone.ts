@@ -10,7 +10,6 @@ export default class Phone {
   public id: string;
   public total_count: number;
   public first_date: Date;
-  public last_date: Date;
   public headlines: string[];
   public highlights: string[];
   public credit: Credit;
@@ -25,11 +24,9 @@ export default class Phone {
     const phone = i === -1 ? {} : clients[i];
     this.session = new Session(phone.session || {});
     this.first_date = new Date(phone.first_date || Date.now());
-    this.last_date = new Date(phone.last_date || Date.now());
     this.total_count = phone.total_count || 0;
     this.headlines = phone.headlines || [];
     this.highlights = phone.highlights || [];
-    this.credit = new Credit(phone.credit || {});
   }
 
   incr(action: UserAction) {
