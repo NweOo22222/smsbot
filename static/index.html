@@ -34,17 +34,75 @@
       </section>
 
       <section>
-        <h2>Users</h2>
-        <select v-model="showUsers" class="form-control form-control-sm" style="width: 80px;">
-          <option value="15" selected>15</option>
-          <option value="20" selected>20</option>
-          <option value="25" selected>25</option>
-          <option value="30" selected>30</option>
-          <option value="50" selected>50</option>
-          <option value="100" selected>100</option>
-          <option value="100" selected>500</option>
-        </select>
-        <div class="table-responsive">
+        <div class="row text-center">
+          <div class="col-3">
+            <div class="card">
+              <div class="card-header">
+                Users
+              </div>
+              <div class="card-body">
+                <h4>{{ total_users }}</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="card">
+              <div class="card-header">
+                Actions
+              </div>
+              <div class="card-body">
+                <h4>{{ total_actions }}</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="card">
+              <div class="card-header">
+                Banned
+              </div>
+              <div class="card-body">
+                <h4>{{ total_banned }}</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-2">
+            <div class="card">
+              <div class="card-header">
+                Disabled
+              </div>
+              <div class="card-body">
+                <h4>{{ total_disabled }}</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-1">
+            <select v-model="showUsers" class="form-control form-control-sm" style="width: 60px;">
+              <option value="15" selected>15</option>
+              <option value="20" selected>20</option>
+              <option value="25" selected>25</option>
+              <option value="30" selected>30</option>
+              <option value="50" selected>50</option>
+            </select>
+          </div>
+          <div class="col-12 my-4">
+            <div class="card">
+              <div class="card-header">
+                <h6>Logs</h6>
+              </div>
+              <div class="card-body">
+                <template>
+                  <ul class="list-group class=" mr=24g">
+                    <div class=" list-item-group text-left" v-for="(message, i) in messages" :key="i">
+                      <li class="mr-2"><code>{{ message }}</code></li>
+                    </div>
+                  </ul>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-4">
           <table class="table table-hover text-center">
             <thead>
               <tr>
@@ -69,8 +127,8 @@
                 <td>{{ user.session.hourly.total_action }} / 5</td>
                 <td>{{ user.session.daily.total_action }} / 10</td>
                 <td>
-                  <p>{{ formatDate(user.session.hourly.expired) }}</p>
-                  <p>{{ formatDate(user.session.daily.expired) }}</p>
+                  <p>{{ formatDate(user.session.hourly.expired) }}/H</p>
+                  <p>{{ formatDate(user.session.daily.expired) }}/D</p>
                 </td>
                 <td>
                   <button class="btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
@@ -103,11 +161,16 @@
       el: "main",
       data: {
         users: [],
+        messages: [],
         loading: false,
         disabled: false,
         message: null,
         error: null,
         showUsers: 15,
+        total_actions: 0,
+        total_users: 0,
+        total_banned: 0,
+        total_disabled: 0,
       },
       watch: {
         error(value) {
@@ -123,14 +186,20 @@
         }
       },
       methods: {
+        fetchTotal() {
+          return axios.get('/api/total').then(({ data: { users, actions, bans, disables } }) => {
+            this.total_users = users;
+            this.total_actions = actions;
+            this.total_banned = bans;
+            this.total_disabled = disables;
+          })
+        },
         toggleChatbot({ number, session }) {
           let message = session.disabled ? 'ON' : 'OFF';
-          return axios('/call?phone=' + number + '&message=' + message)
-            .finally(() => this.fetchUsers());
+          return axios('/call?phone=' + number + '&message=' + message);
         },
         toggleBlock(number) {
-          return axios('/call?phone=' + number + '&message=.banned')
-            .finally(() => this.fetchUsers());
+          return axios('/call?phone=' + number + '&message=.banned');
         },
         reachedDailyLimit(user) {
           return user.session.daily.total_action >= 10;
@@ -142,9 +211,9 @@
           let dt = new Date(expired);
           let [d, m, h, i, y] = [dt.getDate(), dt.getMonth() + 1, dt.getHours(), dt.getMinutes(), dt.getFullYear()];
           let A = 'မနက်';
-          if (m > 11 && m < 15) A = 'နေ့လည်';
-          if (m > 11 && m < 15) A = 'ညနေ';
-          if (m > 17) A = 'ည';
+          if (h > 11 && h < 15) A = 'နေ့လည်';
+          if (h > 11 && h < 15) A = 'ညနေ';
+          if (h > 17) A = 'ည';
           if (m < 10) m = '0' + m;
           if (h > 12) h -= 12;
           if (h < 10) h = '0' + h;
@@ -198,15 +267,25 @@
         }
       },
       beforeMount() {
+        this.fetchTotal();
         this.fetchUsers();
+
         socket.on('users:update', (phone) => {
-          this.fetchUsers().then(() => {
-            this.users = this.users.filter((user) => user.id != phone.id);
-            this.users.unshift(phone);
-            phone.flash = true;
-            setTimeout(() => phone.flash = false, 600);
-          })
+          console.log(phone);
+          this.users = this.users.filter((user) => user.id != phone.id);
+          this.users.unshift(phone);
+          phone.flash = true;
+          setTimeout(() => phone.flash = false, 600);
         });
+
+        socket.on('messages:update', (message) => {
+          this.messages = this.messages.slice(
+            this.messages.length > 4
+              ? this.messages.length - 5
+              : 0, this.messages.length);
+          this.messages.unshift(message);
+          this.fetchTotal();
+        })
       },
     });
   </script>

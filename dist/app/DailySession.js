@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var DAILY_SESSION = 12 * 3600 * 1000;
-var MAX_DAILY_ACTION = 10;
+var MAX_DAILY_ACTION = 12;
 var DailySession = (function () {
     function DailySession(action) {
-        this.expired = new Date(action.expired ? action.expired : Date.now() + DAILY_SESSION);
+        this.expired = new Date(action.expired || Date.now() + DAILY_SESSION);
         this.total_action = action.total_action || 0;
         this.notified = Boolean(action.notified);
     }

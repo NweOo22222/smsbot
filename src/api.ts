@@ -39,6 +39,25 @@ api.get("/version", (req, res) => {
   res.json(require("../package.json")["version"]);
 });
 
+api.get("/total", (req, res) => {
+  const db = DB.read();
+  let actions = 0;
+  let bans = 0;
+  let disables = 0;
+  // let disabled = 0;
+  db["phone"].map((phone) => {
+    actions += parseInt(phone.total_count) || 0;
+    bans += Boolean(phone.session.banned) ? 1 : 0;
+    disables += Boolean(phone.session.disabled) ? 1 : 0;
+  });
+  res.json({
+    users: db["phone"].length,
+    actions,
+    disables,
+    bans,
+  });
+});
+
 api.get("/settings", (req, res) => {
   res.json(Config.getAll());
 });

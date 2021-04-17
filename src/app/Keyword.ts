@@ -7,6 +7,8 @@ const ASK_REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
 const ANSWER_THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
 const ANSWER_OKAY = [/သတင်း(တွေ)?(ပေး|ပို့)/];
 const SEARCH_CONTENT = [/^(?:find|search) ["'](.+)['"]/i, /^["'](.+)['"]$/];
+const IGNORE_KEYWORDS = [/nweoo\.com/, /(0|\+95)9758035929/];
+const COMMON_MISTAKES = [];
 
 export default class Keyword {
   protected sent: boolean;
@@ -15,6 +17,14 @@ export default class Keyword {
 
   get meta(): string {
     return this.text.substr(0, 64);
+  }
+
+  onIgnore(callback: Function) {
+    if (this.sent) return;
+    if (IGNORE_KEYWORDS.filter((keyword) => this.meta.match(keyword)).length) {
+      this.sent = true;
+      callback();
+    }
   }
 
   onReplyThanks(callback: Function) {
@@ -28,6 +38,14 @@ export default class Keyword {
   onReplyOkay(callback: Function) {
     if (this.sent) return;
     if (ANSWER_OKAY.filter((keyword) => this.meta.match(keyword)).length) {
+      this.sent = true;
+      callback();
+    }
+  }
+
+  onCommonMistake(callback: Function) {
+    if (this.sent) return;
+    if (COMMON_MISTAKES.filter((keyword) => this.meta.match(keyword)).length) {
       this.sent = true;
       callback();
     }

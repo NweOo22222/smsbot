@@ -9,6 +9,8 @@ var ASK_REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
 var ANSWER_THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
 var ANSWER_OKAY = [/သတင်း(တွေ)?(ပေး|ပို့)/];
 var SEARCH_CONTENT = [/^(?:find|search) ["'](.+)['"]/i, /^["'](.+)['"]$/];
+var IGNORE_KEYWORDS = [/nweoo\.com/, /(0|\+95)9758035929/];
+var COMMON_MISTAKES = [];
 var Keyword = (function () {
     function Keyword(text) {
         this.text = text;
@@ -20,6 +22,15 @@ var Keyword = (function () {
         enumerable: false,
         configurable: true
     });
+    Keyword.prototype.onIgnore = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        if (IGNORE_KEYWORDS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+            this.sent = true;
+            callback();
+        }
+    };
     Keyword.prototype.onReplyThanks = function (callback) {
         var _this = this;
         if (this.sent)
@@ -34,6 +45,15 @@ var Keyword = (function () {
         if (this.sent)
             return;
         if (ANSWER_OKAY.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+            this.sent = true;
+            callback();
+        }
+    };
+    Keyword.prototype.onCommonMistake = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        if (COMMON_MISTAKES.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
         }
