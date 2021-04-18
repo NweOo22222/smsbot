@@ -16,6 +16,9 @@ export default class Phone {
     read_count: number;
     read_reset: Date;
     constructor(number: string);
+    extend(): this;
+    resetReadLimit(): void;
+    readExpired(): boolean;
     incr(action: UserAction): this;
     markAsSent(highlights: Highlight[], headlines: Headline[]): this;
     reset(): this;

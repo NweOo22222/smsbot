@@ -6,11 +6,8 @@ var ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပ�
 var USAGE_HELP = [/ကူညီ/, /help/i];
 var SHOW_INFO = [/info/i];
 var SEARCH_CONTENT = [/^["'](.+)['"]$/];
-var IGNORE_KEYWORDS = [/nweoo\.com/i, /(0|\+95)9758035929/];
 var ASK_REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
-var ANSWER_OKAY = [/ok/i];
-var ANSWER_THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
-var INTRODUCION = [
+var COMMON_MISTAKES = [
     /^hi/i,
     /^hello/i,
     /^mornee/i,
@@ -18,11 +15,14 @@ var INTRODUCION = [
     /^မင်္ဂလာ/,
     /^ဟယ်လို/,
     /^မောနင်း/,
+    /nweoo\.com/i,
+    /(0|\+95)9758035929/,
+    /th(?:ank|z|x)/i,
+    /ကျေးဇူး/,
+    /ok/i,
+    /ဟုတ်/,
 ];
-var READ_ARTICLE = [
-    /^read [\{\<\[\('"]?(\d+)["'\)\]\>\}]?/i,
-    /^[\{\<\[\('"]?(\d{5,7})["'\)\]\>\}]?/,
-];
+var READ_ARTICLE = [/^read [\{\<\[\('"]?(.+)["'\)\]\>\}]?$/i];
 var Keyword = (function () {
     function Keyword(text) {
         this.text = text;
@@ -34,38 +34,11 @@ var Keyword = (function () {
         enumerable: false,
         configurable: true
     });
-    Keyword.prototype.onIgnore = function (callback) {
-        var _this = this;
-        if (this.sent)
-            return;
-        if (IGNORE_KEYWORDS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            this.sent = true;
-            callback();
-        }
-    };
-    Keyword.prototype.onReplyThanks = function (callback) {
-        var _this = this;
-        if (this.sent)
-            return;
-        if (ANSWER_THANKS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            this.sent = true;
-            callback();
-        }
-    };
-    Keyword.prototype.onReplyOkay = function (callback) {
-        var _this = this;
-        if (this.sent)
-            return;
-        if (ANSWER_OKAY.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            this.sent = true;
-            callback();
-        }
-    };
     Keyword.prototype.onCommonMistake = function (callback) {
         var _this = this;
         if (this.sent)
             return;
-        if (INTRODUCION.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+        if (COMMON_MISTAKES.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
         }

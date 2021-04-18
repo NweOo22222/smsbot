@@ -29,10 +29,28 @@ export default class Phone {
     this.total_count = phone.total_count || 0;
     this.headlines = phone.headlines || [];
     this.highlights = phone.highlights || [];
+
     this.max_limit = phone.max_limit || 0;
-    this.read_count = phone.read_count || this.max_limit;
+    if (this.max_limit) {
+      this.read_reset = new Date(phone.read_reset || Date.now() + 2400 * 3600);
+      this.read_count = phone.read_count || 0;
+      this.premium = Boolean(this.read_count);
+    }
+  }
+
+  extend() {
+    this.readExpired() && this.resetReadLimit();
+    return this;
+  }
+
+  resetReadLimit() {
+    this.read_reset = new Date(Date.now() + 2400 * 3600);
+    this.read_count = this.max_limit;
     this.premium = Boolean(this.read_count);
-    this.read_reset = new Date(phone.read_reset || Date.now() + 2400 * 3600);
+  }
+
+  readExpired() {
+    return this.read_reset && Date.now() > this.read_reset.getTime();
   }
 
   incr(action: UserAction) {

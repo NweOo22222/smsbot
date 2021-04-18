@@ -34,40 +34,44 @@ router.get("/call", middleware, async (req, res) => {
   const phone = message.phone;
   const keyword = new Keyword(message.body);
 
-  keyword.onReplyOkay(() => {
-    phone.incr({ total_action: 0 }).save();
-    res.status(400).end();
-    io().emit("users:update", phone);
-  });
-
-  keyword.onReplyThanks(() => {
-    phone.incr({ total_action: 0 }).save();
-    res.status(400).end();
-    io().emit("users:update", phone);
-  });
-
-  keyword.onIgnore(() => {
-    phone.incr({ total_action: 0 }).save();
-    res.status(400).end();
-    io().emit("users:update", phone);
-  });
+  phone.extend();
 
   keyword.onCommonMistake(() => {
-    //
+    phone.incr({ total_action: 0.5 }).save();
+    res.status(400).end();
   });
 
-  keyword.onAskReporter(() => {
-    let text = printf(ON_HELP_REPORTER, Config.get("MOBILE_NUMBER"));
-    phone.incr({ total_action: 1 }).save();
+  keyword.onAskInfo(() => {
+    let da = phone.session.daily.total_action;
+    let dc = phone.session.daily.character_count;
+    let ha = phone.session.hourly.total_action;
+    let hc = phone.session.hourly.character_count;
+    let dm = Math.round(phone.session.daily.remaining / 60);
+    let dh = Math.round(dm / 60);
+    let dr = dh < 1 ? dm + " မိနစ်" : dh + " နာရီ";
+    let hm = Math.round(phone.session.hourly.remaining / 60);
+    let hr = hm + " မိနစ်";
+    let text = phone.session.unlimited
+      ? "သင့်ဖုန်းနံပါတ်ကို SMS Limit သတ်မှတ်ထားခြင်းမရှိပါ။"
+      : printf(
+          "SMS Limit မပြည့်ရန် %sအတွင်း %d ကြိမ်နှင့် %sအတွင်း %d ကြိမ်ပို့နိုင်ပါတယ်။",
+          hr,
+          phone.session.hourly.actions,
+          dr,
+          phone.session.daily.actions
+        );
+    if (phone.premium) {
+      text += " [PREMIUM]";
+    }
+    text += " - nweoo.com";
+    phone.incr({ total_action: 0.5, character_count: text.length }).save();
     res.send(text);
-    io().emit("users:update", phone);
   });
 
   keyword.onAskHelp(() => {
     let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
-    phone.incr({ total_action: 1 }).save();
+    phone.incr({ total_action: 0.5 }).save();
     res.send(text);
-    io().emit("users:update", phone);
   });
 
   keyword.onAskHeadlines(() => {
@@ -80,8 +84,7 @@ router.get("/call", middleware, async (req, res) => {
     if (result.length) {
       actions.push(
         ...result.map(
-          ({ id, title, datetime, source }) =>
-            (phone.premium ? "[" + id + "] " : "") +
+          ({ title, datetime, source }) =>
             title.split(" ").join("") +
             " -" +
             source +
@@ -95,56 +98,61 @@ router.get("/call", middleware, async (req, res) => {
         actions.push(printf(ON_HEADLINES_NEXT, remain));
       }
       _tasks[message.phone.number] = actions;
-      phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
+      phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
       res.end();
     } else {
       let text = printf(ON_HEADLINES_NULL, Config.get("MOBILE_NUMBER"));
-      phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
+      phone
+        .markAsSent(highlights, latest)
+        .incr({ total_action: 2, character_count: text.length })
+        .save();
       res.send(text);
     }
-    io().emit("users:update", phone);
   });
 
-  keyword.onAskRead((id) => {
-    if (phone.premium) {
-      const article = Article.fetchAll().find((article) => article.id == id);
-      if (!article) {
-        phone
-          .incr({
-            total_action: 0.5,
-          })
-          .save();
-        return res.send(`သတင်းအမှတ်[${id}]ကိုရှာမတွေ့ပါ။ - nweoo.com`);
-      }
-      let characters = article.content?.length;
-      let keywords = article.content.replace(/\n/gm, " ").split(" ");
-      let max_chunk = Math.floor(characters / MAX_CHARACTER_LIMIT) || 1;
-      let chunk = Math.floor(keywords.length / max_chunk);
-      let chunks = [];
-      for (let i = 0; i < max_chunk; i++) {
-        if (i + 1 === max_chunk) {
-          chunks.push(
-            keywords.slice(chunk * i).join("") + " -" + article.source
-          );
-        } else {
-          chunks.push(
-            keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1)
-          );
-        }
-      }
-      phone.read_count -= 1;
-      phone
-        .incr({
-          total_action: 1,
-        })
-        .save();
-      _tasks[phone.number] = [
-        `စာလုံးရေ(${characters})လုံးရှိတဲ့အတွက်အချိန်ကြာမြင့်တတ်ပြီး${chunks.length}စောင်ပို့ဆောင်နေပါတယ်။ - nweoo.com`,
-        ...chunks,
-      ];
+  keyword.onAskRead((title) => {
+    let text: string;
+    if (!phone.premium) {
+      text = phone.max_limit
+        ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
+        : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လိုပိတ်ထားတယ်။ - nweoo.com";
+      phone.incr({ total_action: 1, character_count: text.length }).save();
       return res.send();
     }
-    return res.send("this feauture is disabled! - nweoo.com");
+    title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
+    const article = Article.fetchAll().find(
+      (article) => article.title == title
+    );
+    if (!article) {
+      text = `သတင်းခေါင်းစဥ် "${title}" ကိုရှာမတွေ့ပါ။ - nweoo.com`;
+      phone.incr({ total_action: 1, character_count: text.length }).save();
+      return res.send(text);
+    }
+    let characters = article.content?.length;
+    let keywords = article.content.replace(/\n/gm, " ").split(" ");
+    let max_chunk = Math.floor(characters / MAX_CHARACTER_LIMIT) || 1;
+    let chunk = Math.floor(keywords.length / max_chunk);
+    let chunks = [];
+    for (let i = 0; i < max_chunk; i++) {
+      if (i + 1 === max_chunk) {
+        chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
+      } else {
+        chunks.push(
+          keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1)
+        );
+      }
+    }
+    phone.read_count -= 1;
+    phone
+      .incr({
+        total_action: 1,
+      })
+      .save();
+    _tasks[phone.number] = [
+      `စာလုံးရေ(${characters})လုံးရှိတဲ့အတွက်အချိန်ကြာမြင့်တတ်ပြီး(${chunks.length})စောင်ပို့ဆောင်နေပါတယ်။ - nweoo.com`,
+      ...chunks,
+    ];
+    res.end();
   });
 
   keyword.onAskCount(() => {
@@ -152,14 +160,17 @@ router.get("/call", middleware, async (req, res) => {
       ON_REMAINING_COUNT,
       Headline.latest(null, phone.headlines).length
     );
-    phone.incr({ total_action: 0 }).save();
+    phone.incr({ total_action: 0.5, character_count: text.length }).save();
     res.send(text);
   });
 
   keyword.onAskReset(() => {
-    phone.reset().incr({ total_action: 1 }).save();
-    res.send(ON_RESET);
-    io().emit("users:update", phone);
+    let text = ON_RESET;
+    phone
+      .reset()
+      .incr({ total_action: 1, character_count: text.length })
+      .save();
+    res.send(text);
   });
 
   keyword.onSearchContent((keyword) => {
@@ -176,27 +187,25 @@ router.get("/call", middleware, async (req, res) => {
     articles = [
       text,
       ...articles.map((article) => {
-        const hl = headlines.find((h) => h.title == article.title) || {};
+        const hl = headlines.find((h) => h.title == article.title);
         const ct = `${article.title} -${article.source}`;
-        let d = new Date(hl.datetime || hl.timestamp);
+        let d = hl && new Date(hl.datetime || hl.timestamp);
         return (
-          (phone.premium && hl.id ? `[${hl.id}]` : "") +
-          ct +
-          (hl.id ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : "")
+          ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : "")
         );
       }),
     ].slice(0, 5);
     _tasks[phone.number] = articles;
-    res.send("");
+    res.end();
   });
 
   keyword.onUnmatched(() => {
     let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
     phone.incr({ total_action: 1 }).save();
     res.send(text);
-    io().emit("users:update", phone);
   });
 
+  io().emit("users:update", phone);
   io().emit("messages:update", message.body);
 });
 
@@ -212,9 +221,8 @@ router.get("/action", async (req, res) => {
     _tasks[number] = undefined;
     delete _tasks[number];
   }
-  phone.incr({ total_action: 0 }).save();
+  phone.incr({ total_action: 0.2, character_count: text.length }).save();
   res.send(text);
-  io().emit("users:update", phone);
 });
 
 router.get("/update", (req, res) =>

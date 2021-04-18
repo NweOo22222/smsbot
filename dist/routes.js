@@ -69,34 +69,35 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         });
         phone = message.phone;
         keyword = new Keyword_1.default(message.body);
-        keyword.onReplyOkay(function () {
-            phone.incr({ total_action: 0 }).save();
-            res.status(400).end();
-            socket_1.io().emit("users:update", phone);
-        });
-        keyword.onReplyThanks(function () {
-            phone.incr({ total_action: 0 }).save();
-            res.status(400).end();
-            socket_1.io().emit("users:update", phone);
-        });
-        keyword.onIgnore(function () {
-            phone.incr({ total_action: 0 }).save();
-            res.status(400).end();
-            socket_1.io().emit("users:update", phone);
-        });
+        phone.extend();
         keyword.onCommonMistake(function () {
+            phone.incr({ total_action: 0.5 }).save();
+            res.status(400).end();
         });
-        keyword.onAskReporter(function () {
-            var text = printf_1.default(config_1.ON_HELP_REPORTER, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({ total_action: 1 }).save();
+        keyword.onAskInfo(function () {
+            var da = phone.session.daily.total_action;
+            var dc = phone.session.daily.character_count;
+            var ha = phone.session.hourly.total_action;
+            var hc = phone.session.hourly.character_count;
+            var dm = Math.round(phone.session.daily.remaining / 60);
+            var dh = Math.round(dm / 60);
+            var dr = dh < 1 ? dm + " မိနစ်" : dh + " နာရီ";
+            var hm = Math.round(phone.session.hourly.remaining / 60);
+            var hr = hm + " မိနစ်";
+            var text = phone.session.unlimited
+                ? "သင့်ဖုန်းနံပါတ်ကို SMS Limit သတ်မှတ်ထားခြင်းမရှိပါ။"
+                : printf_1.default("SMS Limit မပြည့်ရန် %sအတွင်း %d ကြိမ်နှင့် %sအတွင်း %d ကြိမ်ပို့နိုင်ပါတယ်။", hr, phone.session.hourly.actions, dr, phone.session.daily.actions);
+            if (phone.premium) {
+                text += " [PREMIUM]";
+            }
+            text += " - nweoo.com";
+            phone.incr({ total_action: 0.5, character_count: text.length }).save();
             res.send(text);
-            socket_1.io().emit("users:update", phone);
         });
         keyword.onAskHelp(function () {
             var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({ total_action: 1 }).save();
+            phone.incr({ total_action: 0.5 }).save();
             res.send(text);
-            socket_1.io().emit("users:update", phone);
         });
         keyword.onAskHeadlines(function () {
             var actions = [];
@@ -106,9 +107,8 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             var result = __spreadArray(__spreadArray([], highlights), latest);
             if (result.length) {
                 actions.push.apply(actions, result.map(function (_a) {
-                    var id = _a.id, title = _a.title, datetime = _a.datetime, source = _a.source;
-                    return (phone.premium ? "[" + id + "] " : "") +
-                        title.split(" ").join("") +
+                    var title = _a.title, datetime = _a.datetime, source = _a.source;
+                    return title.split(" ").join("") +
                         " -" +
                         source +
                         " " +
@@ -120,63 +120,71 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
                     actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, remain));
                 }
                 _tasks[message.phone.number] = actions;
-                phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
+                phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
                 res.end();
             }
             else {
                 var text = printf_1.default(config_1.ON_HEADLINES_NULL, Config_1.default.get("MOBILE_NUMBER"));
-                phone.markAsSent(highlights, latest).incr({ total_action: 1 }).save();
+                phone
+                    .markAsSent(highlights, latest)
+                    .incr({ total_action: 2, character_count: text.length })
+                    .save();
                 res.send(text);
             }
-            socket_1.io().emit("users:update", phone);
         });
-        keyword.onAskRead(function (id) {
+        keyword.onAskRead(function (title) {
             var _a;
-            if (phone.premium) {
-                var article = Article_1.default.fetchAll().find(function (article) { return article.id == id; });
-                if (!article) {
-                    phone
-                        .incr({
-                        total_action: 0.5,
-                    })
-                        .save();
-                    return res.send("\u101E\u1010\u1004\u103A\u1038\u1021\u1019\u103E\u1010\u103A[" + id + "]\u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com");
-                }
-                var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
-                var keywords = article.content.replace(/\n/gm, " ").split(" ");
-                var max_chunk = Math.floor(characters / settings_1.MAX_CHARACTER_LIMIT) || 1;
-                var chunk = Math.floor(keywords.length / max_chunk);
-                var chunks = [];
-                for (var i = 0; i < max_chunk; i++) {
-                    if (i + 1 === max_chunk) {
-                        chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
-                    }
-                    else {
-                        chunks.push(keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1));
-                    }
-                }
-                phone.read_count -= 1;
-                phone
-                    .incr({
-                    total_action: 1,
-                })
-                    .save();
-                _tasks[phone.number] = __spreadArray([
-                    "\u1005\u102C\u101C\u102F\u1036\u1038\u101B\u1031(" + characters + ")\u101C\u102F\u1036\u1038\u101B\u103E\u102D\u1010\u1032\u1037\u1021\u1010\u103D\u1000\u103A\u1021\u1001\u103B\u102D\u1014\u103A\u1000\u103C\u102C\u1019\u103C\u1004\u103A\u1037\u1010\u1010\u103A\u1015\u103C\u102E\u1038" + chunks.length + "\u1005\u1031\u102C\u1004\u103A\u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1014\u1031\u1015\u102B\u1010\u101A\u103A\u104B - nweoo.com"
-                ], chunks);
+            var text;
+            if (!phone.premium) {
+                text = phone.max_limit
+                    ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
+                    : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လိုပိတ်ထားတယ်။ - nweoo.com";
+                phone.incr({ total_action: 1, character_count: text.length }).save();
                 return res.send();
             }
-            return res.send("this feauture is disabled! - nweoo.com");
+            title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
+            var article = Article_1.default.fetchAll().find(function (article) { return article.title == title; });
+            if (!article) {
+                text = "\u101E\u1010\u1004\u103A\u1038\u1001\u1031\u102B\u1004\u103A\u1038\u1005\u1025\u103A \"" + title + "\" \u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com";
+                phone.incr({ total_action: 1, character_count: text.length }).save();
+                return res.send(text);
+            }
+            var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
+            var keywords = article.content.replace(/\n/gm, " ").split(" ");
+            var max_chunk = Math.floor(characters / settings_1.MAX_CHARACTER_LIMIT) || 1;
+            var chunk = Math.floor(keywords.length / max_chunk);
+            var chunks = [];
+            for (var i = 0; i < max_chunk; i++) {
+                if (i + 1 === max_chunk) {
+                    chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
+                }
+                else {
+                    chunks.push(keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1));
+                }
+            }
+            phone.read_count -= 1;
+            phone
+                .incr({
+                total_action: 1,
+            })
+                .save();
+            _tasks[phone.number] = __spreadArray([
+                "\u1005\u102C\u101C\u102F\u1036\u1038\u101B\u1031(" + characters + ")\u101C\u102F\u1036\u1038\u101B\u103E\u102D\u1010\u1032\u1037\u1021\u1010\u103D\u1000\u103A\u1021\u1001\u103B\u102D\u1014\u103A\u1000\u103C\u102C\u1019\u103C\u1004\u103A\u1037\u1010\u1010\u103A\u1015\u103C\u102E\u1038(" + chunks.length + ")\u1005\u1031\u102C\u1004\u103A\u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1014\u1031\u1015\u102B\u1010\u101A\u103A\u104B - nweoo.com"
+            ], chunks);
+            res.end();
         });
         keyword.onAskCount(function () {
             var text = printf_1.default(config_1.ON_REMAINING_COUNT, Headline_1.default.latest(null, phone.headlines).length);
-            phone.incr({ total_action: 0 }).save();
+            phone.incr({ total_action: 0.5, character_count: text.length }).save();
             res.send(text);
         });
         keyword.onAskReset(function () {
-            phone.reset().incr({ total_action: 1 }).save();
-            res.send(config_1.ON_RESET);
-            socket_1.io().emit("users:update", phone);
+            var text = config_1.ON_RESET;
+            phone
+                .reset()
+                .incr({ total_action: 1, character_count: text.length })
+                .save();
+            res.send(text);
         });
         keyword.onSearchContent(function (keyword) {
             var articles = Article_1.default.fetchAll().filter(function (article) {
@@ -192,22 +200,20 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             articles = __spreadArray([
                 text
             ], articles.map(function (article) {
-                var hl = headlines.find(function (h) { return h.title == article.title; }) || {};
+                var hl = headlines.find(function (h) { return h.title == article.title; });
                 var ct = article.title + " -" + article.source;
-                var d = new Date(hl.datetime || hl.timestamp);
-                return ((phone.premium && hl.id ? "[" + hl.id + "]" : "") +
-                    ct +
-                    (hl.id ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
+                var d = hl && new Date(hl.datetime || hl.timestamp);
+                return (ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
             })).slice(0, 5);
             _tasks[phone.number] = articles;
-            res.send("");
+            res.end();
         });
         keyword.onUnmatched(function () {
             var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
             phone.incr({ total_action: 1 }).save();
             res.send(text);
-            socket_1.io().emit("users:update", phone);
         });
+        socket_1.io().emit("users:update", phone);
         socket_1.io().emit("messages:update", message.body);
         return [2];
     });
@@ -225,9 +231,8 @@ router.get("/action", function (req, res) { return __awaiter(void 0, void 0, voi
             _tasks[number] = undefined;
             delete _tasks[number];
         }
-        phone.incr({ total_action: 0 }).save();
+        phone.incr({ total_action: 0.2, character_count: text.length }).save();
         res.send(text);
-        socket_1.io().emit("users:update", phone);
         return [2];
     });
 }); });

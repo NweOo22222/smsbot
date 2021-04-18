@@ -1,17 +1,20 @@
 import { UserAction } from "./Session";
 
 const DAILY_SESSION = 12 * 3600 * 1000; // 12 hours
-const MAX_DAILY_ACTION = 12;
+const MAX_TOTAL_ACTION = 12;
+const MAX_CHARACTER_COUNT = 8000;
 
 export default class DailySession {
   public expired: Date;
   public total_action: number;
+  public character_count: number;
   public notified: Boolean;
 
   constructor(action: UserAction) {
     this.expired = new Date(action.expired || Date.now() + DAILY_SESSION);
     this.total_action = action.total_action || 0;
     this.notified = Boolean(action.notified);
+    this.character_count = action.character_count || 0;
   }
 
   extend() {
@@ -20,7 +23,8 @@ export default class DailySession {
   }
 
   incr(action: UserAction) {
-    this.total_action += action.total_action;
+    this.total_action += action.total_action || 0;
+    this.character_count += action.character_count || 0;
     return this;
   }
 
@@ -28,6 +32,7 @@ export default class DailySession {
     this.expired = new Date(Date.now() + DAILY_SESSION);
     this.total_action = 0;
     this.notified = false;
+    this.character_count = 0;
   }
 
   isExpired() {
@@ -35,10 +40,21 @@ export default class DailySession {
   }
 
   isDenied() {
-    return this.total_action >= MAX_DAILY_ACTION;
+    return (
+      this.total_action >= MAX_TOTAL_ACTION ||
+      this.character_count >= MAX_CHARACTER_COUNT
+    );
   }
 
   get remaining() {
     return Math.round((this.expired.getTime() - Date.now()) / 1000);
+  }
+
+  get characters() {
+    return MAX_CHARACTER_COUNT - this.character_count;
+  }
+
+  get actions() {
+    return Math.floor(MAX_TOTAL_ACTION - this.total_action);
   }
 }

@@ -23,10 +23,24 @@ var Phone = (function () {
         this.headlines = phone.headlines || [];
         this.highlights = phone.highlights || [];
         this.max_limit = phone.max_limit || 0;
-        this.read_count = phone.read_count || this.max_limit;
-        this.premium = Boolean(this.read_count);
-        this.read_reset = new Date(phone.read_reset || Date.now() + 2400 * 3600);
+        if (this.max_limit) {
+            this.read_reset = new Date(phone.read_reset || Date.now() + 2400 * 3600);
+            this.read_count = phone.read_count || 0;
+            this.premium = Boolean(this.read_count);
+        }
     }
+    Phone.prototype.extend = function () {
+        this.readExpired() && this.resetReadLimit();
+        return this;
+    };
+    Phone.prototype.resetReadLimit = function () {
+        this.read_reset = new Date(Date.now() + 2400 * 3600);
+        this.read_count = this.max_limit;
+        this.premium = Boolean(this.read_count);
+    };
+    Phone.prototype.readExpired = function () {
+        return this.read_reset && Date.now() > this.read_reset.getTime();
+    };
     Phone.prototype.incr = function (action) {
         this.session.incr(action);
         this.total_count++;

@@ -1,6 +1,7 @@
 import DailySession from "./DailySession";
 import HourlySession from "./HourlySession";
 export interface UserAction {
+    character_count?: number;
     total_action?: number;
     expired?: Date;
     notified?: Boolean;
