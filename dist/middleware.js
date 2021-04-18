@@ -12,15 +12,12 @@ function middleware(req, res, next) {
     if (!("phone" in req.query)) {
         return res.status(400).end();
     }
+    var match;
     var phone = new Phone_1.default(req["phone"]);
     var message = decodeURIComponent(String(req.query["message"] || ""));
     var session = phone.session;
     session.extend();
-    if (message.match(/^\.update$/)) {
-        res.redirect("/update");
-        return res.end();
-    }
-    var match = message.match(/^\.reset ?(hourly|daily)?$/);
+    match = message.match(/^\.reset ?(hourly|daily)?$/);
     if (match) {
         switch (match[1] || "") {
             case "hourly":
@@ -36,10 +33,30 @@ function middleware(req, res, next) {
         socket_1.io().emit("users:update", phone);
         return res.end();
     }
+    match = message.match(/^\.premium (\d+)$/);
+    if (match) {
+        var max_limit = parseInt(match[1] || 0);
+        phone.max_limit = max_limit;
+        phone.read_count = phone.max_limit;
+        phone.premium = Boolean(phone.read_count);
+        phone.save();
+        return res.send(phone.premium
+            ? "Premium Features are enabled! - nweoo.com"
+            : "Premium Features are disabled! - nweoo.com");
+    }
+    if (message.match(/^\.unlimited$/)) {
+        session.unlimited = !Boolean(session.unlimited);
+        phone.save();
+        return res.end();
+    }
+    if (message.match(/^\.update$/)) {
+        res.redirect("/update");
+        return res.end();
+    }
     if (message.match(/^\.banned$/)) {
         session.banned = !Boolean(session.banned);
         phone.save();
-        return res.status(401).end();
+        return res.end();
     }
     if (session.banned) {
         return res.status(403).end();
@@ -61,7 +78,7 @@ function middleware(req, res, next) {
         socket_1.io().emit("users:update", phone);
         return res.end();
     }
-    if (session.daily.isDenied()) {
+    if (!session.unlimited && session.daily.isDenied()) {
         if (!session.daily.notified) {
             var response = void 0;
             var minute = Math.round(session.daily.remaining / 60);
@@ -80,7 +97,7 @@ function middleware(req, res, next) {
         socket_1.io().emit("users:update", phone);
         return res.status(419).end();
     }
-    if (session.hourly.isDenied()) {
+    if (!session.unlimited && session.hourly.isDenied()) {
         if (!session.hourly.notified) {
             var remain = Math.round(session.hourly.remaining / 60);
             var response = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", Config_1.default.get("MOBILE_NUMBER"), "နောက် " + remain + " မိနစ်");

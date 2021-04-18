@@ -55,7 +55,10 @@ api.get("/total", function (req, res) {
     });
 });
 api.get("/settings", function (req, res) {
-    res.json(Config_1.default.getAll());
+    res.json({
+        MOBILE_NUMBER: Config_1.default.get("MOBILE_NUMBER"),
+        USE_ONLINE: Config_1.default.get("USE_ONLINE"),
+    });
 });
 api.get("/online", function (req, res) {
     res.send(Boolean(Config_1.default.get("USE_ONLINE")) ? "1" : "0");

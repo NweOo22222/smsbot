@@ -22,6 +22,10 @@ var Phone = (function () {
         this.total_count = phone.total_count || 0;
         this.headlines = phone.headlines || [];
         this.highlights = phone.highlights || [];
+        this.max_limit = phone.max_limit || 0;
+        this.read_count = phone.read_count || this.max_limit;
+        this.premium = Boolean(this.read_count);
+        this.read_reset = new Date(phone.read_reset || Date.now() + 2400 * 3600);
     }
     Phone.prototype.incr = function (action) {
         this.session.incr(action);

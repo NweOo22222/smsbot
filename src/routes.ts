@@ -20,7 +20,7 @@ import {
 import middleware from "./middleware";
 import axios from "axios";
 import Config from "./app/Config";
-import { SMS_GATEWAY_API } from "./settings";
+import { MAX_CHARACTER_LIMIT, SMS_GATEWAY_API } from "./settings";
 import Article from "./app/Article";
 
 const _tasks = {};
@@ -80,7 +80,8 @@ router.get("/call", middleware, async (req, res) => {
     if (result.length) {
       actions.push(
         ...result.map(
-          ({ title, datetime, source }) =>
+          ({ id, title, datetime, source }) =>
+            (phone.premium ? "[" + id + "] " : "") +
             title.split(" ").join("") +
             " -" +
             source +
@@ -102,6 +103,48 @@ router.get("/call", middleware, async (req, res) => {
       res.send(text);
     }
     io().emit("users:update", phone);
+  });
+
+  keyword.onAskRead((id) => {
+    if (phone.premium) {
+      const article = Article.fetchAll().find((article) => article.id == id);
+      if (!article) {
+        phone
+          .incr({
+            total_action: 0.5,
+          })
+          .save();
+        return res.send(`သတင်းအမှတ်[${id}]ကိုရှာမတွေ့ပါ။ - nweoo.com`);
+      }
+      let characters = article.content?.length;
+      let keywords = article.content.replace(/\n/gm, " ").split(" ");
+      let max_chunk = Math.floor(characters / MAX_CHARACTER_LIMIT) || 1;
+      let chunk = Math.floor(keywords.length / max_chunk);
+      let chunks = [];
+      for (let i = 0; i < max_chunk; i++) {
+        if (i + 1 === max_chunk) {
+          chunks.push(
+            keywords.slice(chunk * i).join("") + " -" + article.source
+          );
+        } else {
+          chunks.push(
+            keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1)
+          );
+        }
+      }
+      phone.read_count -= 1;
+      phone
+        .incr({
+          total_action: 1,
+        })
+        .save();
+      _tasks[phone.number] = [
+        `စာလုံးရေ(${characters})လုံးရှိတဲ့အတွက်အချိန်ကြာမြင့်တတ်ပြီး${chunks.length}စောင်ပို့ဆောင်နေပါတယ်။ - nweoo.com`,
+        ...chunks,
+      ];
+      return res.send();
+    }
+    return res.send("this feauture is disabled! - nweoo.com");
   });
 
   keyword.onAskCount(() => {
@@ -129,9 +172,19 @@ router.get("/call", middleware, async (req, res) => {
       .map((article) => article.toHeadline());
     let text = printf(ON_SEARCH_EXISTED, keyword, total, articles.length);
     phone.incr({ total_action: 1 }).markAsSent([], articles).save();
+    let headlines = DB.read()["articles"];
     articles = [
       text,
-      ...articles.map((article) => `${article.title} -${article.source}`),
+      ...articles.map((article) => {
+        const hl = headlines.find((h) => h.title == article.title) || {};
+        const ct = `${article.title} -${article.source}`;
+        let d = new Date(hl.datetime || hl.timestamp);
+        return (
+          (phone.premium && hl.id ? `[${hl.id}]` : "") +
+          ct +
+          (hl.id ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : "")
+        );
+      }),
     ].slice(0, 5);
     _tasks[phone.number] = articles;
     res.send("");

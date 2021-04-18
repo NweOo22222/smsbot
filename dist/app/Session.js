@@ -11,6 +11,7 @@ var Session = (function () {
         this.hourly = new HourlySession_1.default(session.hourly || {});
         this.banned = Boolean(session.banned);
         this.disabled = Boolean(session.disabled);
+        this.unlimited = Boolean(session.unlimited);
     }
     Session.prototype.extend = function () {
         this.daily.extend();

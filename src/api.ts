@@ -59,7 +59,10 @@ api.get("/total", (req, res) => {
 });
 
 api.get("/settings", (req, res) => {
-  res.json(Config.getAll());
+  res.json({
+    MOBILE_NUMBER: Config.get("MOBILE_NUMBER"),
+    USE_ONLINE: Config.get("USE_ONLINE"),
+  });
 });
 
 api.get("/online", (req, res) => {

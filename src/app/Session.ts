@@ -12,6 +12,7 @@ export interface UserSession {
   hourly: UserAction;
   banned?: Boolean;
   disabled?: Boolean;
+  unlimited?: Boolean;
 }
 
 export default class Session {
@@ -19,12 +20,14 @@ export default class Session {
   public daily: DailySession;
   public banned: Boolean;
   public disabled: Boolean;
+  public unlimited: Boolean;
 
   constructor(session: UserSession) {
     this.daily = new DailySession(session.daily || {});
     this.hourly = new HourlySession(session.hourly || {});
     this.banned = Boolean(session.banned);
     this.disabled = Boolean(session.disabled);
+    this.unlimited = Boolean(session.unlimited);
   }
 
   extend() {

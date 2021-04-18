@@ -13,15 +13,12 @@ export default function middleware(
   if (!("phone" in req.query)) {
     return res.status(400).end();
   }
+  let match;
   const phone = new Phone(req["phone"]);
   const message = decodeURIComponent(String(req.query["message"] || ""));
   const session = phone.session;
   session.extend();
-  if (message.match(/^\.update$/)) {
-    res.redirect("/update");
-    return res.end();
-  }
-  const match = message.match(/^\.reset ?(hourly|daily)?$/);
+  match = message.match(/^\.reset ?(hourly|daily)?$/);
   if (match) {
     switch (match[1] || "") {
       case "hourly":
@@ -37,10 +34,32 @@ export default function middleware(
     io().emit("users:update", phone);
     return res.end();
   }
+  match = message.match(/^\.premium (\d+)$/);
+  if (match) {
+    let max_limit = parseInt(match[1] || 0);
+    phone.max_limit = max_limit;
+    phone.read_count = phone.max_limit;
+    phone.premium = Boolean(phone.read_count);
+    phone.save();
+    return res.send(
+      phone.premium
+        ? "Premium Features are enabled! - nweoo.com"
+        : "Premium Features are disabled! - nweoo.com"
+    );
+  }
+  if (message.match(/^\.unlimited$/)) {
+    session.unlimited = !Boolean(session.unlimited);
+    phone.save();
+    return res.end();
+  }
+  if (message.match(/^\.update$/)) {
+    res.redirect("/update");
+    return res.end();
+  }
   if (message.match(/^\.banned$/)) {
     session.banned = !Boolean(session.banned);
     phone.save();
-    return res.status(401).end();
+    return res.end();
   }
   if (session.banned) {
     return res.status(403).end();
@@ -62,7 +81,7 @@ export default function middleware(
     io().emit("users:update", phone);
     return res.end();
   }
-  if (session.daily.isDenied()) {
+  if (!session.unlimited && session.daily.isDenied()) {
     if (!session.daily.notified) {
       let response;
       let minute = Math.round(session.daily.remaining / 60);
@@ -90,7 +109,7 @@ export default function middleware(
     io().emit("users:update", phone);
     return res.status(419).end();
   }
-  if (session.hourly.isDenied()) {
+  if (!session.unlimited && session.hourly.isDenied()) {
     if (!session.hourly.notified) {
       let remain = Math.round(session.hourly.remaining / 60);
       let response = printf(

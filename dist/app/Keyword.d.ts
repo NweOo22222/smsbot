@@ -12,6 +12,7 @@ export default class Keyword {
     onAskReporter(callback: Function): void;
     onAskHelp(callback: Function): void;
     onAskHeadlines(callback: Function): void;
+    onAskRead(callback: Function): void;
     onAskCount(callback: Function): void;
     onAskReset(callback: Function): void;
     onAskInfo(callback: Function): void;

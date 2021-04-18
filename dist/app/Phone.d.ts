@@ -11,6 +11,10 @@ export default class Phone {
     highlights: string[];
     operator: Operator;
     session: Session;
+    premium: Boolean;
+    max_limit: number;
+    read_count: number;
+    read_reset: Date;
     constructor(number: string);
     incr(action: UserAction): this;
     markAsSent(highlights: Highlight[], headlines: Headline[]): this;

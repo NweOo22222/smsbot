@@ -3,14 +3,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var RESET_SENT = [/ပြန်စ/, /^reset/i];
 var LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
 var ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
-var USAGE_HELP = [/ကူ(ညီ)?/, /info/i, /help/i];
+var USAGE_HELP = [/ကူညီ/, /help/i];
 var SHOW_INFO = [/info/i];
+var SEARCH_CONTENT = [/^["'](.+)['"]$/];
+var IGNORE_KEYWORDS = [/nweoo\.com/i, /(0|\+95)9758035929/];
 var ASK_REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
+var ANSWER_OKAY = [/ok/i];
 var ANSWER_THANKS = [/th(?:ank|z|x)/i, /ကျေးဇူး/];
-var ANSWER_OKAY = [/သတင်း(တွေ)?(ပေး|ပို့)/];
-var SEARCH_CONTENT = [/^(?:find|search) ["'](.+)['"]/i, /^["'](.+)['"]$/];
-var IGNORE_KEYWORDS = [/nweoo\.com/, /(0|\+95)9758035929/];
-var COMMON_MISTAKES = [];
+var INTRODUCION = [
+    /^hi/i,
+    /^hello/i,
+    /^mornee/i,
+    /^good (morining|evening|night)/i,
+    /^မင်္ဂလာ/,
+    /^ဟယ်လို/,
+    /^မောနင်း/,
+];
+var READ_ARTICLE = [
+    /^read [\{\<\[\('"]?(\d+)["'\)\]\>\}]?/i,
+    /^[\{\<\[\('"]?(\d{5,7})["'\)\]\>\}]?/,
+];
 var Keyword = (function () {
     function Keyword(text) {
         this.text = text;
@@ -53,7 +65,7 @@ var Keyword = (function () {
         var _this = this;
         if (this.sent)
             return;
-        if (COMMON_MISTAKES.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
+        if (INTRODUCION.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
         }
@@ -103,6 +115,20 @@ var Keyword = (function () {
         if (LATEST_NEWS.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
             this.sent = true;
             callback();
+        }
+    };
+    Keyword.prototype.onAskRead = function (callback) {
+        var _this = this;
+        if (this.sent)
+            return;
+        var matched = READ_ARTICLE.filter(function (keyword) {
+            return _this.meta.match(keyword);
+        });
+        matched = matched.pop();
+        if (matched) {
+            matched = this.text.match(matched);
+            this.sent = true;
+            callback(matched[1]);
         }
     };
     Keyword.prototype.onAskCount = function (callback) {

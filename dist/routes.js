@@ -56,6 +56,7 @@ var socket_1 = require("./socket");
 var config_1 = require("./config");
 var middleware_1 = __importDefault(require("./middleware"));
 var Config_1 = __importDefault(require("./app/Config"));
+var settings_1 = require("./settings");
 var Article_1 = __importDefault(require("./app/Article"));
 var _tasks = {};
 var router = express_1.Router();
@@ -105,8 +106,9 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             var result = __spreadArray(__spreadArray([], highlights), latest);
             if (result.length) {
                 actions.push.apply(actions, result.map(function (_a) {
-                    var title = _a.title, datetime = _a.datetime, source = _a.source;
-                    return title.split(" ").join("") +
+                    var id = _a.id, title = _a.title, datetime = _a.datetime, source = _a.source;
+                    return (phone.premium ? "[" + id + "] " : "") +
+                        title.split(" ").join("") +
                         " -" +
                         source +
                         " " +
@@ -128,6 +130,44 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             }
             socket_1.io().emit("users:update", phone);
         });
+        keyword.onAskRead(function (id) {
+            var _a;
+            if (phone.premium) {
+                var article = Article_1.default.fetchAll().find(function (article) { return article.id == id; });
+                if (!article) {
+                    phone
+                        .incr({
+                        total_action: 0.5,
+                    })
+                        .save();
+                    return res.send("\u101E\u1010\u1004\u103A\u1038\u1021\u1019\u103E\u1010\u103A[" + id + "]\u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com");
+                }
+                var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
+                var keywords = article.content.replace(/\n/gm, " ").split(" ");
+                var max_chunk = Math.floor(characters / settings_1.MAX_CHARACTER_LIMIT) || 1;
+                var chunk = Math.floor(keywords.length / max_chunk);
+                var chunks = [];
+                for (var i = 0; i < max_chunk; i++) {
+                    if (i + 1 === max_chunk) {
+                        chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
+                    }
+                    else {
+                        chunks.push(keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1));
+                    }
+                }
+                phone.read_count -= 1;
+                phone
+                    .incr({
+                    total_action: 1,
+                })
+                    .save();
+                _tasks[phone.number] = __spreadArray([
+                    "\u1005\u102C\u101C\u102F\u1036\u1038\u101B\u1031(" + characters + ")\u101C\u102F\u1036\u1038\u101B\u103E\u102D\u1010\u1032\u1037\u1021\u1010\u103D\u1000\u103A\u1021\u1001\u103B\u102D\u1014\u103A\u1000\u103C\u102C\u1019\u103C\u1004\u103A\u1037\u1010\u1010\u103A\u1015\u103C\u102E\u1038" + chunks.length + "\u1005\u1031\u102C\u1004\u103A\u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1014\u1031\u1015\u102B\u1010\u101A\u103A\u104B - nweoo.com"
+                ], chunks);
+                return res.send();
+            }
+            return res.send("this feauture is disabled! - nweoo.com");
+        });
         keyword.onAskCount(function () {
             var text = printf_1.default(config_1.ON_REMAINING_COUNT, Headline_1.default.latest(null, phone.headlines).length);
             phone.incr({ total_action: 0 }).save();
@@ -148,9 +188,17 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
                 .map(function (article) { return article.toHeadline(); });
             var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
             phone.incr({ total_action: 1 }).markAsSent([], articles).save();
+            var headlines = DB_1.default.read()["articles"];
             articles = __spreadArray([
                 text
-            ], articles.map(function (article) { return article.title + " -" + article.source; })).slice(0, 5);
+            ], articles.map(function (article) {
+                var hl = headlines.find(function (h) { return h.title == article.title; }) || {};
+                var ct = article.title + " -" + article.source;
+                var d = new Date(hl.datetime || hl.timestamp);
+                return ((phone.premium && hl.id ? "[" + hl.id + "]" : "") +
+                    ct +
+                    (hl.id ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
+            })).slice(0, 5);
             _tasks[phone.number] = articles;
             res.send("");
         });
