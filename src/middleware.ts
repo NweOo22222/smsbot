@@ -72,7 +72,7 @@ export default function middleware(
     return res.status(400).end();
   }
   let r = Date.now() - phone.last_date.getTime();
-  if (r < Number(Config.get("SPAM_PROTECTION_TIME"))) {
+  if (r > 1000 && r < Number(Config.get("SPAM_PROTECTION_TIME"))) {
     return res.end();
   }
   next();

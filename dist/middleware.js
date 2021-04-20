@@ -71,7 +71,7 @@ function middleware(req, res, next) {
         return res.status(400).end();
     }
     var r = Date.now() - phone.last_date.getTime();
-    if (r < Number(Config_1.default.get("SPAM_PROTECTION_TIME"))) {
+    if (r > 1000 && r < Number(Config_1.default.get("SPAM_PROTECTION_TIME"))) {
         return res.end();
     }
     next();
