@@ -4,7 +4,6 @@ import Config from "./app/Config";
 import Phone from "./app/Phone";
 
 const api = Router();
-// const per_page = 30;
 
 api.delete("/articles/:id", (req, res) => {
   const { id } = req.params;
@@ -59,22 +58,15 @@ api.get("/total", (req, res) => {
 });
 
 api.get("/settings", (req, res) => {
-  res.json({
-    MOBILE_NUMBER: Config.get("MOBILE_NUMBER"),
-    USE_ONLINE: Config.get("USE_ONLINE"),
-  });
-});
-
-api.get("/online", (req, res) => {
-  res.send(Boolean(Config.get("USE_ONLINE")) ? "1" : "0");
+  res.json(Config.getAll());
 });
 
 api.post("/settings", (req, res) => {
-  const db = Config.read();
-  Object.entries(req.body).forEach(([id, value]) => {
-    db[id] = value;
-  });
-  Config.save(db);
+  try {
+    Object.entries(req.body).map(([key, value]) => Config.set(key, value));
+  } catch (e) {
+    return res.status(400).end();
+  }
   res.status(201).redirect(req.headers["referer"] || "/settings.html");
 });
 

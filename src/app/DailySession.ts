@@ -1,7 +1,6 @@
+import Config from "./Config";
 import { UserAction } from "./Session";
 
-const DAILY_SESSION = 12 * 3600 * 1000; // 12 hours
-const MAX_TOTAL_ACTION = 12;
 const MAX_CHARACTER_COUNT = 8000;
 
 export default class DailySession {
@@ -11,7 +10,9 @@ export default class DailySession {
   public notified: Boolean;
 
   constructor(action: UserAction) {
-    this.expired = new Date(action.expired || Date.now() + DAILY_SESSION);
+    this.expired = new Date(
+      action.expired || Date.now() + Number(Config.get("PER_DAILY_SESSION"))
+    );
     this.total_action = action.total_action || 0;
     this.notified = Boolean(action.notified);
     this.character_count = action.character_count || 0;
@@ -29,7 +30,9 @@ export default class DailySession {
   }
 
   reset() {
-    this.expired = new Date(Date.now() + DAILY_SESSION);
+    this.expired = new Date(
+      Date.now() + Number(Config.get("PER_DAILY_SESSION"))
+    );
     this.total_action = 0;
     this.notified = false;
     this.character_count = 0;
@@ -41,7 +44,7 @@ export default class DailySession {
 
   isDenied() {
     return (
-      this.total_action >= MAX_TOTAL_ACTION ||
+      this.total_action >= Number(Config.get("MAX_DAILY_LIMIT")) ||
       this.character_count >= MAX_CHARACTER_COUNT
     );
   }
@@ -55,6 +58,8 @@ export default class DailySession {
   }
 
   get actions() {
-    return Math.floor(MAX_TOTAL_ACTION - this.total_action);
+    return Math.floor(
+      Number(Config.get("MAX_DAILY_LIMIT")) - this.total_action
+    );
   }
 }

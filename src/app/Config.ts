@@ -1,9 +1,30 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
 import { resolve, dirname } from "path";
-import * as config from "../settings";
+import { config } from "../settings";
 
 const DATABASE_FILENAME = ".config.json";
 const DATABASE_PATH = resolve(dirname(dirname(__dirname)), DATABASE_FILENAME);
+
+type SIMSlot = -1 | 0 | 1;
+
+type ConfigKeyName =
+  | "MOBILE_NUMBER"
+  | "USE_SIMSLOT"
+  | "MAX_DAILY_LIMIT"
+  | "PER_DAILY_SESSION"
+  | "MAX_HOURLY_LIMIT"
+  | "PER_HOURLY_SESSION"
+  | "MAX_CHARACTER_LIMIT";
+
+export interface Configuration {
+  MOBILE_NUMBER: string;
+  USE_SIMSLOT: SIMSlot;
+  MAX_DAILY_LIMIT: number;
+  PER_DAILY_SESSION: number;
+  MAX_HOURLY_LIMIT: number;
+  PER_HOURLY_SESSION: number;
+  MAX_CHARACTER_LIMIT: number;
+}
 
 export default class Config {
   static init() {
@@ -18,17 +39,34 @@ export default class Config {
     writeFileSync(DATABASE_PATH, JSON.stringify(config, null, 2), "utf-8");
   }
 
-  static get(keyName: string) {
-    return this.read()[keyName] || config[keyName] || undefined;
+  static set(keyName: ConfigKeyName | string, value: any) {
+    if (!(keyName in config)) {
+      throw new Error("Unexisted key [" + keyName + "]");
+    }
+    const userConfig = this.read();
+    userConfig[keyName] = value;
+    this.save(userConfig);
   }
 
-  static getAll() {
-    const result = [];
+  static get(keyName: ConfigKeyName) {
+    return this.getAll()[keyName] || undefined;
+  }
+
+  static getAll(): Configuration {
     const userConfig = this.read();
-    Object.entries(config).forEach(
-      ([keyName, defaultValue]) =>
-        (result[keyName] = userConfig[keyName] || defaultValue)
-    );
-    return result;
+
+    return {
+      MOBILE_NUMBER: userConfig["MOBILE_NUMBER"] || config.MOBILE_NUMBER,
+      USE_SIMSLOT: userConfig["USE_SIMSLOT"] || config.USE_SIMSLOT,
+      MAX_CHARACTER_LIMIT:
+        userConfig["MAX_CHARACTER_LIMIT"] || config.MAX_CHARACTER_LIMIT,
+      MAX_HOURLY_LIMIT:
+        userConfig["MAX_HOURLY_LIMIT"] || config.MAX_HOURLY_LIMIT,
+      MAX_DAILY_LIMIT: userConfig["MAX_DAILY_LIMIT"] || config.MAX_DAILY_LIMIT,
+      PER_DAILY_SESSION:
+        userConfig["PER_DAILY_SESSION"] || config.PER_DAILY_SESSION,
+      PER_HOURLY_SESSION:
+        userConfig["PER_HOURLY_SESSION"] || config.PER_HOURLY_SESSION,
+    };
   }
 }

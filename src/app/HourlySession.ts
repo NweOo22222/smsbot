@@ -1,7 +1,6 @@
+import Config from "./Config";
 import { UserAction } from "./Session";
 
-const PER_SESSION = 7200000;
-const MAX_TOTAL_ACTION = 5;
 const MAX_CHARACTER_COUNT = 3000;
 
 export default class HourlySession {
@@ -14,7 +13,9 @@ export default class HourlySession {
     this.total_action = action.total_action || 0;
     this.character_count = action.character_count || 0;
     this.expired = new Date(
-      action.expired ? action.expired : Date.now() + PER_SESSION
+      action.expired
+        ? action.expired
+        : Date.now() + Number(Config.get("PER_HOURLY_SESSION"))
     );
     this.notified = Boolean(action.notified);
   }
@@ -31,7 +32,9 @@ export default class HourlySession {
   }
 
   reset() {
-    this.expired = new Date(Date.now() + PER_SESSION);
+    this.expired = new Date(
+      Date.now() + Number(Config.get("PER_HOURLY_SESSION"))
+    );
     this.total_action = 0;
     this.character_count = 0;
     this.notified = false;
@@ -43,7 +46,7 @@ export default class HourlySession {
 
   isDenied() {
     return (
-      this.total_action >= MAX_TOTAL_ACTION ||
+      this.total_action >= Number(Config.get("MAX_HOURLY_LIMIT")) ||
       this.character_count >= MAX_CHARACTER_COUNT
     );
   }
@@ -57,6 +60,8 @@ export default class HourlySession {
   }
 
   get actions() {
-    return Math.floor(MAX_TOTAL_ACTION - this.total_action);
+    return Math.floor(
+      Number(Config.get("MAX_HOURLY_LIMIT")) - this.total_action
+    );
   }
 }

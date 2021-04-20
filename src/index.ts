@@ -7,7 +7,6 @@ import router from "./routes";
 import api from "./api";
 import DB from "./app/DB";
 import Config from "./app/Config";
-import Article from "./app/Article";
 
 const PORT = process.env.PORT || 3001;
 const app = express();

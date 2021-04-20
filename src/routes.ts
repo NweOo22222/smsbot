@@ -12,15 +12,13 @@ import {
   ON_HEADLINES_NEXT,
   ON_HEADLINES_NULL,
   ON_HELP,
-  ON_HELP_REPORTER,
   ON_REMAINING_COUNT,
   ON_RESET,
   ON_UNEXISTED,
 } from "./config";
 import middleware from "./middleware";
-import axios from "axios";
 import Config from "./app/Config";
-import { MAX_CHARACTER_LIMIT, SMS_GATEWAY_API } from "./settings";
+import { config } from "./settings";
 import Article from "./app/Article";
 
 const _tasks = {};
@@ -130,7 +128,7 @@ router.get("/call", middleware, async (req, res) => {
     }
     let characters = article.content?.length;
     let keywords = article.content.replace(/\n/gm, " ").split(" ");
-    let max_chunk = Math.floor(characters / MAX_CHARACTER_LIMIT) || 1;
+    let max_chunk = Math.floor(characters / config.MAX_CHARACTER_LIMIT) || 1;
     let chunk = Math.floor(keywords.length / max_chunk);
     let chunks = [];
     for (let i = 0; i < max_chunk; i++) {

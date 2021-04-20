@@ -30,19 +30,43 @@
         <h5 class="card-title">Settings</h5>
       </div>
       <div class="card-body">
-        <form action="/api/settings" method="POST">
+        <form @submit.prevent="save">
           <div class="form-group">
             <label for="MOBILE_NUMBER">Phone Number</label>
-            <input v-model="MOBILE_NUMBER" type="tel" name="MOBILE_NUMBER" id="MOBILE_NUMBER"
-              placeholder="ဒီဖုန်းနံပါတ်" class="form-control">
+            <input v-model="MOBILE_NUMBER" type="tel" name="MOBILE_NUMBER" id="MOBILE_NUMBER" class="form-control">
           </div>
 
           <div class="form-group">
-            <label for="USE_ONLINE">Connection (Mode)</label>
-            <select name="USE_ONLINE" id="USE_ONLINE" class="form-control">
-              <option value="0" :selected="USE_ONLINE == 0">Offline</option>
-              <option value="1" :selected="USE_ONLINE != 0">Online</option>
+            <label for="USE_SIMSLOT">SIM Slot</label>
+            <select name="USE_SIMSLOT" id="USE_SIMSLOT" class="form-control">
+              <option value="-1" :selected="USE_SIMSLOT == -1">(Any)</option>
+              <option value="0" :selected="USE_SIMSLOT == 0">SIM 1</option>
+              <option value="1" :selected="USE_SIMSLOT == 1">SIM 2</option>
             </select>
+          </div>
+
+          <div class="form-group">
+            <label for="MAX_DAILY_LIMIT">Max Daily Action (counts)</label>
+            <input v-model="MAX_DAILY_LIMIT" type="number" name="MAX_DAILY_LIMIT" id="MAX_DAILY_LIMIT"
+              class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="MAX_HOURLY_LIMIT">Max Hourly Action (counts)</label>
+            <input v-model="MAX_HOURLY_LIMIT" type="number" name="MAX_HOURLY_LIMIT" id="MAX_HOURLY_LIMIT"
+              class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="PER_DAILY_SESSION">Per Daily Session (hrs.)</label>
+            <input v-model="DAILY_SESSION_HOURS" type="number" name="PER_DAILY_SESSION" id="PER_DAILY_SESSION"
+              class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="PER_HOURLY_SESSION">Per Hourly Session (hrs.)</label>
+            <input v-model="HOURLY_SESSION_HOURS" type="number" name="PER_HOURLY_SESSION" id="PER_HOURLY_SESSION"
+              class="form-control " required>
           </div>
 
           <button type="submit" class="btn btn-primary btn-block">Save</button>
@@ -55,17 +79,40 @@
     new Vue({
       el: '.container',
       data: {
-        MOBILE_NUMBER: '',
-        USE_ONLINE: '',
-        PER_SESSION: '',
-        MAX_TOTAL_ACTION: '',
+        MOBILE_NUMBER: undefined,
+        USE_SIMSLOT: undefined,
+        MAX_DAILY_LIMIT: undefined,
+        MAX_HOURLY_LIMIT: undefined,
+        MAX_CHARACTER_LIMIT: undefined,
+        HOURLY_SESSION_HOURS: undefined,
+        DAILY_SESSION_HOURS: undefined,
+      },
+      methods: {
+        save() {
+          const config = {
+            MOBILE_NUMBER: this.MOBILE_NUMBER,
+            USE_SIMSLOT: parseInt(this.USE_SIMSLOT),
+            PER_DAILY_SESSION: parseInt(this.DAILY_SESSION) * 3600000,
+            PER_HOURLY_SESSION: parseInt(this.HOURLY_SESSION) * 3600000,
+            MAX_DAILY_LIMIT: parseInt(this.MAX_DAILY_LIMIT),
+            MAX_HOURLY_LIMIT: parseInt(this.MAX_HOURLY_LIMIT),
+            MAX_CHARACTER_LIMIT: parseInt(this.MAX_CHARACTER_LIMIT),
+          };
+
+          axios.post('/api/settings', config)
+            .then(() => alert('Saved'))
+            .catch(e => alert('Failed') | location.reload());
+        }
       },
       beforeMount() {
         axios.get('/api/settings').then(({ data }) => {
           this.MOBILE_NUMBER = data.MOBILE_NUMBER;
-          this.USE_ONLINE = data.USE_ONLINE;
-          this.PER_SESSION = data.PER_SESSION;
-          this.MAX_TOTAL_ACTION = data.MAX_TOTAL_ACTION;
+          this.USE_SIMSLOT = data.USE_SIMSLOT;
+          this.DAILY_SESSION_HOURS = data.PER_DAILY_SESSION / 3600000;
+          this.HOURLY_SESSION_HOURS = data.PER_HOURLY_SESSION / 3600000;
+          this.MAX_DAILY_LIMIT = data.MAX_DAILY_LIMIT;
+          this.MAX_HOURLY_LIMIT = data.MAX_HOURLY_LIMIT;
+          this.MAX_CHARACTER_LIMIT = data.MAX_CHARACTER_LIMIT;
         });
       }
     });
