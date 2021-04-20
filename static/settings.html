@@ -49,27 +49,33 @@
           </div>
 
           <div class="form-group">
+            <label for="SPAM_PROTECTION_TIME">Prevent Repeated Actions (ms)</label>
+            <input v-model="SPAM_PROTECTION_TIME" type="number" name="SPAM_PROTECTION_TIME" id="SPAM_PROTECTION_TIME"
+              class="form-control">
+          </div>
+
+          <div class="form-group">
             <label for="MAX_DAILY_LIMIT">Max Daily Action (counts)</label>
             <input v-model="MAX_DAILY_LIMIT" type="number" name="MAX_DAILY_LIMIT" id="MAX_DAILY_LIMIT"
-              class="form-control" required>
+              class="form-control">
           </div>
 
           <div class="form-group">
             <label for="MAX_HOURLY_LIMIT">Max Hourly Action (counts)</label>
             <input v-model="MAX_HOURLY_LIMIT" type="number" name="MAX_HOURLY_LIMIT" id="MAX_HOURLY_LIMIT"
-              class="form-control" required>
+              class="form-control">
           </div>
 
           <div class="form-group">
             <label for="PER_DAILY_SESSION">Per Daily Session (hrs.)</label>
             <input v-model="DAILY_SESSION_HOURS" type="number" name="PER_DAILY_SESSION" id="PER_DAILY_SESSION"
-              class="form-control" required>
+              class="form-control">
           </div>
 
           <div class="form-group">
             <label for="PER_HOURLY_SESSION">Per Hourly Session (hrs.)</label>
             <input v-model="HOURLY_SESSION_HOURS" type="number" name="PER_HOURLY_SESSION" id="PER_HOURLY_SESSION"
-              class="form-control " required>
+              class="form-control ">
           </div>
 
           <button type="submit" class="btn btn-primary btn-block">Save</button>
@@ -93,6 +99,7 @@
         MAX_CHARACTER_LIMIT: undefined,
         HOURLY_SESSION_HOURS: undefined,
         DAILY_SESSION_HOURS: undefined,
+        SPAM_PROTECTION_TIME: undefined,
       },
       methods: {
         save() {
@@ -104,6 +111,7 @@
             MAX_DAILY_LIMIT: parseInt(this.MAX_DAILY_LIMIT),
             MAX_HOURLY_LIMIT: parseInt(this.MAX_HOURLY_LIMIT),
             MAX_CHARACTER_LIMIT: parseInt(this.MAX_CHARACTER_LIMIT),
+            SPAM_PROTECTION_TIME: parseInt(this.SPAM_PROTECTION_TIME),
           };
           this.saved = false;
           axios.post('/api/settings', config)
@@ -124,6 +132,7 @@
           this.MAX_DAILY_LIMIT = data.MAX_DAILY_LIMIT;
           this.MAX_HOURLY_LIMIT = data.MAX_HOURLY_LIMIT;
           this.MAX_CHARACTER_LIMIT = data.MAX_CHARACTER_LIMIT;
+          this.SPAM_PROTECTION_TIME = data.SPAM_PROTECTION_TIME;
         });
       }
     });

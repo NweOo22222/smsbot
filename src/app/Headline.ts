@@ -9,9 +9,7 @@ export default class Headline {
 
   constructor({ id, source, datetime, timestamp, title }) {
     this.id = id;
-    this.title = String(title)
-      .replace(/\((?:ရုပ်သံ|ဓာတ်ပုံ)\)/gm, "")
-      .replace(/ /gm, "");
+    this.title = String(title).replace(/ /gm, "");
     this.source = source;
     this.datetime = new Date(datetime || parseInt(timestamp) || Date.now());
   }
@@ -44,7 +42,11 @@ export default class Headline {
     const articles = (DB.read()["articles"] || [])
       .map((article) => new Headline(article))
       .sort((a, b) => b.datetime - a.datetime)
-      .filter((headline) => !diff.includes(headline["id"]));
+      .filter(
+        (headline) =>
+          !headline.title.match(/(?:\((?:ရုပ်သံ|ဆောင်းပါး)\)|ကာတွန်း\()/) &&
+          !diff.includes(headline["id"])
+      );
     if (limit === null) {
       return articles;
     }

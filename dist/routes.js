@@ -52,6 +52,8 @@ var Message_1 = __importDefault(require("./app/Message"));
 var Phone_1 = __importDefault(require("./app/Phone"));
 var Highlight_1 = __importDefault(require("./app/Highlight"));
 var DB_1 = __importDefault(require("./app/DB"));
+var burmeseNumber_1 = __importDefault(require("./functions/burmeseNumber"));
+var remainingTime_1 = __importDefault(require("./functions/remainingTime"));
 var socket_1 = require("./socket");
 var config_1 = require("./config");
 var middleware_1 = __importDefault(require("./middleware"));
@@ -61,7 +63,7 @@ var Article_1 = __importDefault(require("./app/Article"));
 var _tasks = {};
 var router = express_1.Router();
 router.get("/call", middleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var message, phone, keyword;
+    var message, phone, keyword, session, error, error;
     return __generator(this, function (_a) {
         message = new Message_1.default({
             body: decodeURIComponent(String(req.query.message)),
@@ -69,35 +71,55 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         });
         phone = message.phone;
         keyword = new Keyword_1.default(message.body);
+        session = phone.session;
+        if (!session.unlimited && session.daily.isDenied()) {
+            if (!session.daily.notified) {
+                error = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)));
+                session.daily.notified = true;
+                phone.save();
+                socket_1.io().emit("users:update", phone);
+                _tasks[phone.number] = [error];
+                return [2, res.end()];
+            }
+            socket_1.io().emit("users:update", phone);
+            return [2, res.status(419).end()];
+        }
+        if (!session.unlimited && session.hourly.isDenied()) {
+            if (!session.hourly.notified) {
+                error = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)));
+                session.hourly.notified = true;
+                phone.save();
+                socket_1.io().emit("users:update", phone);
+                _tasks[phone.number] = [error];
+                return [2, res.end()];
+            }
+            socket_1.io().emit("users:update", phone);
+            return [2, res.status(419).end()];
+        }
         phone.extend();
         keyword.onCommonMistake(function () {
-            phone.incr({ total_action: 0.5 }).save();
+            phone.incr({ total_action: 0 }).save();
             res.status(400).end();
         });
         keyword.onAskInfo(function () {
-            var da = phone.session.daily.total_action;
-            var dc = phone.session.daily.character_count;
-            var ha = phone.session.hourly.total_action;
-            var hc = phone.session.hourly.character_count;
-            var dm = Math.round(phone.session.daily.remaining / 60);
-            var dh = Math.round(dm / 60);
-            var dr = dh < 1 ? dm + " မိနစ်" : dh + " နာရီ";
-            var hm = Math.round(phone.session.hourly.remaining / 60);
-            var hr = hm + " မိနစ်";
-            var text = phone.session.unlimited
-                ? "သင့်ဖုန်းနံပါတ်ကို SMS Limit သတ်မှတ်ထားခြင်းမရှိပါ။"
-                : printf_1.default("SMS Limit မပြည့်ရန် %sအတွင်း %d ကြိမ်နှင့် %sအတွင်း %d ကြိမ်ပို့နိုင်ပါတယ်။", hr, phone.session.hourly.actions, dr, phone.session.daily.actions);
+            var text = session.unlimited
+                ? config_1.NO_SMS_LIMIT
+                : printf_1.default(config_1.ON_SMS_LIMIT, burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)), burmeseNumber_1.default(session.hourly.actions), burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)), burmeseNumber_1.default(session.daily.actions));
             if (phone.premium) {
                 text += " [PREMIUM]";
             }
             text += " - nweoo.com";
-            phone.incr({ total_action: 0.5, character_count: text.length }).save();
-            res.send(text);
+            phone.notified_error = false;
+            phone.incr({ total_action: 0 }).save();
+            _tasks[phone.number] = [text];
+            res.end();
         });
         keyword.onAskHelp(function () {
             var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({ total_action: 0.5 }).save();
-            res.send(text);
+            phone.notified_error = false;
+            phone.incr({ total_action: 0 }).save();
+            _tasks[phone.number] = [text];
+            res.end();
         });
         keyword.onAskHeadlines(function () {
             var actions = [];
@@ -106,6 +128,7 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             var remain = Headline_1.default.latest(null, phone.headlines).length - latest.length;
             var result = __spreadArray(__spreadArray([], highlights), latest);
             if (result.length) {
+                phone.notified_error = false;
                 actions.push.apply(actions, result.map(function (_a) {
                     var title = _a.title, datetime = _a.datetime, source = _a.source;
                     return title.split(" ").join("") +
@@ -116,20 +139,27 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
                         "/" +
                         Number(datetime.getMonth() + 1);
                 }));
-                if (remain && phone.session.hourly.total_action < 1) {
-                    actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, remain));
+                if (remain > 5) {
+                    phone.notified_emtpy = false;
+                }
+                if (remain && session.hourly.total_action < 1) {
+                    actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, burmeseNumber_1.default(remain)));
                 }
                 _tasks[message.phone.number] = actions;
                 phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
                 res.end();
             }
             else {
-                var text = printf_1.default(config_1.ON_HEADLINES_NULL, Config_1.default.get("MOBILE_NUMBER"));
-                phone
-                    .markAsSent(highlights, latest)
-                    .incr({ total_action: 2, character_count: text.length })
-                    .save();
-                res.send(text);
+                var text = config_1.ON_HEADLINES_NULL;
+                if (!phone.notified_emtpy) {
+                    phone.notified_emtpy = true;
+                    _tasks[phone.number] = [text];
+                    phone.incr({ total_action: 0.5 }).save();
+                }
+                else {
+                    phone.incr({ total_action: 1 }).save();
+                }
+                res.end();
             }
         });
         keyword.onAskRead(function (title) {
@@ -139,14 +169,19 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
                 text = phone.max_limit
                     ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
                     : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လိုပိတ်ထားတယ်။ - nweoo.com";
-                phone.incr({ total_action: 1, character_count: text.length }).save();
-                return res.send();
+                if (!phone.notified_error) {
+                    phone.notified_error = true;
+                    phone.incr({ total_action: 0 }).save();
+                    _tasks[phone.number] = [text];
+                }
+                return res.end();
             }
             title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
             var article = Article_1.default.fetchAll().find(function (article) { return article.title == title; });
             if (!article) {
                 text = "\u101E\u1010\u1004\u103A\u1038\u1001\u1031\u102B\u1004\u103A\u1038\u1005\u1025\u103A \"" + title + "\" \u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com";
-                phone.incr({ total_action: 1, character_count: text.length }).save();
+                phone.incr({ total_action: 0 }).save();
+                _tasks[phone.number] = [text];
                 return res.send(text);
             }
             var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
@@ -154,6 +189,7 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             var max_chunk = Math.floor(characters / settings_1.config.MAX_CHARACTER_LIMIT) || 1;
             var chunk = Math.floor(keywords.length / max_chunk);
             var chunks = [];
+            phone.notified_error = false;
             for (var i = 0; i < max_chunk; i++) {
                 if (i + 1 === max_chunk) {
                     chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
@@ -174,17 +210,21 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             res.end();
         });
         keyword.onAskCount(function () {
-            var text = printf_1.default(config_1.ON_REMAINING_COUNT, Headline_1.default.latest(null, phone.headlines).length);
-            phone.incr({ total_action: 0.5, character_count: text.length }).save();
-            res.send(text);
+            var count = Headline_1.default.latest(null, phone.headlines).length;
+            var text = count
+                ? printf_1.default(config_1.ON_REMAINING_COUNT, burmeseNumber_1.default(count))
+                : config_1.ON_REMAINING_COUNT_NULL;
+            phone.notified_error = false;
+            phone.incr({ total_action: 0 }).save();
+            _tasks[phone.number] = [text];
+            res.end();
         });
         keyword.onAskReset(function () {
             var text = config_1.ON_RESET;
-            phone
-                .reset()
-                .incr({ total_action: 1, character_count: text.length })
-                .save();
-            res.send(text);
+            phone.notified_error = false;
+            phone.reset().incr({ total_action: 0.8 }).save();
+            _tasks[phone.number] = [text];
+            res.end();
         });
         keyword.onSearchContent(function (keyword) {
             var articles = Article_1.default.fetchAll().filter(function (article) {
@@ -193,9 +233,11 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             var total = articles.length;
             articles = articles
                 .filter(function (article) { return !phone.headlines.includes(article.id); })
-                .map(function (article) { return article.toHeadline(); });
+                .map(function (article) { return article.toHeadline(); })
+                .slice(0, 5);
             var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
-            phone.incr({ total_action: 1 }).markAsSent([], articles).save();
+            phone.notified_error = false;
+            phone.incr({ total_action: 0 }).markAsSent([], articles).save();
             var headlines = DB_1.default.read()["articles"];
             articles = __spreadArray([
                 text
@@ -204,14 +246,20 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
                 var ct = article.title + " -" + article.source;
                 var d = hl && new Date(hl.datetime || hl.timestamp);
                 return (ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
-            })).slice(0, 5);
+            }));
             _tasks[phone.number] = articles;
             res.end();
         });
         keyword.onUnmatched(function () {
             var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
-            phone.incr({ total_action: 1 }).save();
-            res.send(text);
+            if (phone.total_count > 1) {
+                if (!phone.notified_error) {
+                    phone.notified_error = true;
+                    _tasks[phone.number] = [text];
+                }
+                phone.incr({ total_action: 0.2 }).save();
+            }
+            res.end();
         });
         socket_1.io().emit("users:update", phone);
         socket_1.io().emit("messages:update", message.body);
@@ -231,6 +279,7 @@ router.get("/action", function (req, res) { return __awaiter(void 0, void 0, voi
             _tasks[number] = undefined;
             delete _tasks[number];
         }
+        socket_1.io().emit("users:update", phone);
         phone.incr({ total_action: 0.2, character_count: text.length }).save();
         res.send(text);
         return [2];

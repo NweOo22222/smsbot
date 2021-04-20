@@ -1,24 +1,29 @@
 export const ON_HELP =
-  "ဖုန်းနံပါတ် %s ကို သတင်းခေါင်းစဥ်များရယူရန် news ဟုပို့ပါ။\nကျန်ရှိသည့်အရေတွက်ကိုသိရန် count ဟုပို့ပါ။\nသတင်းများကိုအစမှပြန်လည်ရယူရန် reset ဟုပို့ပါ။\nSMS Chatbot ကိုပိတ်ရန်​ OFF ဟုပို့ပါ။";
+  'ဖုန်းနံပါတ် %s ကို\n-သတင်းခေါင်းစဥ်များရယူရန် news\n-ကျန်ရှိသည့်အရေတွက်ကိုသိရန် count\n-SMS Limit ကိုသိရန် info\n-အစမှပြန်လည်ရယူရန် reset\n-Chatbot ကိုပိတ်ရန်​ off ဟုပို့ပါ။\nအသုံးများသောစကားစုများကိုမျက်တောင်အဖွင့်အပိတ်ထဲတွင်ထည့်၍ရှာဖွေနိုင်ပါတယ်။ ဥပမာ."မြစ်ကြီးနား"';
 
 export const ON_REMAINING_COUNT =
-  "မပို့ရသေးသောသတင်းခေါင်းစဥ် %d ခုကျန်ပါတယ်။ - nweoo.com";
+  "မပို့ရသေးသောသတင်းခေါင်းစဥ် %s ခုကျန်ပါတယ်။ - nweoo.com";
+
+export const ON_REMAINING_COUNT_NULL = "သတင်းများနောက်ထပ်မရှိပါ။ - nweoo.com";
 
 export const ON_HEADLINES_NEXT = ON_REMAINING_COUNT;
 
-export const ON_HEADLINES_NULL = "သတင်းများနောက်ထပ်မရှိပါ။ - nweoo.com";
+export const ON_HEADLINES_NULL = ON_REMAINING_COUNT_NULL;
 
 export const ON_RESET =
   "သတင်းများကိုအစမှပြန်လည်ရယူရန် news ဟုပို့ပါ။ - nweoo.com";
 
 export const ON_UNEXISTED =
-  "မှားယွင်းနေပါတယ်။ သတင်းများရယူလိုပါက %s ကို news ဟုပို့ပါ။ - nweoo.com";
+  "မှားယွင်းနေပါတယ်။ သတင်းများရယူရန်ဖုန်းနံပါတ် %s ကို news ဟုပို့ပါ။ - nweoo.com";
 
 export const ON_RATE_LIMIT =
-  "SMS %s Limit ပြည့်သွားပါသဖြင့် %s ကို %s ပြည့်မှပြန်ပို့ပေးပါ။ - nweoo.com";
-
-export const ON_HELP_REPORTER =
-  "ဖုန်နံပါတ် 09758035929 ကို #nweoo ထည့်ပြီးပို့လိုက်တာနဲ့ nweoo.com/reports နဲ့ fb.com/nweoo22222 ကို သတင်းတွေတိုက်ရိုက်ပေးပို့နိုင်ပါတယ်။";
+  "SMS %s Limit ပြည့်သွားပါသဖြင့်ဖုန်းနံပါတ် %s ကို %sနေမှပြန်ပို့ပေးပါ။ - nweoo.com";
 
 export const ON_SEARCH_EXISTED =
-  '"%s" ပါ၀င်သည့်သတင်း %d ခုရှာတွေ့ပြီး %d ပို့ရန်ကျန်ပါတယ်။ - nweoo.com';
+  '"%s" ပါ၀င်သည့်သတင်း %s ခုရှာတွေ့ပြီး %s ပို့ရန်ကျန်ပါတယ်။ - nweoo.com';
+
+export const NO_SMS_LIMIT =
+  "သင့်ဖုန်းနံပါတ်ကို SMS Limit သတ်မှတ်ထားခြင်းမရှိပါ။";
+
+export const ON_SMS_LIMIT =
+  "SMS Limit မပြည့်ရန် %sအတွင်း %s ကြိမ်နှင့် %sအတွင်း %s ကြိမ်ပို့နိုင်ပါတယ်။";

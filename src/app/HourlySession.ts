@@ -60,7 +60,7 @@ export default class HourlySession {
   }
 
   get actions() {
-    return Math.floor(
+    return Math.round(
       Number(Config.get("MAX_HOURLY_LIMIT")) - this.total_action
     );
   }

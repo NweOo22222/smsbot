@@ -31,8 +31,11 @@ api.get("/articles", function (req, res) {
 });
 api.get("/users", function (req, res) {
     var limit = req.query["limit"] || 15;
-    var users = DB_1.default.read()["phone"];
-    res.json(users.reverse().slice(0, limit));
+    var users = DB_1.default.read()["phone"].sort(function (a, b) {
+        return new Date(b.last_date || b.first_date).getTime() -
+            new Date(a.last_date || a.first_date).getTime();
+    });
+    res.json(users.slice(0, limit));
 });
 api.get("/version", function (req, res) {
     res.json(require("../package.json")["version"]);

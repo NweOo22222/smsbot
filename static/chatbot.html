@@ -203,19 +203,18 @@
           while (true) {
             try {
               const { data } = await axios.get(`/action?phone=${this.phone}`);
-              this.typing = true;
               if (data) {
-                this.scrollChat();
+                this.typing = true;
+                await sleep(Math.round(Math.random() * 10) * 100);
                 this.messages.push({
                   from: this.bot,
                   text: this.formatText(data),
                   timestamp: Date.now(),
                 });
-                await sleep(Math.round(Math.random() * 10) * 100);
+                this.scrollChat();
               }
             } catch (e) {
               this.typing = false;
-              await sleep(Math.round(Math.random() * 10) * 100);
               return;
             }
           }

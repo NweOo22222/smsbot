@@ -19,9 +19,12 @@ var Phone = (function () {
         var phone = i === -1 ? {} : clients[i];
         this.session = new Session_1.default(phone.session || {});
         this.first_date = new Date(phone.first_date || Date.now());
+        this.last_date = new Date(phone.last_date || Date.now());
         this.total_count = phone.total_count || 0;
         this.headlines = phone.headlines || [];
         this.highlights = phone.highlights || [];
+        this.notified_error = Boolean(phone.notified_error);
+        this.notified_emtpy = Boolean(phone.notified_emtpy);
         this.max_limit = phone.max_limit || 0;
         if (this.max_limit) {
             this.read_reset = new Date(phone.read_reset || Date.now() + 2400 * 3600);
@@ -71,6 +74,7 @@ var Phone = (function () {
             var id = _a.id;
             return id == _this.id;
         });
+        this.last_date = new Date();
         if (i === -1) {
             db["phone"].push(this);
         }

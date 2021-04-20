@@ -9,6 +9,7 @@ export default class Phone {
   public id: string;
   public total_count: number;
   public first_date: Date;
+  public last_date: Date;
   public headlines: string[];
   public highlights: string[];
   public operator: Operator;
@@ -17,6 +18,8 @@ export default class Phone {
   public max_limit: number;
   public read_count: number;
   public read_reset: Date;
+  public notified_emtpy: boolean;
+  public notified_error: boolean;
 
   constructor(public number: string) {
     guessOperator(this);
@@ -26,9 +29,12 @@ export default class Phone {
     const phone = i === -1 ? {} : clients[i];
     this.session = new Session(phone.session || {});
     this.first_date = new Date(phone.first_date || Date.now());
+    this.last_date = new Date(phone.last_date || Date.now());
     this.total_count = phone.total_count || 0;
     this.headlines = phone.headlines || [];
     this.highlights = phone.highlights || [];
+    this.notified_error = Boolean(phone.notified_error);
+    this.notified_emtpy = Boolean(phone.notified_emtpy);
 
     this.max_limit = phone.max_limit || 0;
     if (this.max_limit) {
@@ -78,6 +84,7 @@ export default class Phone {
   save() {
     const db = DB.read();
     const i = db["phone"]?.findIndex(({ id }) => id == this.id);
+    this.last_date = new Date();
     if (i === -1) {
       db["phone"].push(this);
     } else {

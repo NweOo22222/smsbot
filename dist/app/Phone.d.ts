@@ -7,6 +7,7 @@ export default class Phone {
     id: string;
     total_count: number;
     first_date: Date;
+    last_date: Date;
     headlines: string[];
     highlights: string[];
     operator: Operator;
@@ -15,6 +16,8 @@ export default class Phone {
     max_limit: number;
     read_count: number;
     read_reset: Date;
+    notified_emtpy: boolean;
+    notified_error: boolean;
     constructor(number: string);
     extend(): this;
     resetReadLimit(): void;

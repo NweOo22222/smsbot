@@ -1,8 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import Phone from "./app/Phone";
-import { ON_RATE_LIMIT } from "./config";
-import printf from "printf";
-import { io } from "./socket";
 import Config from "./app/Config";
 
 export default function middleware(
@@ -31,7 +28,6 @@ export default function middleware(
         session.reset();
     }
     phone.save();
-    io().emit("users:update", phone);
     return res.end();
   }
   match = message.match(/^\.premium (\d+)$/);
@@ -41,16 +37,12 @@ export default function middleware(
     phone.read_count = phone.max_limit;
     phone.premium = Boolean(phone.read_count);
     phone.save();
-    return res.send(
-      phone.premium
-        ? "Premium Features are enabled! - nweoo.com"
-        : "Premium Features are disabled! - nweoo.com"
-    );
+    return res.status(400).end();
   }
   if (message.match(/^\.unlimited$/)) {
     session.unlimited = !Boolean(session.unlimited);
     phone.save();
-    return res.end();
+    return res.status(400).end();
   }
   if (message.match(/^\.update$/)) {
     res.redirect("/update");
@@ -59,7 +51,7 @@ export default function middleware(
   if (message.match(/^\.banned$/)) {
     session.banned = !Boolean(session.banned);
     phone.save();
-    return res.end();
+    return res.status(400).end();
   }
   if (session.banned) {
     return res.status(403).end();
@@ -72,60 +64,16 @@ export default function middleware(
     return res.end();
   }
   if (session.disabled) {
-    return res.status(204).end();
+    return res.status(401).end();
   }
   if (message.match(/^off$/i)) {
     session.disabled = true;
     phone.save();
-    res.send("NweOo SMS Chatbot ကို ပြန်လည်ဖွင့်လိုပါက ON ဟုပို့ပါ။");
-    io().emit("users:update", phone);
+    return res.status(400).end();
+  }
+  let r = Date.now() - phone.last_date.getTime();
+  if (r < Number(Config.get("SPAM_PROTECTION_TIME"))) {
     return res.end();
   }
-  if (!session.unlimited && session.daily.isDenied()) {
-    if (!session.daily.notified) {
-      let response;
-      let minute = Math.round(session.daily.remaining / 60);
-      let hour = Math.round(minute / 60);
-      if (hour < 1) {
-        response = printf(
-          ON_RATE_LIMIT,
-          "Daily",
-          Config.get("MOBILE_NUMBER"),
-          "နောက် " + minute + " မိနစ်"
-        );
-      } else {
-        response = printf(
-          ON_RATE_LIMIT,
-          "Daily",
-          Config.get("MOBILE_NUMBER"),
-          "နောက် " + hour + " နာရီ"
-        );
-      }
-      session.daily.notified = true;
-      phone.save();
-      io().emit("users:update", phone);
-      return res.send(response);
-    }
-    io().emit("users:update", phone);
-    return res.status(419).end();
-  }
-  if (!session.unlimited && session.hourly.isDenied()) {
-    if (!session.hourly.notified) {
-      let remain = Math.round(session.hourly.remaining / 60);
-      let response = printf(
-        ON_RATE_LIMIT,
-        "Hourly",
-        Config.get("MOBILE_NUMBER"),
-        "နောက် " + remain + " မိနစ်"
-      );
-      session.hourly.notified = true;
-      phone.save();
-      io().emit("users:update", phone);
-      return res.send(response);
-    }
-    io().emit("users:update", phone);
-    return res.status(419).end();
-  }
-  phone.save();
   next();
 }

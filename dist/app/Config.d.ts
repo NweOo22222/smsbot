@@ -1,5 +1,5 @@
 declare type SIMSlot = -1 | 0 | 1;
-declare type ConfigKeyName = "MOBILE_NUMBER" | "USE_SIMSLOT" | "MAX_DAILY_LIMIT" | "PER_DAILY_SESSION" | "MAX_HOURLY_LIMIT" | "PER_HOURLY_SESSION" | "MAX_CHARACTER_LIMIT";
+declare type ConfigKeyName = "MOBILE_NUMBER" | "USE_SIMSLOT" | "MAX_DAILY_LIMIT" | "PER_DAILY_SESSION" | "MAX_HOURLY_LIMIT" | "PER_HOURLY_SESSION" | "MAX_CHARACTER_LIMIT" | "SPAM_PROTECTION_TIME";
 export interface Configuration {
     MOBILE_NUMBER: string;
     USE_SIMSLOT: SIMSlot;
@@ -8,6 +8,7 @@ export interface Configuration {
     MAX_HOURLY_LIMIT: number;
     PER_HOURLY_SESSION: number;
     MAX_CHARACTER_LIMIT: number;
+    SPAM_PROTECTION_TIME: number;
 }
 export default class Config {
     static init(): void;

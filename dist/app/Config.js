@@ -33,6 +33,7 @@ var Config = (function () {
         return {
             MOBILE_NUMBER: userConfig["MOBILE_NUMBER"] || settings_1.config.MOBILE_NUMBER,
             USE_SIMSLOT: userConfig["USE_SIMSLOT"] || settings_1.config.USE_SIMSLOT,
+            SPAM_PROTECTION_TIME: userConfig["SPAM_PROTECTION_TIME"] || settings_1.config.SPAM_PROTECTION_TIME,
             MAX_CHARACTER_LIMIT: userConfig["MAX_CHARACTER_LIMIT"] || settings_1.config.MAX_CHARACTER_LIMIT,
             MAX_HOURLY_LIMIT: userConfig["MAX_HOURLY_LIMIT"] || settings_1.config.MAX_HOURLY_LIMIT,
             MAX_DAILY_LIMIT: userConfig["MAX_DAILY_LIMIT"] || settings_1.config.MAX_DAILY_LIMIT,

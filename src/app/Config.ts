@@ -14,7 +14,8 @@ type ConfigKeyName =
   | "PER_DAILY_SESSION"
   | "MAX_HOURLY_LIMIT"
   | "PER_HOURLY_SESSION"
-  | "MAX_CHARACTER_LIMIT";
+  | "MAX_CHARACTER_LIMIT"
+  | "SPAM_PROTECTION_TIME";
 
 export interface Configuration {
   MOBILE_NUMBER: string;
@@ -24,6 +25,7 @@ export interface Configuration {
   MAX_HOURLY_LIMIT: number;
   PER_HOURLY_SESSION: number;
   MAX_CHARACTER_LIMIT: number;
+  SPAM_PROTECTION_TIME: number;
 }
 
 export default class Config {
@@ -58,6 +60,8 @@ export default class Config {
     return {
       MOBILE_NUMBER: userConfig["MOBILE_NUMBER"] || config.MOBILE_NUMBER,
       USE_SIMSLOT: userConfig["USE_SIMSLOT"] || config.USE_SIMSLOT,
+      SPAM_PROTECTION_TIME:
+        userConfig["SPAM_PROTECTION_TIME"] || config.SPAM_PROTECTION_TIME,
       MAX_CHARACTER_LIMIT:
         userConfig["MAX_CHARACTER_LIMIT"] || config.MAX_CHARACTER_LIMIT,
       MAX_HOURLY_LIMIT:

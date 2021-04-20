@@ -52,7 +52,7 @@ var HourlySession = (function () {
     });
     Object.defineProperty(HourlySession.prototype, "actions", {
         get: function () {
-            return Math.floor(Number(Config_1.default.get("MAX_HOURLY_LIMIT")) - this.total_action);
+            return Math.round(Number(Config_1.default.get("MAX_HOURLY_LIMIT")) - this.total_action);
         },
         enumerable: false,
         configurable: true

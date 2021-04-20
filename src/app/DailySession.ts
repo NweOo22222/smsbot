@@ -58,7 +58,7 @@ export default class DailySession {
   }
 
   get actions() {
-    return Math.floor(
+    return Math.round(
       Number(Config.get("MAX_DAILY_LIMIT")) - this.total_action
     );
   }

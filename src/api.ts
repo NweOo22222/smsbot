@@ -1,7 +1,6 @@
 import { Router } from "express";
 import DB from "./app/DB";
 import Config from "./app/Config";
-import Phone from "./app/Phone";
 
 const api = Router();
 
@@ -30,8 +29,12 @@ api.get("/articles", (req, res) => {
 
 api.get("/users", (req, res) => {
   const limit = req.query["limit"] || 15;
-  const users = DB.read()["phone"];
-  res.json(users.reverse().slice(0, limit));
+  const users = DB.read()["phone"].sort(
+    (a, b) =>
+      new Date(b.last_date || b.first_date).getTime() -
+      new Date(a.last_date || a.first_date).getTime()
+  );
+  res.json(users.slice(0, limit));
 });
 
 api.get("/version", (req, res) => {

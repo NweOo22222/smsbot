@@ -6,6 +6,8 @@ import Message from "./app/Message";
 import Phone from "./app/Phone";
 import Highlight from "./app/Highlight";
 import DB from "./app/DB";
+import burmeseNumber from "./functions/burmeseNumber";
+import remainingTime from "./functions/remainingTime";
 import { io } from "./socket";
 import {
   ON_SEARCH_EXISTED,
@@ -13,8 +15,12 @@ import {
   ON_HEADLINES_NULL,
   ON_HELP,
   ON_REMAINING_COUNT,
+  ON_REMAINING_COUNT_NULL,
+  ON_SMS_LIMIT,
   ON_RESET,
   ON_UNEXISTED,
+  NO_SMS_LIMIT,
+  ON_RATE_LIMIT,
 } from "./config";
 import middleware from "./middleware";
 import Config from "./app/Config";
@@ -31,45 +37,77 @@ router.get("/call", middleware, async (req, res) => {
   });
   const phone = message.phone;
   const keyword = new Keyword(message.body);
+  const session = phone.session;
+
+  if (!session.unlimited && session.daily.isDenied()) {
+    if (!session.daily.notified) {
+      let error = printf(
+        ON_RATE_LIMIT,
+        "Daily",
+        Config.get("MOBILE_NUMBER"),
+        "နောက်" + burmeseNumber(remainingTime(session.daily.remaining))
+      );
+      session.daily.notified = true;
+      phone.save();
+      io().emit("users:update", phone);
+      _tasks[phone.number] = [error];
+      return res.end();
+    }
+    io().emit("users:update", phone);
+    return res.status(419).end();
+  }
+
+  if (!session.unlimited && session.hourly.isDenied()) {
+    if (!session.hourly.notified) {
+      let error = printf(
+        ON_RATE_LIMIT,
+        "Hourly",
+        Config.get("MOBILE_NUMBER"),
+        "နောက်" + burmeseNumber(remainingTime(session.hourly.remaining))
+      );
+      session.hourly.notified = true;
+      phone.save();
+      io().emit("users:update", phone);
+      _tasks[phone.number] = [error];
+      return res.end();
+    }
+    io().emit("users:update", phone);
+    return res.status(419).end();
+  }
 
   phone.extend();
 
   keyword.onCommonMistake(() => {
-    phone.incr({ total_action: 0.5 }).save();
+    phone.incr({ total_action: 0 }).save();
     res.status(400).end();
   });
 
   keyword.onAskInfo(() => {
-    let da = phone.session.daily.total_action;
-    let dc = phone.session.daily.character_count;
-    let ha = phone.session.hourly.total_action;
-    let hc = phone.session.hourly.character_count;
-    let dm = Math.round(phone.session.daily.remaining / 60);
-    let dh = Math.round(dm / 60);
-    let dr = dh < 1 ? dm + " မိနစ်" : dh + " နာရီ";
-    let hm = Math.round(phone.session.hourly.remaining / 60);
-    let hr = hm + " မိနစ်";
-    let text = phone.session.unlimited
-      ? "သင့်ဖုန်းနံပါတ်ကို SMS Limit သတ်မှတ်ထားခြင်းမရှိပါ။"
+    let text = session.unlimited
+      ? NO_SMS_LIMIT
       : printf(
-          "SMS Limit မပြည့်ရန် %sအတွင်း %d ကြိမ်နှင့် %sအတွင်း %d ကြိမ်ပို့နိုင်ပါတယ်။",
-          hr,
-          phone.session.hourly.actions,
-          dr,
-          phone.session.daily.actions
+          ON_SMS_LIMIT,
+          burmeseNumber(remainingTime(session.hourly.remaining)),
+          burmeseNumber(session.hourly.actions),
+          burmeseNumber(remainingTime(session.daily.remaining)),
+          burmeseNumber(session.daily.actions)
         );
     if (phone.premium) {
       text += " [PREMIUM]";
     }
     text += " - nweoo.com";
-    phone.incr({ total_action: 0.5, character_count: text.length }).save();
-    res.send(text);
+    phone.notified_error = false;
+    phone.incr({ total_action: 0 }).save();
+    _tasks[phone.number] = [text];
+    res.end();
   });
 
   keyword.onAskHelp(() => {
     let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
-    phone.incr({ total_action: 0.5 }).save();
-    res.send(text);
+    phone.notified_error = false;
+    phone.incr({ total_action: 0 }).save();
+    _tasks[phone.number] = [text];
+    res.end();
   });
 
   keyword.onAskHeadlines(() => {
@@ -80,6 +118,7 @@ router.get("/call", middleware, async (req, res) => {
       Headline.latest(null, phone.headlines).length - latest.length;
     const result = [...highlights, ...latest];
     if (result.length) {
+      phone.notified_error = false;
       actions.push(
         ...result.map(
           ({ title, datetime, source }) =>
@@ -92,19 +131,25 @@ router.get("/call", middleware, async (req, res) => {
             Number(datetime.getMonth() + 1)
         )
       );
-      if (remain && phone.session.hourly.total_action < 1) {
-        actions.push(printf(ON_HEADLINES_NEXT, remain));
+      if (remain > 5) {
+        phone.notified_emtpy = false;
+      }
+      if (remain && session.hourly.total_action < 1) {
+        actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
       }
       _tasks[message.phone.number] = actions;
       phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
       res.end();
     } else {
-      let text = printf(ON_HEADLINES_NULL, Config.get("MOBILE_NUMBER"));
-      phone
-        .markAsSent(highlights, latest)
-        .incr({ total_action: 2, character_count: text.length })
-        .save();
-      res.send(text);
+      let text = ON_HEADLINES_NULL;
+      if (!phone.notified_emtpy) {
+        phone.notified_emtpy = true;
+        _tasks[phone.number] = [text];
+        phone.incr({ total_action: 0.5 }).save();
+      } else {
+        phone.incr({ total_action: 1 }).save();
+      }
+      res.end();
     }
   });
 
@@ -114,8 +159,12 @@ router.get("/call", middleware, async (req, res) => {
       text = phone.max_limit
         ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
         : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လိုပိတ်ထားတယ်။ - nweoo.com";
-      phone.incr({ total_action: 1, character_count: text.length }).save();
-      return res.send();
+      if (!phone.notified_error) {
+        phone.notified_error = true;
+        phone.incr({ total_action: 0 }).save();
+        _tasks[phone.number] = [text];
+      }
+      return res.end();
     }
     title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
     const article = Article.fetchAll().find(
@@ -123,7 +172,8 @@ router.get("/call", middleware, async (req, res) => {
     );
     if (!article) {
       text = `သတင်းခေါင်းစဥ် "${title}" ကိုရှာမတွေ့ပါ။ - nweoo.com`;
-      phone.incr({ total_action: 1, character_count: text.length }).save();
+      phone.incr({ total_action: 0 }).save();
+      _tasks[phone.number] = [text];
       return res.send(text);
     }
     let characters = article.content?.length;
@@ -131,6 +181,7 @@ router.get("/call", middleware, async (req, res) => {
     let max_chunk = Math.floor(characters / config.MAX_CHARACTER_LIMIT) || 1;
     let chunk = Math.floor(keywords.length / max_chunk);
     let chunks = [];
+    phone.notified_error = false;
     for (let i = 0; i < max_chunk; i++) {
       if (i + 1 === max_chunk) {
         chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
@@ -154,21 +205,22 @@ router.get("/call", middleware, async (req, res) => {
   });
 
   keyword.onAskCount(() => {
-    let text = printf(
-      ON_REMAINING_COUNT,
-      Headline.latest(null, phone.headlines).length
-    );
-    phone.incr({ total_action: 0.5, character_count: text.length }).save();
-    res.send(text);
+    let count = Headline.latest(null, phone.headlines).length;
+    let text = count
+      ? printf(ON_REMAINING_COUNT, burmeseNumber(count))
+      : ON_REMAINING_COUNT_NULL;
+    phone.notified_error = false;
+    phone.incr({ total_action: 0 }).save();
+    _tasks[phone.number] = [text];
+    res.end();
   });
 
   keyword.onAskReset(() => {
     let text = ON_RESET;
-    phone
-      .reset()
-      .incr({ total_action: 1, character_count: text.length })
-      .save();
-    res.send(text);
+    phone.notified_error = false;
+    phone.reset().incr({ total_action: 0.8 }).save();
+    _tasks[phone.number] = [text];
+    res.end();
   });
 
   keyword.onSearchContent((keyword) => {
@@ -178,9 +230,11 @@ router.get("/call", middleware, async (req, res) => {
     let total = articles.length;
     articles = articles
       .filter((article) => !phone.headlines.includes(article.id))
-      .map((article) => article.toHeadline());
+      .map((article) => article.toHeadline())
+      .slice(0, 5);
     let text = printf(ON_SEARCH_EXISTED, keyword, total, articles.length);
-    phone.incr({ total_action: 1 }).markAsSent([], articles).save();
+    phone.notified_error = false;
+    phone.incr({ total_action: 0 }).markAsSent([], articles).save();
     let headlines = DB.read()["articles"];
     articles = [
       text,
@@ -192,15 +246,21 @@ router.get("/call", middleware, async (req, res) => {
           ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : "")
         );
       }),
-    ].slice(0, 5);
+    ];
     _tasks[phone.number] = articles;
     res.end();
   });
 
   keyword.onUnmatched(() => {
     let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
-    phone.incr({ total_action: 1 }).save();
-    res.send(text);
+    if (phone.total_count > 1) {
+      if (!phone.notified_error) {
+        phone.notified_error = true;
+        _tasks[phone.number] = [text];
+      }
+      phone.incr({ total_action: 0.2 }).save();
+    }
+    res.end();
   });
 
   io().emit("users:update", phone);
@@ -219,6 +279,7 @@ router.get("/action", async (req, res) => {
     _tasks[number] = undefined;
     delete _tasks[number];
   }
+  io().emit("users:update", phone);
   phone.incr({ total_action: 0.2, character_count: text.length }).save();
   res.send(text);
 });

@@ -89,11 +89,11 @@
                 :class="(user['flash'] && 'flash ' || '') + (reachedDailyLimit(user) ? 'bg-danger text-white' : '') + (reachedHourlyLimit(user) ? 'bg-warning text-white' : '')">
                 <td>
                   {{ user.number.slice(0, 6) + '*'.repeat(user.number.length - 10) + user.number.slice(-4) }}
-                  [<a href="#" @click="copy(user.number)">copy</a>]
+                  [<a href="javascript:void(0)" @click="copy(user.number)">copy</a>]
                 </td>
                 <td>{{ user.total_count }}</td>
-                <td>{{ user.session.hourly.total_action }} / {{ settings.MAX_HOURLY_LIMIT }}</td>
-                <td>{{ user.session.daily.total_action }} / {{ settings.MAX_DAILY_LIMIT }}</td>
+                <td>{{ parseInt(user.session.hourly.total_action) }} / {{ settings.MAX_HOURLY_LIMIT }}</td>
+                <td>{{ parseInt(user.session.daily.total_action) }} / {{ settings.MAX_DAILY_LIMIT }}</td>
                 <td>
                   <p>{{ formatDate(user.session.hourly.expired) }}/H</p>
                   <p>{{ formatDate(user.session.daily.expired) }}/D</p>
@@ -251,10 +251,8 @@
         socket.on('users:update', (phone) => {
           this.users = this.users.filter((user) => user.id != phone.id);
           this.users.unshift(phone);
-          requestAnimationFrame(() => {
-            phone.flash = true;
-            setTimeout(() => phone.flash = false, 300);
-          })
+          phone.flash = true;
+          setTimeout(() => (phone.flash = false), 240);
         });
 
         socket.on('messages:update', (message) => {
@@ -269,8 +267,8 @@
 
   <style>
     .flash {
-      background: initial;
-      animation: flashlight .5s ease forwards;
+      animation: flashlight .2s ease;
+      animation-play-state: running;
     }
 
     @keyframes flashlight {
@@ -287,7 +285,8 @@
       }
 
       100% {
-        background-color: initial;
+        background: initial;
+        animation-play-state: initial;
       }
     }
   </style>

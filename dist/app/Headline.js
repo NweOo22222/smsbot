@@ -20,9 +20,7 @@ var Headline = (function () {
     function Headline(_a) {
         var id = _a.id, source = _a.source, datetime = _a.datetime, timestamp = _a.timestamp, title = _a.title;
         this.id = id;
-        this.title = String(title)
-            .replace(/\((?:ရုပ်သံ|ဓာတ်ပုံ)\)/gm, "")
-            .replace(/ /gm, "");
+        this.title = String(title).replace(/ /gm, "");
         this.source = source;
         this.datetime = new Date(datetime || parseInt(timestamp) || Date.now());
     }
@@ -55,7 +53,10 @@ var Headline = (function () {
         var articles = (DB_1.default.read()["articles"] || [])
             .map(function (article) { return new Headline(article); })
             .sort(function (a, b) { return b.datetime - a.datetime; })
-            .filter(function (headline) { return !diff.includes(headline["id"]); });
+            .filter(function (headline) {
+            return !headline.title.match(/(?:\((?:ရုပ်သံ|ဆောင်းပါး)\)|ကာတွန်း\()/) &&
+                !diff.includes(headline["id"]);
+        });
         if (limit === null) {
             return articles;
         }
