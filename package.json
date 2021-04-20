@@ -1,6 +1,6 @@
 {
   "name": "smsbot",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "sms bot with rate limit",
   "main": "dest/index.js",
   "scripts": {
