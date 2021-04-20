@@ -55,21 +55,18 @@ api.get("/total", function (req, res) {
     });
 });
 api.get("/settings", function (req, res) {
-    res.json({
-        MOBILE_NUMBER: Config_1.default.get("MOBILE_NUMBER"),
-        USE_ONLINE: Config_1.default.get("USE_ONLINE"),
-    });
-});
-api.get("/online", function (req, res) {
-    res.send(Boolean(Config_1.default.get("USE_ONLINE")) ? "1" : "0");
+    res.json(Config_1.default.getAll());
 });
 api.post("/settings", function (req, res) {
-    var db = Config_1.default.read();
-    Object.entries(req.body).forEach(function (_a) {
-        var id = _a[0], value = _a[1];
-        db[id] = value;
-    });
-    Config_1.default.save(db);
+    try {
+        Object.entries(req.body).map(function (_a) {
+            var key = _a[0], value = _a[1];
+            return Config_1.default.set(key, value);
+        });
+    }
+    catch (e) {
+        return res.status(400).end();
+    }
     res.status(201).redirect(req.headers["referer"] || "/settings.html");
 });
 exports.default = api;

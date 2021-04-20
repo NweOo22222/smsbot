@@ -7,8 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Settings | NweOo - SMSBot</title>
   <link rel="stylesheet" href="bootstrap.min.css">
-  <script src="axios.min.js"></script>
-  <script src="vue.min.js"></script>
 </head>
 
 <body>
@@ -24,7 +22,12 @@
         Chatbot [Demo]
       </a>
     </section>
-
+    <div class="alert alert-success" v-show="saved">
+      ပြောင်းလဲသတ်မှတ်လိုက်ပါပြီ။
+    </div>
+    <div class="alert alert-danger" v-show="error">
+      {{ error }}
+    </div>
     <div class="card">
       <div class="card-header">
         <h5 class="card-title">Settings</h5>
@@ -75,10 +78,14 @@
     </div>
   </div>
 
+  <script src="axios.min.js"></script>
+  <script src="vue.js"></script>
   <script>
     new Vue({
       el: '.container',
       data: {
+        error: null,
+        saved: false,
         MOBILE_NUMBER: undefined,
         USE_SIMSLOT: undefined,
         MAX_DAILY_LIMIT: undefined,
@@ -92,16 +99,20 @@
           const config = {
             MOBILE_NUMBER: this.MOBILE_NUMBER,
             USE_SIMSLOT: parseInt(this.USE_SIMSLOT),
-            PER_DAILY_SESSION: parseInt(this.DAILY_SESSION) * 3600000,
-            PER_HOURLY_SESSION: parseInt(this.HOURLY_SESSION) * 3600000,
+            PER_DAILY_SESSION: parseInt(this.DAILY_SESSION_HOURS) * 3600000,
+            PER_HOURLY_SESSION: parseInt(this.HOURLY_SESSION_HOURS) * 3600000,
             MAX_DAILY_LIMIT: parseInt(this.MAX_DAILY_LIMIT),
             MAX_HOURLY_LIMIT: parseInt(this.MAX_HOURLY_LIMIT),
             MAX_CHARACTER_LIMIT: parseInt(this.MAX_CHARACTER_LIMIT),
           };
-
+          this.saved = false;
           axios.post('/api/settings', config)
-            .then(() => alert('Saved'))
-            .catch(e => alert('Failed') | location.reload());
+            .then(() => {
+              this.saved = true;
+            })
+            .catch(e => {
+              this.error = e.message;
+            });
         }
       },
       beforeMount() {

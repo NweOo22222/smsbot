@@ -151,7 +151,7 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             }
             var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
             var keywords = article.content.replace(/\n/gm, " ").split(" ");
-            var max_chunk = Math.floor(characters / settings_1.MAX_CHARACTER_LIMIT) || 1;
+            var max_chunk = Math.floor(characters / settings_1.config.MAX_CHARACTER_LIMIT) || 1;
             var chunk = Math.floor(keywords.length / max_chunk);
             var chunks = [];
             for (var i = 0; i < max_chunk; i++) {

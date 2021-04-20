@@ -1,27 +1,8 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs_1 = require("fs");
 var path_1 = require("path");
-var config = __importStar(require("../settings"));
+var settings_1 = require("../settings");
 var DATABASE_FILENAME = ".config.json";
 var DATABASE_PATH = path_1.resolve(path_1.dirname(path_1.dirname(__dirname)), DATABASE_FILENAME);
 var Config = (function () {
@@ -36,17 +17,28 @@ var Config = (function () {
     Config.save = function (config) {
         fs_1.writeFileSync(DATABASE_PATH, JSON.stringify(config, null, 2), "utf-8");
     };
+    Config.set = function (keyName, value) {
+        if (!(keyName in settings_1.config)) {
+            throw new Error("Unexisted key [" + keyName + "]");
+        }
+        var userConfig = this.read();
+        userConfig[keyName] = value;
+        this.save(userConfig);
+    };
     Config.get = function (keyName) {
-        return this.read()[keyName] || config[keyName] || undefined;
+        return this.getAll()[keyName] || undefined;
     };
     Config.getAll = function () {
-        var result = [];
         var userConfig = this.read();
-        Object.entries(config).forEach(function (_a) {
-            var keyName = _a[0], defaultValue = _a[1];
-            return (result[keyName] = userConfig[keyName] || defaultValue);
-        });
-        return result;
+        return {
+            MOBILE_NUMBER: userConfig["MOBILE_NUMBER"] || settings_1.config.MOBILE_NUMBER,
+            USE_SIMSLOT: userConfig["USE_SIMSLOT"] || settings_1.config.USE_SIMSLOT,
+            MAX_CHARACTER_LIMIT: userConfig["MAX_CHARACTER_LIMIT"] || settings_1.config.MAX_CHARACTER_LIMIT,
+            MAX_HOURLY_LIMIT: userConfig["MAX_HOURLY_LIMIT"] || settings_1.config.MAX_HOURLY_LIMIT,
+            MAX_DAILY_LIMIT: userConfig["MAX_DAILY_LIMIT"] || settings_1.config.MAX_DAILY_LIMIT,
+            PER_DAILY_SESSION: userConfig["PER_DAILY_SESSION"] || settings_1.config.PER_DAILY_SESSION,
+            PER_HOURLY_SESSION: userConfig["PER_HOURLY_SESSION"] || settings_1.config.PER_HOURLY_SESSION,
+        };
     };
     return Config;
 }());

@@ -7,8 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NweOo SMS</title>
   <link rel="stylesheet" href="bootstrap.min.css" />
-  <script src="axios.min.js"></script>
-  <script src="vue.js"></script>
 </head>
 
 <body>
@@ -38,68 +36,35 @@
 
       <section>
         <div class="row text-center">
-          <div class="col-3">
+          <div class="col-12 col-sm-6 col-md-3">
             <div class="card">
-              <div class="card-header">
-                Users
-              </div>
               <div class="card-body">
                 <h4>{{ total_users }}</h4>
+                <span>ပို့ဆောင်သူ</span>
               </div>
             </div>
           </div>
-          <div class="col-3">
+          <div class="col-12 col-sm-6 col-md-3">
             <div class="card">
-              <div class="card-header">
-                Actions
-              </div>
               <div class="card-body">
                 <h4>{{ total_actions }}</h4>
+                <span>လုပ်ဆောင်ချက်</span>
               </div>
             </div>
           </div>
-          <div class="col-3">
+          <div class="col-12 col-sm-6 col-md-3">
             <div class="card">
-              <div class="card-header">
-                Banned
-              </div>
-              <div class="card-body">
-                <h4>{{ total_banned }}</h4>
-              </div>
-            </div>
-          </div>
-          <div class="col-2">
-            <div class="card">
-              <div class="card-header">
-                Disabled
-              </div>
               <div class="card-body">
                 <h4>{{ total_disabled }}</h4>
+                <span>ပိတ်ထားသူ</span>
               </div>
             </div>
           </div>
-          <div class="col-1">
-            <select v-model="showUsers" class="form-control form-control-sm" style="width: 60px;">
-              <option value="15" selected>15</option>
-              <option value="20" selected>20</option>
-              <option value="25" selected>25</option>
-              <option value="30" selected>30</option>
-              <option value="50" selected>50</option>
-            </select>
-          </div>
-          <div class="col-12 my-4">
+          <div class="col-12 col-sm-6 col-md-3">
             <div class="card">
-              <div class="card-header">
-                <h6>Logs</h6>
-              </div>
               <div class="card-body">
-                <template>
-                  <ul class="list-group class=" mr=24g">
-                    <div class=" list-item-group text-left" v-for="(message, i) in messages" :key="i">
-                      <li class="mr-2"><code>{{ message }}</code></li>
-                    </div>
-                  </ul>
-                </template>
+                <h4>{{ total_banned }}</h4>
+                <span>ဘန်းခံထိသူ</span>
               </div>
             </div>
           </div>
@@ -109,8 +74,8 @@
           <table class="table table-hover text-center">
             <thead>
               <tr>
-                <th>Mobile</th>
-                <th>Total</th>
+                <th>Phone</th>
+                <th>Actions</th>
                 <th>Hourly</th>
                 <th>Daily</th>
                 <th>Renew On</th>
@@ -123,12 +88,12 @@
               <tr v-for="user in users" :key="user.id"
                 :class="(user['flash'] && 'flash ' || '') + (reachedDailyLimit(user) ? 'bg-danger text-white' : '') + (reachedHourlyLimit(user) ? 'bg-warning text-white' : '')">
                 <td>
-                  <a :href="'tel:' + user.number">{{ user.number }}</a>
+                  {{ user.number.slice(0, 6) + '*'.repeat(user.number.length - 10) + user.number.slice(-4) }}
                   [<a href="#" @click="copy(user.number)">copy</a>]
                 </td>
                 <td>{{ user.total_count }}</td>
-                <td>{{ user.session.hourly.total_action }} / 5</td>
-                <td>{{ user.session.daily.total_action }} / 12</td>
+                <td>{{ user.session.hourly.total_action }} / {{ settings.MAX_HOURLY_LIMIT }}</td>
+                <td>{{ user.session.daily.total_action }} / {{ settings.MAX_DAILY_LIMIT }}</td>
                 <td>
                   <p>{{ formatDate(user.session.hourly.expired) }}/H</p>
                   <p>{{ formatDate(user.session.daily.expired) }}/D</p>
@@ -151,11 +116,14 @@
           </table>
         </div>
       </section>
+      <div class="alert alert-secondary position-fixed fixed-bottom text-center" v-show="message">
+        {{ message }}
+      </div>
     </main>
   </div>
 
-  <script src="jquery.slim.js"></script>
-  <script src="bootstrap.min.js"></script>
+  <script src="axios.min.js"></script>
+  <script src="vue.js"></script>
   <script src="socket.io/socket.io.min.js"></script>
   <script>
     const socket = io();
@@ -165,6 +133,7 @@
       data: {
         users: [],
         messages: [],
+        settings: {},
         loading: false,
         disabled: false,
         message: null,
@@ -205,10 +174,10 @@
           return axios('/call?phone=' + number + '&message=.banned');
         },
         reachedDailyLimit(user) {
-          return user.session.daily.total_action >= 10;
+          return user.session.daily.total_action >= this.settings.MAX_DAILY_LIMIT;
         },
         reachedHourlyLimit(user) {
-          return user.session.hourly.total_action >= 5;
+          return user.session.hourly.total_action >= this.settings.MAX_HOURLY_LIMIT;
         },
         formatDate(expired) {
           let dt = new Date(expired);
@@ -267,31 +236,36 @@
           document.execCommand('copy');
           el.remove();
           this.message = 'Copied to clipboard!'
+        },
+        fetchSettings() {
+          axios.get('/api/settings').then(({ data }) => {
+            this.settings = data;
+          })
         }
       },
       beforeMount() {
         this.fetchTotal();
         this.fetchUsers();
+        this.fetchSettings();
 
         socket.on('users:update', (phone) => {
-          console.log(phone);
           this.users = this.users.filter((user) => user.id != phone.id);
           this.users.unshift(phone);
-          phone.flash = true;
-          setTimeout(() => phone.flash = false, 600);
+          requestAnimationFrame(() => {
+            phone.flash = true;
+            setTimeout(() => phone.flash = false, 300);
+          })
         });
 
         socket.on('messages:update', (message) => {
-          this.messages = this.messages.slice(
-            this.messages.length > 4
-              ? this.messages.length - 5
-              : 0, this.messages.length);
-          this.messages.unshift(message);
+          this.message = message;
           this.fetchTotal();
         })
       },
     });
   </script>
+  <script src="jquery.slim.js"></script>
+  <script src="bootstrap.min.js"></script>
 
   <style>
     .flash {

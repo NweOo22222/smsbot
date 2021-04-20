@@ -1,13 +1,17 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var PER_SESSION = 7200000;
-var MAX_TOTAL_ACTION = 5;
+var Config_1 = __importDefault(require("./Config"));
 var MAX_CHARACTER_COUNT = 3000;
 var HourlySession = (function () {
     function HourlySession(action) {
         this.total_action = action.total_action || 0;
         this.character_count = action.character_count || 0;
-        this.expired = new Date(action.expired ? action.expired : Date.now() + PER_SESSION);
+        this.expired = new Date(action.expired
+            ? action.expired
+            : Date.now() + Number(Config_1.default.get("PER_HOURLY_SESSION")));
         this.notified = Boolean(action.notified);
     }
     HourlySession.prototype.extend = function () {
@@ -20,7 +24,7 @@ var HourlySession = (function () {
         return this;
     };
     HourlySession.prototype.reset = function () {
-        this.expired = new Date(Date.now() + PER_SESSION);
+        this.expired = new Date(Date.now() + Number(Config_1.default.get("PER_HOURLY_SESSION")));
         this.total_action = 0;
         this.character_count = 0;
         this.notified = false;
@@ -29,7 +33,7 @@ var HourlySession = (function () {
         return Date.now() > this.expired.getTime();
     };
     HourlySession.prototype.isDenied = function () {
-        return (this.total_action >= MAX_TOTAL_ACTION ||
+        return (this.total_action >= Number(Config_1.default.get("MAX_HOURLY_LIMIT")) ||
             this.character_count >= MAX_CHARACTER_COUNT);
     };
     Object.defineProperty(HourlySession.prototype, "remaining", {
@@ -48,7 +52,7 @@ var HourlySession = (function () {
     });
     Object.defineProperty(HourlySession.prototype, "actions", {
         get: function () {
-            return Math.floor(MAX_TOTAL_ACTION - this.total_action);
+            return Math.floor(Number(Config_1.default.get("MAX_HOURLY_LIMIT")) - this.total_action);
         },
         enumerable: false,
         configurable: true

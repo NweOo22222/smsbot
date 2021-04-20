@@ -1,7 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_CHARACTER_LIMIT = exports.SMS_GATEWAY_API = exports.USE_ONLINE = exports.MOBILE_NUMBER = void 0;
-exports.MOBILE_NUMBER = "09758035929";
-exports.USE_ONLINE = false;
-exports.SMS_GATEWAY_API = "https://etherio-server.herokuapp.com";
-exports.MAX_CHARACTER_LIMIT = 500;
+exports.config = void 0;
+exports.config = {
+    MOBILE_NUMBER: "ဒီဖုန်းနံပါတ်",
+    USE_SIMSLOT: -1,
+    PER_DAILY_SESSION: 43200000,
+    PER_HOURLY_SESSION: 7200000,
+    MAX_DAILY_LIMIT: 12,
+    MAX_HOURLY_LIMIT: 5,
+    MAX_CHARACTER_LIMIT: 165,
+};
