@@ -2,24 +2,26 @@
 
 ROOT_DIR=$(cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" && pwd)
 
-echo "updating and installing your system packages..."
+echo
+echo ">>>updating and installing your system packages..."
 echo "\$ pkg update"
 pkg update --yes
 
 echo
-
 echo "\$ pkg install git nodejs --yes"
-echo "- do not shutdown the process during installing, which can cause fatal error"
+echo ">>> do not interrupt this process which can cause fatal error"
+echo
 sleep 3
 pkg install git nodejs --yes
 
 echo
+echo ">>> downloading repository to home directory..."
+echo
+git clone https://github.com/NweOo22222/smsbot --single-branch --depth 1 "$HOME/smsbot"
 
-echo "downloading repository to home directory..."
-echo "\$ git clone https://github.com/NweOo22222/smsbot"
-git clone "https://github.com/NweOo22222/smsbot" "$HOME/smsbot"
-
-echo "installing..."
+echo
+echo ">>> installing..."
+echo
 npm install
 npm run build
 

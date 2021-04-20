@@ -51,7 +51,7 @@
 
 > ပထမဦးဆုံးတစ်ခါပဲလုပ်ဖို့လိုပါတယ်။ နောက်တစ်ခါပြန်၀င်တဲ့အခါ အဆင့်(၃) ကိုလုပ်ဖို့ပဲလိုပါတယ်။
 
-အဆင့်​ (၂) `sh -c "$(curl -fsSL https://raw.githubusercontent.com/nweoo22222/smsbot/v1.2/bin/install.sh)`
+အဆင့်​ (၂) `sh -c "$(curl -fsSL https://raw.githubusercontent.com/nweoo22222/smsbot/v1.2/bin/install.sh)"`
 
 အဆင့် (၃) `~/start`
 
