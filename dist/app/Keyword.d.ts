@@ -6,7 +6,6 @@ export default class Keyword {
     onCommonMistake(callback: Function): void;
     onUnmatched(callback: Function): void;
     onSearchContent(callback: Function): void;
-    onAskReporter(callback: Function): void;
     onAskHelp(callback: Function): void;
     onAskHeadlines(callback: Function): void;
     onAskRead(callback: Function): void;

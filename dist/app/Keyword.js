@@ -2,24 +2,25 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var RESET_SENT = [/ပြန်စ/, /^reset/i];
 var LATEST_NEWS = [/ဘာထူးလဲ/, /သတင်း/, /news/i];
-var ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /ဒါပဲလား/, /count/i];
+var ARTICLES_COUNT = [/(ကျန်|ရှိ)သေးလား/, /count/i];
 var USAGE_HELP = [/ကူညီ/, /help/i];
 var SHOW_INFO = [/info/i];
-var SEARCH_CONTENT = [/^["'](.+)['"]$/];
-var ASK_REPORTER = [/သတင်း(တွေ)?(ပေး|ပို့)/];
+var SEARCH_CONTENT = [/^(?:search\s?)?["'](.+)['"]$/];
 var COMMON_MISTAKES = [
-    /^hi/i,
-    /^hello/i,
-    /^mornee/i,
-    /^good (morining|evening|night)/i,
-    /^မင်္ဂလာ/,
-    /^ဟယ်လို/,
-    /^မောနင်း/,
+    /hi/i,
+    /hello/i,
+    /mornee/i,
+    /good (morining|evening|night)/i,
+    /မင်္ဂလာ/,
+    /ဟယ်လို/,
+    /မောနင်း/,
+    /ဟိုင်း/,
     /nweoo\.com/i,
-    /(0|\+95)9758035929/,
     /th(?:ank|z|x)/i,
-    /ကျေးဇူး/,
     /ok/i,
+    /yes/i,
+    /(0|\+95)9758035929/,
+    /ကျေးဇူး/,
     /ဟုတ်/,
 ];
 var READ_ARTICLE = [/^read [\{\<\[\('"]?(.+)["'\)\]\>\}]?$/i];
@@ -61,15 +62,6 @@ var Keyword = (function () {
             matched = this.text.match(matched);
             this.sent = true;
             callback(matched[1]);
-        }
-    };
-    Keyword.prototype.onAskReporter = function (callback) {
-        var _this = this;
-        if (this.sent)
-            return;
-        if (ASK_REPORTER.filter(function (keyword) { return _this.meta.match(keyword); }).length) {
-            this.sent = true;
-            callback();
         }
     };
     Keyword.prototype.onAskHelp = function (callback) {
