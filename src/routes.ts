@@ -40,7 +40,7 @@ router.get("/call", middleware, async (req, res) => {
   const keyword = new Keyword(message.body);
   const session = phone.session;
 
-  phone.extend();
+  phone.extend().session.extend();
 
   if (!session.unlimited && session.daily.isDenied()) {
     if (!session.daily.notified) {

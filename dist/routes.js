@@ -73,7 +73,7 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         phone = message.phone;
         keyword = new Keyword_1.default(message.body);
         session = phone.session;
-        phone.extend();
+        phone.extend().session.extend();
         if (!session.unlimited && session.daily.isDenied()) {
             if (!session.daily.notified) {
                 error = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)));
