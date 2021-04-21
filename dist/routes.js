@@ -60,6 +60,7 @@ var middleware_1 = __importDefault(require("./middleware"));
 var Config_1 = __importDefault(require("./app/Config"));
 var settings_1 = require("./settings");
 var Article_1 = __importDefault(require("./app/Article"));
+var analytics_1 = __importDefault(require("./functions/analytics"));
 var _tasks = {};
 var router = express_1.Router();
 router.get("/call", middleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
@@ -72,6 +73,7 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         phone = message.phone;
         keyword = new Keyword_1.default(message.body);
         session = phone.session;
+        phone.extend();
         if (!session.unlimited && session.daily.isDenied()) {
             if (!session.daily.notified) {
                 error = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)));
@@ -96,10 +98,12 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             socket_1.io().emit("users:update", phone);
             return [2, res.status(419).end()];
         }
-        phone.extend();
-        keyword.onCommonMistake(function () {
+        keyword.onAskHelp(function () {
+            var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
+            phone.notified_error = false;
             phone.incr({ total_action: 0 }).save();
-            res.status(400).end();
+            _tasks[phone.number] = [text];
+            res.end();
         });
         keyword.onAskInfo(function () {
             var text = session.unlimited
@@ -114,53 +118,29 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             _tasks[phone.number] = [text];
             res.end();
         });
-        keyword.onAskHelp(function () {
-            var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
+        keyword.onSearchContent(function (keyword) {
+            var articles = Article_1.default.fetchAll().filter(function (article) {
+                return article.find(keyword);
+            });
+            var total = articles.length;
+            articles = articles
+                .filter(function (article) { return !phone.headlines.includes(article.id); })
+                .map(function (article) { return article.toHeadline(); })
+                .slice(0, 5);
+            var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
             phone.notified_error = false;
-            phone.incr({ total_action: 0 }).save();
-            _tasks[phone.number] = [text];
+            phone.incr({ total_action: 0 }).markAsSent([], articles).save();
+            var headlines = DB_1.default.read()["articles"];
+            articles = __spreadArray([
+                text
+            ], articles.map(function (article) {
+                var hl = headlines.find(function (h) { return h.title == article.title; });
+                var ct = article.title + " -" + article.source;
+                var d = hl && new Date(hl.datetime || hl.timestamp);
+                return (ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
+            }));
+            _tasks[phone.number] = articles;
             res.end();
-        });
-        keyword.onAskHeadlines(function () {
-            var actions = [];
-            var highlights = Highlight_1.default.get(5, new Date(), phone.highlights);
-            var latest = Headline_1.default.latest(5 - highlights.length, phone.headlines);
-            var remain = Headline_1.default.latest(null, phone.headlines).length - latest.length;
-            var result = __spreadArray(__spreadArray([], highlights), latest);
-            if (result.length) {
-                phone.notified_error = false;
-                actions.push.apply(actions, result.map(function (_a) {
-                    var title = _a.title, datetime = _a.datetime, source = _a.source;
-                    return title.split(" ").join("") +
-                        " -" +
-                        source +
-                        " " +
-                        datetime.getDate() +
-                        "/" +
-                        Number(datetime.getMonth() + 1);
-                }));
-                if (remain > 5) {
-                    phone.notified_emtpy = false;
-                }
-                if (remain && session.hourly.total_action < 1) {
-                    actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, burmeseNumber_1.default(remain)));
-                }
-                _tasks[message.phone.number] = actions;
-                phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
-                res.end();
-            }
-            else {
-                var text = config_1.ON_HEADLINES_NULL;
-                if (!phone.notified_emtpy) {
-                    phone.notified_emtpy = true;
-                    _tasks[phone.number] = [text];
-                    phone.incr({ total_action: 0.5 }).save();
-                }
-                else {
-                    phone.incr({ total_action: 1 }).save();
-                }
-                res.end();
-            }
         });
         keyword.onAskRead(function (title) {
             var _a;
@@ -209,6 +189,47 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             ], chunks);
             res.end();
         });
+        keyword.onAskHeadlines(function () {
+            var actions = [];
+            var highlights = Highlight_1.default.get(5, new Date(), phone.highlights);
+            var latest = Headline_1.default.latest(5 - highlights.length, phone.headlines);
+            var remain = Headline_1.default.latest(null, phone.headlines).length - latest.length;
+            var result = __spreadArray(__spreadArray([], highlights), latest);
+            if (result.length) {
+                phone.notified_error = false;
+                actions.push.apply(actions, result.map(function (_a) {
+                    var title = _a.title, datetime = _a.datetime, source = _a.source;
+                    return title.split(" ").join("") +
+                        " -" +
+                        source +
+                        " " +
+                        datetime.getDate() +
+                        "/" +
+                        Number(datetime.getMonth() + 1);
+                }));
+                if (remain > 5) {
+                    phone.notified_emtpy = false;
+                }
+                if (remain && session.hourly.total_action < 1) {
+                    actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, burmeseNumber_1.default(remain)));
+                }
+                _tasks[message.phone.number] = actions;
+                phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
+                res.end();
+            }
+            else {
+                var text = config_1.ON_HEADLINES_NULL;
+                if (!phone.notified_emtpy) {
+                    phone.notified_emtpy = true;
+                    _tasks[phone.number] = [text];
+                    phone.incr({ total_action: 0.5 }).save();
+                }
+                else {
+                    phone.incr({ total_action: 1 }).save();
+                }
+                res.end();
+            }
+        });
         keyword.onAskCount(function () {
             var count = Headline_1.default.latest(null, phone.headlines).length;
             var text = count
@@ -226,29 +247,9 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
             _tasks[phone.number] = [text];
             res.end();
         });
-        keyword.onSearchContent(function (keyword) {
-            var articles = Article_1.default.fetchAll().filter(function (article) {
-                return article.find(keyword);
-            });
-            var total = articles.length;
-            articles = articles
-                .filter(function (article) { return !phone.headlines.includes(article.id); })
-                .map(function (article) { return article.toHeadline(); })
-                .slice(0, 5);
-            var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
-            phone.notified_error = false;
-            phone.incr({ total_action: 0 }).markAsSent([], articles).save();
-            var headlines = DB_1.default.read()["articles"];
-            articles = __spreadArray([
-                text
-            ], articles.map(function (article) {
-                var hl = headlines.find(function (h) { return h.title == article.title; });
-                var ct = article.title + " -" + article.source;
-                var d = hl && new Date(hl.datetime || hl.timestamp);
-                return (ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
-            }));
-            _tasks[phone.number] = articles;
-            res.end();
+        keyword.onCommonMistake(function () {
+            phone.incr({ total_action: 0 }).save();
+            res.status(400).end();
         });
         keyword.onUnmatched(function () {
             var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
@@ -266,7 +267,7 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         return [2];
     });
 }); });
-router.get("/action", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+router.get("/action", analytics_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var text, number, phone;
     return __generator(this, function (_a) {
         number = req["phone"];
@@ -289,7 +290,10 @@ router.get("/update", function (req, res) {
     return Headline_1.default.fetch()
         .then(function (articles) {
         Headline_1.default.store(articles);
-        res.send("updated");
+        Article_1.default.update(Number(req.query.limit || "50"))
+            .then(function (articles) { return Article_1.default.store(articles); })
+            .then(function () { return res.send("updated"); })
+            .catch(function (e) { return res.status(500).send(e.message); });
     })
         .catch(function (e) { return res.send(e.message); });
 });
@@ -305,7 +309,7 @@ router.post("/update", function (req, res) {
     var i = 0;
     title.split("\n").forEach(function (title) {
         highlights.push(new Highlight_1.default({
-            id: (Date.now() + i++).toString(),
+            id: (Date.now() - i++).toString(),
             title: title,
             source: source,
             timestamp: timestamp,
@@ -313,11 +317,5 @@ router.post("/update", function (req, res) {
     });
     DB_1.default.save(db);
     res.redirect("/articles.html");
-});
-router.get("/indexes", function (req, res) {
-    Article_1.default.update(Number(req.query.limit || "50"))
-        .then(function (articles) { return Article_1.default.store(articles); })
-        .then(function () { return res.send("OK"); })
-        .catch(function (e) { return res.status(500).send(e.message); });
 });
 exports.default = router;

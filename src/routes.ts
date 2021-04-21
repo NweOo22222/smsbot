@@ -26,6 +26,7 @@ import middleware from "./middleware";
 import Config from "./app/Config";
 import { config } from "./settings";
 import Article from "./app/Article";
+import analytics from "./functions/analytics";
 
 const _tasks = {};
 const router = Router();
@@ -38,6 +39,8 @@ router.get("/call", middleware, async (req, res) => {
   const phone = message.phone;
   const keyword = new Keyword(message.body);
   const session = phone.session;
+
+  phone.extend();
 
   if (!session.unlimited && session.daily.isDenied()) {
     if (!session.daily.notified) {
@@ -75,11 +78,12 @@ router.get("/call", middleware, async (req, res) => {
     return res.status(419).end();
   }
 
-  phone.extend();
-
-  keyword.onCommonMistake(() => {
+  keyword.onAskHelp(() => {
+    let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
+    phone.notified_error = false;
     phone.incr({ total_action: 0 }).save();
-    res.status(400).end();
+    _tasks[phone.number] = [text];
+    res.end();
   });
 
   keyword.onAskInfo(() => {
@@ -102,55 +106,32 @@ router.get("/call", middleware, async (req, res) => {
     res.end();
   });
 
-  keyword.onAskHelp(() => {
-    let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
+  keyword.onSearchContent((keyword) => {
+    let articles: any = Article.fetchAll().filter((article) =>
+      article.find(keyword)
+    );
+    let total = articles.length;
+    articles = articles
+      .filter((article) => !phone.headlines.includes(article.id))
+      .map((article) => article.toHeadline())
+      .slice(0, 5);
+    let text = printf(ON_SEARCH_EXISTED, keyword, total, articles.length);
     phone.notified_error = false;
-    phone.incr({ total_action: 0 }).save();
-    _tasks[phone.number] = [text];
+    phone.incr({ total_action: 0 }).markAsSent([], articles).save();
+    let headlines = DB.read()["articles"];
+    articles = [
+      text,
+      ...articles.map((article) => {
+        const hl = headlines.find((h) => h.title == article.title);
+        const ct = `${article.title} -${article.source}`;
+        let d = hl && new Date(hl.datetime || hl.timestamp);
+        return (
+          ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : "")
+        );
+      }),
+    ];
+    _tasks[phone.number] = articles;
     res.end();
-  });
-
-  keyword.onAskHeadlines(() => {
-    let actions: string[] = [];
-    const highlights = Highlight.get(5, new Date(), phone.highlights);
-    const latest = Headline.latest(5 - highlights.length, phone.headlines);
-    const remain =
-      Headline.latest(null, phone.headlines).length - latest.length;
-    const result = [...highlights, ...latest];
-    if (result.length) {
-      phone.notified_error = false;
-      actions.push(
-        ...result.map(
-          ({ title, datetime, source }) =>
-            title.split(" ").join("") +
-            " -" +
-            source +
-            " " +
-            datetime.getDate() +
-            "/" +
-            Number(datetime.getMonth() + 1)
-        )
-      );
-      if (remain > 5) {
-        phone.notified_emtpy = false;
-      }
-      if (remain && session.hourly.total_action < 1) {
-        actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
-      }
-      _tasks[message.phone.number] = actions;
-      phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
-      res.end();
-    } else {
-      let text = ON_HEADLINES_NULL;
-      if (!phone.notified_emtpy) {
-        phone.notified_emtpy = true;
-        _tasks[phone.number] = [text];
-        phone.incr({ total_action: 0.5 }).save();
-      } else {
-        phone.incr({ total_action: 1 }).save();
-      }
-      res.end();
-    }
   });
 
   keyword.onAskRead((title) => {
@@ -204,6 +185,49 @@ router.get("/call", middleware, async (req, res) => {
     res.end();
   });
 
+  keyword.onAskHeadlines(() => {
+    let actions: string[] = [];
+    const highlights = Highlight.get(5, new Date(), phone.highlights);
+    const latest = Headline.latest(5 - highlights.length, phone.headlines);
+    const remain =
+      Headline.latest(null, phone.headlines).length - latest.length;
+    const result = [...highlights, ...latest];
+    if (result.length) {
+      phone.notified_error = false;
+      actions.push(
+        ...result.map(
+          ({ title, datetime, source }) =>
+            title.split(" ").join("") +
+            " -" +
+            source +
+            " " +
+            datetime.getDate() +
+            "/" +
+            Number(datetime.getMonth() + 1)
+        )
+      );
+      if (remain > 5) {
+        phone.notified_emtpy = false;
+      }
+      if (remain && session.hourly.total_action < 1) {
+        actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
+      }
+      _tasks[message.phone.number] = actions;
+      phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
+      res.end();
+    } else {
+      let text = ON_HEADLINES_NULL;
+      if (!phone.notified_emtpy) {
+        phone.notified_emtpy = true;
+        _tasks[phone.number] = [text];
+        phone.incr({ total_action: 0.5 }).save();
+      } else {
+        phone.incr({ total_action: 1 }).save();
+      }
+      res.end();
+    }
+  });
+
   keyword.onAskCount(() => {
     let count = Headline.latest(null, phone.headlines).length;
     let text = count
@@ -223,32 +247,9 @@ router.get("/call", middleware, async (req, res) => {
     res.end();
   });
 
-  keyword.onSearchContent((keyword) => {
-    let articles: any = Article.fetchAll().filter((article) =>
-      article.find(keyword)
-    );
-    let total = articles.length;
-    articles = articles
-      .filter((article) => !phone.headlines.includes(article.id))
-      .map((article) => article.toHeadline())
-      .slice(0, 5);
-    let text = printf(ON_SEARCH_EXISTED, keyword, total, articles.length);
-    phone.notified_error = false;
-    phone.incr({ total_action: 0 }).markAsSent([], articles).save();
-    let headlines = DB.read()["articles"];
-    articles = [
-      text,
-      ...articles.map((article) => {
-        const hl = headlines.find((h) => h.title == article.title);
-        const ct = `${article.title} -${article.source}`;
-        let d = hl && new Date(hl.datetime || hl.timestamp);
-        return (
-          ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : "")
-        );
-      }),
-    ];
-    _tasks[phone.number] = articles;
-    res.end();
+  keyword.onCommonMistake(() => {
+    phone.incr({ total_action: 0 }).save();
+    res.status(400).end();
   });
 
   keyword.onUnmatched(() => {
@@ -267,7 +268,7 @@ router.get("/call", middleware, async (req, res) => {
   io().emit("messages:update", message.body);
 });
 
-router.get("/action", async (req, res) => {
+router.get("/action", analytics, async (req, res) => {
   let text: string;
   let number = req["phone"];
   if (typeof _tasks[number] !== "object" || !_tasks[number].length) {
@@ -288,7 +289,10 @@ router.get("/update", (req, res) =>
   Headline.fetch()
     .then((articles) => {
       Headline.store(articles);
-      res.send("updated");
+      Article.update(Number(req.query.limit || "50"))
+        .then((articles) => Article.store(articles))
+        .then(() => res.send("updated"))
+        .catch((e) => res.status(500).send(e.message));
     })
     .catch((e) => res.send(e.message))
 );
@@ -305,7 +309,7 @@ router.post("/update", (req, res) => {
   title.split("\n").forEach((title) => {
     highlights.push(
       new Highlight({
-        id: (Date.now() + i++).toString(),
+        id: (Date.now() - i++).toString(),
         title,
         source,
         timestamp,
@@ -314,13 +318,6 @@ router.post("/update", (req, res) => {
   });
   DB.save(db);
   res.redirect("/articles.html");
-});
-
-router.get("/indexes", (req, res) => {
-  Article.update(Number(req.query.limit || "50"))
-    .then((articles) => Article.store(articles))
-    .then(() => res.send("OK"))
-    .catch((e) => res.status(500).send(e.message));
 });
 
 export default router;
