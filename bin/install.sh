@@ -1,41 +1,66 @@
 #!/bin/sh -e
 
-ROOT_DIR=$(cd "$(dirname "$(dirname "${BASH_SOURCE[0]}")")" && pwd)
+REPO_NAME=smsbot
+REPO_PATH=$HOME/$REPO_NAME
 
-echo
-echo ">>>updating and installing your system packages..."
-echo "\$ pkg update"
-pkg update --yes
+NODEJS_MODULE=0
+answer=''
 
-echo
-echo "\$ pkg install git nodejs --yes"
-echo ">>> do not interrupt this process which can cause fatal error"
-echo
-sleep 3
-pkg install git nodejs --yes
+function ask {
+    local QUESTION=${1:-''}
+    local HINT=${2:-'[Y/n]'}
+    echo "\033[0;1;2m\033[0m${QUESTION}\033[0;2m${HINT}\033[0m\r"
+    read answer
+}
 
-echo
-echo ">>> downloading repository to home directory..."
-echo
-git clone https://github.com/NweOo22222/smsbot --single-branch --depth 1 "$HOME/smsbot"
+function pkg_install {
+    echo "updating your system packages."
+    echo " \$ pkg update --yes"
+    pkg update --yes
+    
+    echo "installing core packages: nodejs, git."
+    echo " > do not interupt this process while installing, hit Ctrl+C to cancel stop before installing"
+    echo "  installing in 3 seconds"
+    sleep 1
+    echo "  installing in 2 seconds..."
+    sleep 1
+    echo "  installing in 1 seconds..."
+    sleep 1
+    echo " \$ pkg install nodejs git --yes"
+    pkg install nodejs git --yes
+}
 
-echo
-echo ">>> installing..."
-echo
-npm install
-npm run build
+function git_clone {
+    echo
+    echo " \$ git clone https://github.com/NweOo22222/$REPO_NAME $REPO_NAME --single-branch --depth 1"
+    git clone "https://github.com/NweOo22222/$REPO_NAME" "$REPO_PATH" --single-branch --depth 1
+    echo
+    echo " \$ npm install"
+    cd "$REPO_PATH" && npm install
+    echo
+    echo
+    ln -s "$REPO_PATH/bin/start.sh" "$HOME/start"
+    echo "NweOo SMSBot is successfully installed on your device!"
+    echo " > type command '~/start' to start your server"
+}
 
-if [ -e "$HOME/start" ]
+function terminate {
+    if [[ "$NODEJS_MODULE" = "0" ]]
+    then
+        pkg_install
+    fi
+    git_clone
+}
+
+if [ -d "$REPO_PATH" ]
 then
-    continue
-else
-    echo "echo \"changing directory into $ROOT_DIR\"" >> "$ROOT_DIR/bin/start.sh"
-    echo "cd "$ROOT_DIR"" >> "$ROOT_DIR/bin/start.sh"
-    echo "npm start" >> "$ROOT_DIR/bin/start.sh"
-    chmod +x "$ROOT_DIR/bin/start.sh"
-    ln -s "$ROOT_DIR/bin/start.sh" "$HOME/start"
+    echo "already existed at "$HOME"."
+    echo " > to remove existing, type and hit command 'rm -rf "$ROOT_DIR"'."
+    exit 1
 fi
 
-echo "Completed!"
-echo
-echo "Type and hit '~/start' to start chatbot server"
+trap 'terminate' EXIT
+
+test "$(command -v node)"
+
+NODEJS_MODULE=1

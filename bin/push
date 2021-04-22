@@ -1,3 +1,8 @@
+#!/usr/bin/env node
+
+const BRANCH_NAME = "v1.2";
+
+const { execSync } = require("child_process");
 const { dirname, resolve } = require("path");
 const { readFileSync, writeFileSync } = require("fs");
 
@@ -9,7 +14,18 @@ package.version = updatePatch(package.version).join(".");
 
 writeFileSync(package_json, JSON.stringify(package, null, 2), "utf-8");
 
+(async () => {
+  await sleep(1);
+  execSync("git add .");
+  execSync('git commit -m "' + new Date().toLocaleString() + '"');
+  execSync("git push origin " + BRANCH_NAME);
+})();
+
 function updatePatch(version) {
   let [major, minor, patch] = version.split(".");
   return [parseInt(major), parseInt(minor), parseInt(patch) + 1];
+}
+
+function sleep(sec) {
+  return new Promise((resolve) => setTimeout(() => resolve(), sec * 1000));
 }
