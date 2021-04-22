@@ -21,7 +21,7 @@ app.use(morgan_1.default("dev"));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(function (req, res, next) {
-    req["phone"] = String(req.query.phone).replace(/^\s/, "+");
+    req["phone"] = req.query["phone"] = String(req.query.phone).replace(/^\s/, "+");
     next();
 });
 app.use("/api", api_1.default);

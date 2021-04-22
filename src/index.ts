@@ -23,11 +23,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
-  req["phone"] = String(req.query.phone).replace(/^\s/, "+");
+  req["phone"] = req.query["phone"] = String(req.query.phone).replace(
+    /^\s/,
+    "+"
+  );
   next();
 });
-
-// .update();
 
 app.use("/api", api);
 

@@ -61,9 +61,10 @@ var Config_1 = __importDefault(require("./app/Config"));
 var settings_1 = require("./settings");
 var Article_1 = __importDefault(require("./app/Article"));
 var analytics_1 = __importDefault(require("./functions/analytics"));
+var verifySIM_1 = __importDefault(require("./verifySIM"));
 var _tasks = {};
 var router = express_1.Router();
-router.get("/call", middleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+router.get("/call", middleware_1.default, verifySIM_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var message, phone, keyword, session, error, error;
     return __generator(this, function (_a) {
         message = new Message_1.default({
@@ -191,9 +192,12 @@ router.get("/call", middleware_1.default, function (req, res) { return __awaiter
         });
         keyword.onAskHeadlines(function () {
             var actions = [];
-            var highlights = Highlight_1.default.get(5, new Date(), phone.highlights);
-            var latest = Headline_1.default.latest(5 - highlights.length, phone.headlines);
-            var remain = Headline_1.default.latest(null, phone.headlines).length - latest.length;
+            var news_count = Number(Config_1.default.get("NEWS_PER_SMS"));
+            var highlights = Highlight_1.default.get(news_count, new Date(), phone.highlights);
+            var latest = Headline_1.default.latest(news_count - highlights.length, phone.headlines);
+            var remain = Highlight_1.default.get(null, new Date(), phone.highlights).length +
+                Headline_1.default.latest(null, phone.headlines).length -
+                latest.length;
             var result = __spreadArray(__spreadArray([], highlights), latest);
             if (result.length) {
                 phone.notified_error = false;

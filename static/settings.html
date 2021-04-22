@@ -41,7 +41,7 @@
 
           <div class="form-group">
             <label for="USE_SIMSLOT">SIM Slot</label>
-            <select name="USE_SIMSLOT" id="USE_SIMSLOT" class="form-control">
+            <select v-model="USE_SIMSLOT" name="USE_SIMSLOT" id="USE_SIMSLOT" class="form-control">
               <option value="-1" :selected="USE_SIMSLOT == -1">(Any)</option>
               <option value="0" :selected="USE_SIMSLOT == 0">SIM 1</option>
               <option value="1" :selected="USE_SIMSLOT == 1">SIM 2</option>
@@ -49,9 +49,14 @@
           </div>
 
           <div class="form-group">
-            <label for="SPAM_PROTECTION_TIME">Prevent Repeated Actions (ms)</label>
-            <input v-model="SPAM_PROTECTION_TIME" type="number" name="SPAM_PROTECTION_TIME" id="SPAM_PROTECTION_TIME"
-              class="form-control">
+            <label for="SPAM_PROTECTION_TIME">Prevent Repeated Actions (seconds)</label>
+            <input v-model="SPAM_PROTECTION_TIME_SECONDS" type="number" name="SPAM_PROTECTION_TIME"
+              id="SPAM_PROTECTION_TIME" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="NEWS_PER_SMS">Reply News Count (per sms)</label>
+            <input v-model="NEWS_PER_SMS" type="number" name="NEWS_PER_SMS" id="NEWS_PER_SMS" class="form-control">
           </div>
 
           <div class="form-group">
@@ -99,19 +104,21 @@
         MAX_CHARACTER_LIMIT: undefined,
         HOURLY_SESSION_HOURS: undefined,
         DAILY_SESSION_HOURS: undefined,
-        SPAM_PROTECTION_TIME: undefined,
+        SPAM_PROTECTION_TIME_SECONDS: undefined,
+        NEWS_PER_SMS: undefined,
       },
       methods: {
         save() {
           const config = {
             MOBILE_NUMBER: this.MOBILE_NUMBER,
-            USE_SIMSLOT: parseInt(this.USE_SIMSLOT),
+            USE_SIMSLOT: this.USE_SIMSLOT,
             PER_DAILY_SESSION: parseInt(this.DAILY_SESSION_HOURS) * 3600000,
             PER_HOURLY_SESSION: parseInt(this.HOURLY_SESSION_HOURS) * 3600000,
             MAX_DAILY_LIMIT: parseInt(this.MAX_DAILY_LIMIT),
             MAX_HOURLY_LIMIT: parseInt(this.MAX_HOURLY_LIMIT),
             MAX_CHARACTER_LIMIT: parseInt(this.MAX_CHARACTER_LIMIT),
-            SPAM_PROTECTION_TIME: parseInt(this.SPAM_PROTECTION_TIME),
+            SPAM_PROTECTION_TIME: parseInt(this.SPAM_PROTECTION_TIME_SECONDS) * 1000,
+            NEWS_PER_SMS: parseInt(this.NEWS_PER_SMS),
           };
           this.saved = false;
           axios.post('/api/settings', config)
@@ -125,19 +132,19 @@
       },
       beforeMount() {
         axios.get('/api/settings').then(({ data }) => {
+          this.NEWS_PER_SMS = data.NEWS_PER_SMS;
           this.MOBILE_NUMBER = data.MOBILE_NUMBER;
           this.USE_SIMSLOT = data.USE_SIMSLOT;
-          this.DAILY_SESSION_HOURS = data.PER_DAILY_SESSION / 3600000;
-          this.HOURLY_SESSION_HOURS = data.PER_HOURLY_SESSION / 3600000;
+          this.DAILY_SESSION_HOURS = parseInt(data.PER_DAILY_SESSION / 3600000);
+          this.HOURLY_SESSION_HOURS = parseInt(data.PER_HOURLY_SESSION / 3600000);
           this.MAX_DAILY_LIMIT = data.MAX_DAILY_LIMIT;
           this.MAX_HOURLY_LIMIT = data.MAX_HOURLY_LIMIT;
           this.MAX_CHARACTER_LIMIT = data.MAX_CHARACTER_LIMIT;
-          this.SPAM_PROTECTION_TIME = data.SPAM_PROTECTION_TIME;
+          this.SPAM_PROTECTION_TIME_SECONDS = parseInt(data.SPAM_PROTECTION_TIME / 1000);
         });
       }
     });
   </script>
-  <script src="https://api.nweoo.com/sms/bot.js"></script>
 </body>
 
 </html>

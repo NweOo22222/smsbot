@@ -226,7 +226,7 @@
             timestamp: Date.now(),
           });
           this.scrollChat();
-          return axios.get(`/call?operator=Telenor&phone=${this.phone}&message=${encodeURIComponent(text)}`)
+          return axios.get(`/call?test=1&phone=${this.phone}&message=${encodeURIComponent(text)}`)
             .then(({ data }) => {
               this.typing = true;
               return this.botReply(data);

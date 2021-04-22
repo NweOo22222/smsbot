@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var DB_1 = __importDefault(require("./app/DB"));
 var Config_1 = __importDefault(require("./app/Config"));
+var Phone_1 = __importDefault(require("./app/Phone"));
 var api = express_1.Router();
 api.delete("/articles/:id", function (req, res) {
     var id = req.params.id;
@@ -36,6 +37,14 @@ api.get("/users", function (req, res) {
             new Date(a.last_date || a.first_date).getTime();
     });
     res.json(users.slice(0, limit));
+});
+api.get("/users/:number", function (req, res) {
+    try {
+        res.json(new Phone_1.default(req.params.number));
+    }
+    catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 api.get("/version", function (req, res) {
     res.json(require("../package.json")["version"]);

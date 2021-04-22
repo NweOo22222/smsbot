@@ -27,11 +27,12 @@ import Config from "./app/Config";
 import { config } from "./settings";
 import Article from "./app/Article";
 import analytics from "./functions/analytics";
+import verifySIM from "./verifySIM";
 
 const _tasks = {};
 const router = Router();
 
-router.get("/call", middleware, async (req, res) => {
+router.get("/call", middleware, verifySIM, async (req, res) => {
   const message = new Message({
     body: decodeURIComponent(String(req.query.message)),
     address: req["phone"],
@@ -187,10 +188,16 @@ router.get("/call", middleware, async (req, res) => {
 
   keyword.onAskHeadlines(() => {
     let actions: string[] = [];
-    const highlights = Highlight.get(5, new Date(), phone.highlights);
-    const latest = Headline.latest(5 - highlights.length, phone.headlines);
+    let news_count = Number(Config.get("NEWS_PER_SMS"));
+    const highlights = Highlight.get(news_count, new Date(), phone.highlights);
+    const latest = Headline.latest(
+      news_count - highlights.length,
+      phone.headlines
+    );
     const remain =
-      Headline.latest(null, phone.headlines).length - latest.length;
+      Highlight.get(null, new Date(), phone.highlights).length +
+      Headline.latest(null, phone.headlines).length -
+      latest.length;
     const result = [...highlights, ...latest];
     if (result.length) {
       phone.notified_error = false;

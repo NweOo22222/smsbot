@@ -33,7 +33,7 @@ else
     echo "cd "$ROOT_DIR"" >> "$ROOT_DIR/bin/start.sh"
     echo "npm start" >> "$ROOT_DIR/bin/start.sh"
     chmod +x "$ROOT_DIR/bin/start.sh"
-    ln "$ROOT_DIR/bin/start.sh" "$HOME/start"
+    ln -s "$ROOT_DIR/bin/start.sh" "$HOME/start"
 fi
 
 echo "Completed!"

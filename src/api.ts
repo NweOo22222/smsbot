@@ -1,6 +1,7 @@
 import { Router } from "express";
 import DB from "./app/DB";
 import Config from "./app/Config";
+import Phone from "./app/Phone";
 
 const api = Router();
 
@@ -35,6 +36,14 @@ api.get("/users", (req, res) => {
       new Date(a.last_date || a.first_date).getTime()
   );
   res.json(users.slice(0, limit));
+});
+
+api.get("/users/:number", (req, res) => {
+  try {
+    res.json(new Phone(req.params.number));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 api.get("/version", (req, res) => {
