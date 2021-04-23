@@ -11,4 +11,5 @@ exports.config = {
     MAX_HOURLY_LIMIT: 5,
     MAX_CHARACTER_LIMIT: 165,
     NEWS_PER_SMS: 5,
+    ACTION_SCORE: 0.2,
 };

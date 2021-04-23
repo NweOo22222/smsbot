@@ -107,9 +107,11 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
             res.end();
         });
         keyword.onAskInfo(function () {
+            var dailyAction = Math.round(session.daily.actions / Number(Config_1.default.get("ACTION_SCORE")));
+            var hourlyAction = Math.round(session.hourly.actions / Number(Config_1.default.get("ACTION_SCORE")));
             var text = session.unlimited
                 ? config_1.NO_SMS_LIMIT
-                : printf_1.default(config_1.ON_SMS_LIMIT, burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)), burmeseNumber_1.default(session.hourly.actions), burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)), burmeseNumber_1.default(session.daily.actions));
+                : printf_1.default(config_1.ON_SMS_LIMIT, burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)), burmeseNumber_1.default(hourlyAction), burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)), burmeseNumber_1.default(dailyAction));
             if (phone.premium) {
                 text += " [PREMIUM]";
             }
@@ -149,7 +151,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
             if (!phone.premium) {
                 text = phone.max_limit
                     ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
-                    : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လိုပိတ်ထားတယ်။ - nweoo.com";
+                    : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လို့ပိတ်ထားတယ်။ - nweoo.com";
                 if (!phone.notified_error) {
                     phone.notified_error = true;
                     phone.incr({ total_action: 0 }).save();

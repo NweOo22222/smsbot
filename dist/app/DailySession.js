@@ -50,7 +50,7 @@ var DailySession = (function () {
     });
     Object.defineProperty(DailySession.prototype, "actions", {
         get: function () {
-            return Math.round(Number(Config_1.default.get("MAX_DAILY_LIMIT")) - this.total_action);
+            return Number(Config_1.default.get("MAX_DAILY_LIMIT")) - this.total_action;
         },
         enumerable: false,
         configurable: true

@@ -40,6 +40,7 @@ var Config = (function () {
             PER_DAILY_SESSION: userConfig["PER_DAILY_SESSION"] || settings_1.config.PER_DAILY_SESSION,
             PER_HOURLY_SESSION: userConfig["PER_HOURLY_SESSION"] || settings_1.config.PER_HOURLY_SESSION,
             NEWS_PER_SMS: userConfig["NEWS_PER_SMS"] || settings_1.config.NEWS_PER_SMS,
+            ACTION_SCORE: userConfig["ACTION_SCORE"] || settings_1.config.ACTION_SCORE,
         };
     };
     return Config;

@@ -88,14 +88,20 @@ router.get("/call", middleware, verifySIM, async (req, res) => {
   });
 
   keyword.onAskInfo(() => {
+    let dailyAction = Math.round(
+      session.daily.actions / Number(Config.get("ACTION_SCORE"))
+    );
+    let hourlyAction = Math.round(
+      session.hourly.actions / Number(Config.get("ACTION_SCORE"))
+    );
     let text = session.unlimited
       ? NO_SMS_LIMIT
       : printf(
           ON_SMS_LIMIT,
           burmeseNumber(remainingTime(session.hourly.remaining)),
-          burmeseNumber(session.hourly.actions),
+          burmeseNumber(hourlyAction),
           burmeseNumber(remainingTime(session.daily.remaining)),
-          burmeseNumber(session.daily.actions)
+          burmeseNumber(dailyAction)
         );
     if (phone.premium) {
       text += " [PREMIUM]";
@@ -140,7 +146,7 @@ router.get("/call", middleware, verifySIM, async (req, res) => {
     if (!phone.premium) {
       text = phone.max_limit
         ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
-        : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လိုပိတ်ထားတယ်။ - nweoo.com";
+        : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လို့ပိတ်ထားတယ်။ - nweoo.com";
       if (!phone.notified_error) {
         phone.notified_error = true;
         phone.incr({ total_action: 0 }).save();
