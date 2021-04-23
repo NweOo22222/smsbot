@@ -2,6 +2,7 @@ import { Router } from "express";
 import DB from "./app/DB";
 import Config from "./app/Config";
 import Phone from "./app/Phone";
+import Highlight from "./app/Highlight";
 
 const api = Router();
 
@@ -15,6 +16,30 @@ api.delete("/articles/:id", (req, res) => {
 
 api.get("/highlights", (req, res) => {
   res.json(DB.read()["highlights"]);
+});
+
+api.post("/highlights", (req, res) => {
+  let { title, source, timestamp } = req.body;
+  if (!(title && source && timestamp)) {
+    return res.redirect(req.headers["referer"] || "/articles.html");
+  }
+  const db = DB.read();
+  if (!("highlights" in db)) db["highlights"] = [];
+  const highlights = db["highlights"];
+  let i = 0;
+  title.split("\n").forEach((title) => {
+    title &&
+      highlights.push(
+        new Highlight({
+          id: (parseInt(timestamp) - i++).toString(),
+          title,
+          source,
+          timestamp,
+        })
+      );
+  });
+  DB.save(db);
+  res.status(201).end();
 });
 
 api.delete("/highlights/:id", (req, res) => {
@@ -69,9 +94,7 @@ api.get("/total", (req, res) => {
   });
 });
 
-api.get("/settings", (req, res) => {
-  res.json(Config.getAll());
-});
+api.get("/settings", (req, res) => res.json(Config.getAll()));
 
 api.post("/settings", (req, res) => {
   try {

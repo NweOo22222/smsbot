@@ -1,11 +1,17 @@
-import Vue from 'vue'
-import App from './App.vue'
-import './registerServiceWorker'
-import router from './router'
+import Vue from "vue";
+import App from "./App.vue";
+import router from "./router";
+import Axios from "axios";
+import VueAxios from "vue-axios";
+import vuetify from "./plugins/vuetify";
+import "./registerServiceWorker";
 
-Vue.config.productionTip = false
+Vue.use(VueAxios, Axios);
+
+Vue.config.productionTip = false;
 
 new Vue({
   router,
-  render: h => h(App)
-}).$mount('#app')
+  vuetify,
+  render: (h) => h(App),
+}).$mount("#app");

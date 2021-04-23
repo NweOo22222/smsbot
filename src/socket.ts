@@ -6,7 +6,11 @@ let socket: Server;
 
 export function connect(app: Application) {
   const server = createServer(app);
-  socket = new Server(server);
+  socket = new Server(server, {
+    cors: {
+      origin: "*",
+    },
+  });
   return server;
 }
 

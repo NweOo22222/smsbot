@@ -9,16 +9,30 @@ const { readFileSync, writeFileSync } = require("fs");
 const package_json = resolve(dirname(__dirname), "package.json");
 
 const package = JSON.parse(readFileSync(package_json, "utf-8"));
+const prevVersion = package.version;
 
 package.version = updatePatch(package.version).join(".");
+
+console.log("changed version from v", prevVersion, "to v", package.version);
 
 writeFileSync(package_json, JSON.stringify(package, null, 2), "utf-8");
 
 (async () => {
   await sleep(1);
+  console.log("building server...");
+  execSync("npm run build");
+
+  console.log("building client...");
+  execSync("cd client && npm run build");
+
+  console.log("commiting git changes...");
   execSync("git add .");
   execSync('git commit -m "' + new Date().toLocaleString() + '"');
+
+  console.log("pushing to github repository...");
   execSync("git push origin " + BRANCH_NAME);
+
+  console.log("Done!");
 })();
 
 function updatePatch(version) {
