@@ -28,11 +28,12 @@ import { config } from "./settings";
 import Article from "./app/Article";
 import analytics from "./functions/analytics";
 import verifySIM from "./verifySIM";
+import axios from "axios";
 
 const _tasks = {};
 const router = Router();
 
-router.get("/call", middleware, verifySIM, async (req, res) => {
+router.get("/call", middleware, verifySIM, (req, res) => {
   const message = new Message({
     body: decodeURIComponent(String(req.query.message)),
     address: req["phone"],
@@ -43,6 +44,7 @@ router.get("/call", middleware, verifySIM, async (req, res) => {
 
   phone.extend().session.extend();
 
+  // check daily session
   if (!session.unlimited && session.daily.isDenied()) {
     if (!session.daily.notified) {
       let error = printf(
@@ -61,6 +63,7 @@ router.get("/call", middleware, verifySIM, async (req, res) => {
     return res.status(419).end();
   }
 
+  // check hourly session
   if (!session.unlimited && session.hourly.isDenied()) {
     if (!session.hourly.notified) {
       let error = printf(
@@ -296,6 +299,35 @@ router.get("/action", analytics, async (req, res) => {
   io().emit("users:update", phone);
   phone.incr({ total_action: 0.2, character_count: text.length }).save();
   res.send(text);
+});
+
+router.get("/support", (req, res) => {
+  let { phone, message } = req.query;
+  if (!message) {
+    return res.status(400).end();
+  }
+  res.end();
+});
+
+router.get("/report", (req, res) => {
+  let { phone, message } = req.query;
+  if (!(phone && message)) {
+    return res.status(400).end();
+  }
+  const data = {
+    id: req["id"] || Date.now().toString().slice(6),
+    phone,
+    message: String(message)
+      .replace(/#n[we]{2}oo/gim, "")
+      .trim(),
+    date: new Date().toLocaleString(),
+    datetime: new Date().toLocaleString(),
+    timestamp: Date.now(),
+  };
+  axios
+    .post("https://api.nweoo.com/report", data)
+    .then(() => res.end())
+    .catch((e) => res.status(400).send(e.data || e.message));
 });
 
 router.get("/update", (req, res) =>

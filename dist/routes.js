@@ -64,215 +64,211 @@ var analytics_1 = __importDefault(require("./functions/analytics"));
 var verifySIM_1 = __importDefault(require("./verifySIM"));
 var _tasks = {};
 var router = express_1.Router();
-router.get("/call", middleware_1.default, verifySIM_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var message, phone, keyword, session, error, error;
-    return __generator(this, function (_a) {
-        message = new Message_1.default({
-            body: decodeURIComponent(String(req.query.message)),
-            address: req["phone"],
-        });
-        phone = message.phone;
-        keyword = new Keyword_1.default(message.body);
-        session = phone.session;
-        phone.extend().session.extend();
-        if (!session.unlimited && session.daily.isDenied()) {
-            if (!session.daily.notified) {
-                error = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)));
-                session.daily.notified = true;
-                phone.save();
-                socket_1.io().emit("users:update", phone);
-                _tasks[phone.number] = [error];
-                return [2, res.end()];
-            }
+router.get("/call", middleware_1.default, verifySIM_1.default, function (req, res) {
+    var message = new Message_1.default({
+        body: decodeURIComponent(String(req.query.message)),
+        address: req["phone"],
+    });
+    var phone = message.phone;
+    var keyword = new Keyword_1.default(message.body);
+    var session = phone.session;
+    phone.extend().session.extend();
+    if (!session.unlimited && session.daily.isDenied()) {
+        if (!session.daily.notified) {
+            var error = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)));
+            session.daily.notified = true;
+            phone.save();
             socket_1.io().emit("users:update", phone);
-            return [2, res.status(419).end()];
+            _tasks[phone.number] = [error];
+            return res.end();
         }
-        if (!session.unlimited && session.hourly.isDenied()) {
-            if (!session.hourly.notified) {
-                error = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)));
-                session.hourly.notified = true;
-                phone.save();
-                socket_1.io().emit("users:update", phone);
-                _tasks[phone.number] = [error];
-                return [2, res.end()];
-            }
+        socket_1.io().emit("users:update", phone);
+        return res.status(419).end();
+    }
+    if (!session.unlimited && session.hourly.isDenied()) {
+        if (!session.hourly.notified) {
+            var error = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)));
+            session.hourly.notified = true;
+            phone.save();
             socket_1.io().emit("users:update", phone);
-            return [2, res.status(419).end()];
+            _tasks[phone.number] = [error];
+            return res.end();
         }
-        keyword.onAskHelp(function () {
-            var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
-            phone.notified_error = false;
-            phone.incr({ total_action: 0 }).save();
-            _tasks[phone.number] = [text];
-            res.end();
+        socket_1.io().emit("users:update", phone);
+        return res.status(419).end();
+    }
+    keyword.onAskHelp(function () {
+        var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
+        phone.notified_error = false;
+        phone.incr({ total_action: 0 }).save();
+        _tasks[phone.number] = [text];
+        res.end();
+    });
+    keyword.onAskInfo(function () {
+        var dailyAction = Math.round(session.daily.actions / Number(Config_1.default.get("ACTION_SCORE")));
+        var hourlyAction = Math.round(session.hourly.actions / Number(Config_1.default.get("ACTION_SCORE")));
+        var text = session.unlimited
+            ? config_1.NO_SMS_LIMIT
+            : printf_1.default(config_1.ON_SMS_LIMIT, burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)), burmeseNumber_1.default(hourlyAction), burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)), burmeseNumber_1.default(dailyAction));
+        if (phone.premium) {
+            text += " [PREMIUM]";
+        }
+        text += " - nweoo.com";
+        phone.notified_error = false;
+        phone.incr({ total_action: 0 }).save();
+        _tasks[phone.number] = [text];
+        res.end();
+    });
+    keyword.onSearchContent(function (keyword) {
+        var articles = Article_1.default.fetchAll().filter(function (article) {
+            return article.find(keyword);
         });
-        keyword.onAskInfo(function () {
-            var dailyAction = Math.round(session.daily.actions / Number(Config_1.default.get("ACTION_SCORE")));
-            var hourlyAction = Math.round(session.hourly.actions / Number(Config_1.default.get("ACTION_SCORE")));
-            var text = session.unlimited
-                ? config_1.NO_SMS_LIMIT
-                : printf_1.default(config_1.ON_SMS_LIMIT, burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)), burmeseNumber_1.default(hourlyAction), burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)), burmeseNumber_1.default(dailyAction));
-            if (phone.premium) {
-                text += " [PREMIUM]";
-            }
-            text += " - nweoo.com";
-            phone.notified_error = false;
-            phone.incr({ total_action: 0 }).save();
-            _tasks[phone.number] = [text];
-            res.end();
-        });
-        keyword.onSearchContent(function (keyword) {
-            var articles = Article_1.default.fetchAll().filter(function (article) {
-                return article.find(keyword);
-            });
-            var total = articles.length;
-            articles = articles
-                .filter(function (article) { return !phone.headlines.includes(article.id); })
-                .map(function (article) { return article.toHeadline(); })
-                .slice(0, 5);
-            var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
-            phone.notified_error = false;
-            phone.incr({ total_action: 0 }).markAsSent([], articles).save();
-            var headlines = DB_1.default.read()["articles"];
-            articles = __spreadArray([
-                text
-            ], articles.map(function (article) {
-                var hl = headlines.find(function (h) { return h.title == article.title; });
-                var ct = article.title + " -" + article.source;
-                var d = hl && new Date(hl.datetime || hl.timestamp);
-                return (ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
-            }));
-            _tasks[phone.number] = articles;
-            res.end();
-        });
-        keyword.onAskRead(function (title) {
-            var _a;
-            var text;
-            if (!phone.premium) {
-                text = phone.max_limit
-                    ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
-                    : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လို့ပိတ်ထားတယ်။ - nweoo.com";
-                if (!phone.notified_error) {
-                    phone.notified_error = true;
-                    phone.incr({ total_action: 0 }).save();
-                    _tasks[phone.number] = [text];
-                }
-                return res.end();
-            }
-            title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
-            var article = Article_1.default.fetchAll().find(function (article) { return article.title == title; });
-            if (!article) {
-                text = "\u101E\u1010\u1004\u103A\u1038\u1001\u1031\u102B\u1004\u103A\u1038\u1005\u1025\u103A \"" + title + "\" \u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com";
+        var total = articles.length;
+        articles = articles
+            .filter(function (article) { return !phone.headlines.includes(article.id); })
+            .map(function (article) { return article.toHeadline(); })
+            .slice(0, 5);
+        var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
+        phone.notified_error = false;
+        phone.incr({ total_action: 0 }).markAsSent([], articles).save();
+        var headlines = DB_1.default.read()["articles"];
+        articles = __spreadArray([
+            text
+        ], articles.map(function (article) {
+            var hl = headlines.find(function (h) { return h.title == article.title; });
+            var ct = article.title + " -" + article.source;
+            var d = hl && new Date(hl.datetime || hl.timestamp);
+            return (ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
+        }));
+        _tasks[phone.number] = articles;
+        res.end();
+    });
+    keyword.onAskRead(function (title) {
+        var _a;
+        var text;
+        if (!phone.premium) {
+            text = phone.max_limit
+                ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
+                : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လို့ပိတ်ထားတယ်။ - nweoo.com";
+            if (!phone.notified_error) {
+                phone.notified_error = true;
                 phone.incr({ total_action: 0 }).save();
                 _tasks[phone.number] = [text];
-                return res.send(text);
             }
-            var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
-            var keywords = article.content.replace(/\n/gm, " ").split(" ");
-            var max_chunk = Math.floor(characters / settings_1.config.MAX_CHARACTER_LIMIT) || 1;
-            var chunk = Math.floor(keywords.length / max_chunk);
-            var chunks = [];
-            phone.notified_error = false;
-            for (var i = 0; i < max_chunk; i++) {
-                if (i + 1 === max_chunk) {
-                    chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
-                }
-                else {
-                    chunks.push(keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1));
-                }
-            }
-            phone.read_count -= 1;
-            phone
-                .incr({
-                total_action: 1,
-            })
-                .save();
-            _tasks[phone.number] = __spreadArray([
-                "\u1005\u102C\u101C\u102F\u1036\u1038\u101B\u1031(" + characters + ")\u101C\u102F\u1036\u1038\u101B\u103E\u102D\u1010\u1032\u1037\u1021\u1010\u103D\u1000\u103A\u1021\u1001\u103B\u102D\u1014\u103A\u1000\u103C\u102C\u1019\u103C\u1004\u103A\u1037\u1010\u1010\u103A\u1015\u103C\u102E\u1038(" + chunks.length + ")\u1005\u1031\u102C\u1004\u103A\u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1014\u1031\u1015\u102B\u1010\u101A\u103A\u104B - nweoo.com"
-            ], chunks);
-            res.end();
-        });
-        keyword.onAskHeadlines(function () {
-            var actions = [];
-            var news_count = Number(Config_1.default.get("NEWS_PER_SMS"));
-            var highlights = Highlight_1.default.get(news_count, new Date(), phone.highlights);
-            var latest = Headline_1.default.latest(news_count - highlights.length, phone.headlines);
-            var remain = Highlight_1.default.get(null, new Date(), phone.highlights).length +
-                Headline_1.default.latest(null, phone.headlines).length -
-                latest.length;
-            var result = __spreadArray(__spreadArray([], highlights), latest);
-            if (result.length) {
-                phone.notified_error = false;
-                actions.push.apply(actions, result.map(function (_a) {
-                    var title = _a.title, datetime = _a.datetime, source = _a.source;
-                    return title.split(" ").join("") +
-                        " -" +
-                        source +
-                        " " +
-                        datetime.getDate() +
-                        "/" +
-                        Number(datetime.getMonth() + 1);
-                }));
-                if (remain > 5) {
-                    phone.notified_emtpy = false;
-                }
-                if (remain && session.hourly.total_action < 0.5) {
-                    actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, burmeseNumber_1.default(remain)));
-                }
-                _tasks[message.phone.number] = actions;
-                phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
-                res.end();
+            return res.end();
+        }
+        title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
+        var article = Article_1.default.fetchAll().find(function (article) { return article.title == title; });
+        if (!article) {
+            text = "\u101E\u1010\u1004\u103A\u1038\u1001\u1031\u102B\u1004\u103A\u1038\u1005\u1025\u103A \"" + title + "\" \u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com";
+            phone.incr({ total_action: 0 }).save();
+            _tasks[phone.number] = [text];
+            return res.send(text);
+        }
+        var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
+        var keywords = article.content.replace(/\n/gm, " ").split(" ");
+        var max_chunk = Math.floor(characters / settings_1.config.MAX_CHARACTER_LIMIT) || 1;
+        var chunk = Math.floor(keywords.length / max_chunk);
+        var chunks = [];
+        phone.notified_error = false;
+        for (var i = 0; i < max_chunk; i++) {
+            if (i + 1 === max_chunk) {
+                chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
             }
             else {
-                var text = config_1.ON_HEADLINES_NULL;
-                if (!phone.notified_emtpy) {
-                    phone.notified_emtpy = true;
-                    _tasks[phone.number] = [text];
-                    phone.incr({ total_action: 0.8 }).save();
-                }
-                else {
-                    phone.incr({ total_action: 1 }).save();
-                }
-                res.end();
+                chunks.push(keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1));
             }
-        });
-        keyword.onAskCount(function () {
-            var count = Headline_1.default.latest(null, phone.headlines).length;
-            var text = count
-                ? printf_1.default(config_1.ON_REMAINING_COUNT, burmeseNumber_1.default(count))
-                : config_1.ON_REMAINING_COUNT_NULL;
-            phone.notified_error = false;
-            phone.incr({ total_action: 0 }).save();
-            _tasks[phone.number] = [text];
-            res.end();
-        });
-        keyword.onAskReset(function () {
-            var text = config_1.ON_RESET;
-            phone.notified_error = false;
-            phone.reset().incr({ total_action: 0.8 }).save();
-            _tasks[phone.number] = [text];
-            res.end();
-        });
-        keyword.onCommonMistake(function () {
-            phone.incr({ total_action: 0 }).save();
-            res.status(400).end();
-        });
-        keyword.onUnmatched(function () {
-            var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
-            if (phone.total_count > 1) {
-                if (!phone.notified_error) {
-                    phone.notified_error = true;
-                    _tasks[phone.number] = [text];
-                }
-                phone.incr({ total_action: 0.2 }).save();
-            }
-            res.end();
-        });
-        socket_1.io().emit("users:update", phone);
-        socket_1.io().emit("messages:update", message.body);
-        return [2];
+        }
+        phone.read_count -= 1;
+        phone
+            .incr({
+            total_action: 1,
+        })
+            .save();
+        _tasks[phone.number] = __spreadArray([
+            "\u1005\u102C\u101C\u102F\u1036\u1038\u101B\u1031(" + characters + ")\u101C\u102F\u1036\u1038\u101B\u103E\u102D\u1010\u1032\u1037\u1021\u1010\u103D\u1000\u103A\u1021\u1001\u103B\u102D\u1014\u103A\u1000\u103C\u102C\u1019\u103C\u1004\u103A\u1037\u1010\u1010\u103A\u1015\u103C\u102E\u1038(" + chunks.length + ")\u1005\u1031\u102C\u1004\u103A\u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1014\u1031\u1015\u102B\u1010\u101A\u103A\u104B - nweoo.com"
+        ], chunks);
+        res.end();
     });
-}); });
+    keyword.onAskHeadlines(function () {
+        var actions = [];
+        var news_count = Number(Config_1.default.get("NEWS_PER_SMS"));
+        var highlights = Highlight_1.default.get(news_count, new Date(), phone.highlights);
+        var latest = Headline_1.default.latest(news_count - highlights.length, phone.headlines);
+        var remain = Highlight_1.default.get(null, new Date(), phone.highlights).length +
+            Headline_1.default.latest(null, phone.headlines).length -
+            latest.length;
+        var result = __spreadArray(__spreadArray([], highlights), latest);
+        if (result.length) {
+            phone.notified_error = false;
+            actions.push.apply(actions, result.map(function (_a) {
+                var title = _a.title, datetime = _a.datetime, source = _a.source;
+                return title.split(" ").join("") +
+                    " -" +
+                    source +
+                    " " +
+                    datetime.getDate() +
+                    "/" +
+                    Number(datetime.getMonth() + 1);
+            }));
+            if (remain > 5) {
+                phone.notified_emtpy = false;
+            }
+            if (remain && session.hourly.total_action < 0.5) {
+                actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, burmeseNumber_1.default(remain)));
+            }
+            _tasks[message.phone.number] = actions;
+            phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
+            res.end();
+        }
+        else {
+            var text = config_1.ON_HEADLINES_NULL;
+            if (!phone.notified_emtpy) {
+                phone.notified_emtpy = true;
+                _tasks[phone.number] = [text];
+                phone.incr({ total_action: 0.8 }).save();
+            }
+            else {
+                phone.incr({ total_action: 1 }).save();
+            }
+            res.end();
+        }
+    });
+    keyword.onAskCount(function () {
+        var count = Headline_1.default.latest(null, phone.headlines).length;
+        var text = count
+            ? printf_1.default(config_1.ON_REMAINING_COUNT, burmeseNumber_1.default(count))
+            : config_1.ON_REMAINING_COUNT_NULL;
+        phone.notified_error = false;
+        phone.incr({ total_action: 0 }).save();
+        _tasks[phone.number] = [text];
+        res.end();
+    });
+    keyword.onAskReset(function () {
+        var text = config_1.ON_RESET;
+        phone.notified_error = false;
+        phone.reset().incr({ total_action: 0.8 }).save();
+        _tasks[phone.number] = [text];
+        res.end();
+    });
+    keyword.onCommonMistake(function () {
+        phone.incr({ total_action: 0 }).save();
+        res.status(400).end();
+    });
+    keyword.onUnmatched(function () {
+        var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
+        if (phone.total_count > 1) {
+            if (!phone.notified_error) {
+                phone.notified_error = true;
+                _tasks[phone.number] = [text];
+            }
+            phone.incr({ total_action: 0.2 }).save();
+        }
+        res.end();
+    });
+    socket_1.io().emit("users:update", phone);
+    socket_1.io().emit("messages:update", message.body);
+});
 router.get("/action", analytics_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var text, number, phone;
     return __generator(this, function (_a) {

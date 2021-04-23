@@ -41,7 +41,7 @@ export default class HourlySession {
   }
 
   isExpired() {
-    return Date.now() > this.expired.getTime();
+    return Date.now() > this.expired.getTime() - 300000;
   }
 
   isDenied() {

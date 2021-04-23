@@ -11,4 +11,4 @@ exports.ON_UNEXISTED = "မှားယွင်းနေပါတယ်။ သ�
 exports.ON_RATE_LIMIT = "SMS %s Limit ပြည့်သွားပါသဖြင့်ဖုန်းနံပါတ် %s ကို %sနေမှပြန်ပို့ပေးပါ။ - nweoo.com";
 exports.ON_SEARCH_EXISTED = '"%s" ပါ၀င်သည့်သတင်း %s ခုရှာတွေ့ပြီး %s ပို့ရန်ကျန်ပါတယ်။ - nweoo.com';
 exports.NO_SMS_LIMIT = "သင့်ဖုန်းနံပါတ်ကို SMS Limit သတ်မှတ်ထားခြင်းမရှိပါ။";
-exports.ON_SMS_LIMIT = "%sအတွင်းနောက်ထပ် %sစောင်၊ %sအတွင်း %sစောင်ပြန်ပို့နိုင်ပါတယ်။";
+exports.ON_SMS_LIMIT = "%sအတွင်းနောက်ထပ် %s စောင်၊ %sအတွင်း %s စောင်ပြန်ပို့ပေးနိုင်ပါတယ်။";

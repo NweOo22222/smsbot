@@ -26,8 +26,6 @@
   <link rel="manifest" href="manifest.json" />
   <title>Chatbot | NweOo</title>
   <link rel="stylesheet" href="tailwind.min.css">
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.min.css">
   <script src="vue.js"></script>
   <script src="axios.min.js"></script>
   <style>
@@ -100,6 +98,13 @@
     #status-bar #phone::before {
       content: 'Phone:';
     }
+
+    #chat-message::after {
+      content: attr(char) ' characters';
+      color: #818181;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: small;
+    }
   </style>
 </head>
 
@@ -108,7 +113,9 @@
     <div id="status-bar">
       <div class="wrapper">
         <div class="row">
-          <h6>{{ bot }}</h6>
+          <h6>
+            <a href="/">{{ bot }}</a>
+          </h6>
           <div class="status">
             <span id="error">{{ error || 'n/a' }}</span>
             <span id="status"></span>
@@ -127,20 +134,20 @@
         class="mt-5 flex flex-col space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch">
 
         <!-- chat bubble -->
-        <div v-for="(message, i) of messages" :key="i">
-          <div class="flex items-end" :class="message.from == bot ? '' : 'justify-end'">
-            <div class="flex flex-col space-y-2 text-md leading-tight max-w-lg mx-2"
-              :class="message.from == bot ? 'order-2 items-start' : 'order-1 items-end'">
-              <div>
-                <span class="px-4 py-3 rounded-xl inline-block" style="line-height: 2em; letter-spacing: 1px;"
-                  :class="message.from == bot ? 'rounded-bl-none bg-gray-100 text-gray-600' : 'rounded-br-none bg-blue-500 text-white'"
-                  v-html="message.text">
-                </span>
-              </div>
+        <div class="flex items-end" :class="message.from == bot ? '' : 'justify-end'" v-for="(message, i) of messages"
+          :key="i">
+          <div class="flex flex-col space-y-2 text-md leading-tight max-w-lg mx-2"
+            :class="message.from == bot ? 'order-2 items-start' : 'order-1 items-end'" id="chat-message"
+            :char="message.text.length">
+            <div>
+              <span class="px-4 py-3 rounded-xl inline-block" style="line-height: 2em; letter-spacing: 1px;"
+                :class="message.from == bot ? 'rounded-bl-none bg-gray-100 text-gray-600' : 'rounded-br-none bg-blue-500 text-white'"
+                v-html="message.text">
+              </span>
             </div>
-            <img :src="message.from == bot ? 'bot.svg' : 'human.svg'" alt="profile_avatar" class="w-6 h-6 rounded-full"
-              :class="message.from == bot ? 'order-1' : 'order-2'">
           </div>
+          <img :src="message.from == bot ? 'bot.svg' : 'human.svg'" alt="profile_avatar" class="w-6 h-6 rounded-full"
+            :class="message.from == bot ? 'order-1' : 'order-2'">
         </div>
 
         <!-- typing animation -->
@@ -160,7 +167,8 @@
           <div class="absolute right-2 items-center inset-y-0 hidden sm:flex">
             <button type="submit"
               class="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 ease-in-out text-white bg-blue-500 hover:bg-blue-600 focus:outline-none">
-              <i class="mdi mdi-arrow-right text-xl leading-none"></i>
+              <!-- <i class="mdi mdi-arrow-right text-xl leading-none"></i> -->
+              >
             </button>
           </div>
         </form>
@@ -254,12 +262,13 @@
         changePhone() {
           this.phone = '';
           localStorage.setItem('test_phone_number', '');
+          this.intro();
         },
         intro() {
           let text;
           this.phone = localStorage.getItem('test_phone_number');
           if (!this.phone) {
-            text = 'အသုံးပြုသူအတွက် ဖုန်းနံပါတ်တစ်ခုခုကို အရင်ပြောပြပါ။';
+            text = 'ဖုန်းနံပါတ်တစ်ခုခုကို အရင်ရိုက်ထည့်ပါ။';
           } else {
             text = 'မင်္ဂလာပါ။ NweOo SMS Chatbot ကို စမ်းသပ်အသုံးပြုနိုင်ဖို့အတွက် အနီးစပ်ဆုံးတူအောင် ဖန်တီးထားတဲ့ Demo Version ပါ။';
           }
@@ -282,9 +291,14 @@
             return;
           }
           if (this.message === 'clear') {
-            this.messages = [];
             this.intro();
             this.message = '.reset';
+          }
+          if (this.message.match(/#n[we]{2}oo/gmi)) {
+            return axios.get('/report?phone=' + this.phone + '&message=' + encodeURIComponent(this.message))
+              .finally(() => {
+                this.message = ''
+              });
           }
           this.humanChat(this.message).finally(() => this.typing = false);
           this.message = '';

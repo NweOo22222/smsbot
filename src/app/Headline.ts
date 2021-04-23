@@ -20,7 +20,7 @@ export default class Headline {
 
   static fetch(): Promise<Headline[]> {
     return axios
-      .get("https://api.nweoo.com/news/headlines?limit=30")
+      .get("http://api.nweoo.com/news/headlines?limit=30")
       .then(({ data }) => {
         const articles = [];
         for (const entry of Object.entries(data)) {

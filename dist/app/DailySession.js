@@ -28,7 +28,7 @@ var DailySession = (function () {
         this.character_count = 0;
     };
     DailySession.prototype.isExpired = function () {
-        return Date.now() > this.expired.getTime();
+        return Date.now() > this.expired.getTime() - 300000;
     };
     DailySession.prototype.isDenied = function () {
         return (this.total_action >= Number(Config_1.default.get("MAX_DAILY_LIMIT")) ||

@@ -30,7 +30,7 @@ var HourlySession = (function () {
         this.notified = false;
     };
     HourlySession.prototype.isExpired = function () {
-        return Date.now() > this.expired.getTime();
+        return Date.now() > this.expired.getTime() - 300000;
     };
     HourlySession.prototype.isDenied = function () {
         return (this.total_action >= Number(Config_1.default.get("MAX_HOURLY_LIMIT")) ||

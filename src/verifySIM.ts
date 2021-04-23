@@ -15,7 +15,7 @@ export default function verifySIM(
     return next();
   }
   axios
-    .get("http://localhost:8080/v1/sms?limit=20")
+    .get("http://localhost:8080/v1/sms")
     .then(({ data: { messages } }) => {
       messages = messages.filter(
         (message) =>
@@ -28,6 +28,7 @@ export default function verifySIM(
         threads.push(...messages.map(({ _id }) => _id));
         let s = threads.length - 20;
         threads = s > 0 ? threads.slice(s, 20) : threads;
+        req["id"] = messages[0]["_id"];
         next();
       } else {
         console.log("ignored to response %s, SIM Slot not matched", phone);

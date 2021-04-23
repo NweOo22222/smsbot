@@ -29,7 +29,7 @@ var Headline = (function () {
     };
     Headline.fetch = function () {
         return axios_1.default
-            .get("https://api.nweoo.com/news/headlines?limit=30")
+            .get("http://api.nweoo.com/news/headlines?limit=30")
             .then(function (_a) {
             var data = _a.data;
             var articles = [];

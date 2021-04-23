@@ -7,6 +7,7 @@ import router from "./routes";
 import api from "./api";
 import DB from "./app/DB";
 import Config from "./app/Config";
+import analytic from "./analytic";
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -22,13 +23,7 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  req["phone"] = req.query["phone"] = String(req.query.phone).replace(
-    /^\s/,
-    "+"
-  );
-  next();
-});
+app.use(analytic);
 
 app.use("/api", api);
 
