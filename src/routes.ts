@@ -216,7 +216,7 @@ router.get("/call", middleware, verifySIM, async (req, res) => {
       if (remain > 5) {
         phone.notified_emtpy = false;
       }
-      if (remain && session.hourly.total_action < 1) {
+      if (remain && session.hourly.total_action < 0.5) {
         actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
       }
       _tasks[message.phone.number] = actions;
@@ -227,7 +227,7 @@ router.get("/call", middleware, verifySIM, async (req, res) => {
       if (!phone.notified_emtpy) {
         phone.notified_emtpy = true;
         _tasks[phone.number] = [text];
-        phone.incr({ total_action: 0.5 }).save();
+        phone.incr({ total_action: 0.8 }).save();
       } else {
         phone.incr({ total_action: 1 }).save();
       }
@@ -314,14 +314,16 @@ router.post("/update", (req, res) => {
   const highlights = db["highlights"];
   let i = 0;
   title.split("\n").forEach((title) => {
-    highlights.push(
-      new Highlight({
-        id: (Date.now() - i++).toString(),
-        title,
-        source,
-        timestamp,
-      })
-    );
+    title = String(title).trim();
+    title &&
+      highlights.push(
+        new Highlight({
+          id: (Date.now() + i++).toString(),
+          title,
+          source,
+          timestamp,
+        })
+      );
   });
   DB.save(db);
   res.redirect("/articles.html");
