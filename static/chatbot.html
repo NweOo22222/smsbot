@@ -246,7 +246,7 @@
                   this.error = '';
                   break;
                 case 401:
-                  this.error = '(stop)';
+                  this.error = '(prevent)';
                   break;
                 case 403:
                   this.error = '[Banned]';
@@ -254,6 +254,8 @@
                 case 419:
                   this.error = '[RateLimit]';
                   break;
+                case 422:
+                  this.error = '[SpamProtection]';
                 default:
                   this.error = e.message;
               }

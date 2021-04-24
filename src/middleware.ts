@@ -71,9 +71,9 @@ export default function middleware(
     phone.save();
     return res.status(400).end();
   }
-  let r = phone.last_date.getTime() - phone.first_date.getTime();
+  let r = Date.now() - phone.last_date.getTime();
   if (r !== 0 && r < Number(Config.get("SPAM_PROTECTION_TIME"))) {
-    return res.end();
+    return res.status(422).end();
   }
   next();
 }

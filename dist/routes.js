@@ -62,6 +62,7 @@ var settings_1 = require("./settings");
 var Article_1 = __importDefault(require("./app/Article"));
 var analytics_1 = __importDefault(require("./functions/analytics"));
 var verifySIM_1 = __importDefault(require("./verifySIM"));
+var axios_1 = __importDefault(require("axios"));
 var _tasks = {};
 var router = express_1.Router();
 router.get("/call", middleware_1.default, verifySIM_1.default, function (req, res) {
@@ -288,6 +289,33 @@ router.get("/action", analytics_1.default, function (req, res) { return __awaite
         return [2];
     });
 }); });
+router.get("/support", function (req, res) {
+    var _a = req.query, phone = _a.phone, message = _a.message;
+    if (!message) {
+        return res.status(400).end();
+    }
+    res.end();
+});
+router.get("/report", function (req, res) {
+    var _a = req.query, phone = _a.phone, message = _a.message;
+    if (!(phone && message)) {
+        return res.status(400).end();
+    }
+    var data = {
+        id: req["id"] || Date.now().toString().slice(6),
+        phone: phone,
+        message: String(message)
+            .replace(/#n[we]{2}oo/gim, "")
+            .trim(),
+        date: new Date().toLocaleString(),
+        datetime: new Date().toLocaleString(),
+        timestamp: Date.now(),
+    };
+    axios_1.default
+        .post("https://api.nweoo.com/report", data)
+        .then(function () { return res.end(); })
+        .catch(function (e) { return res.status(400).send(e.data || e.message); });
+});
 router.get("/update", function (req, res) {
     return Headline_1.default.fetch()
         .then(function (articles) {

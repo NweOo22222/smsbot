@@ -70,9 +70,9 @@ function middleware(req, res, next) {
         phone.save();
         return res.status(400).end();
     }
-    var r = phone.last_date.getTime() - phone.first_date.getTime();
+    var r = Date.now() - phone.last_date.getTime();
     if (r !== 0 && r < Number(Config_1.default.get("SPAM_PROTECTION_TIME"))) {
-        return res.end();
+        return res.status(422).end();
     }
     next();
 }
