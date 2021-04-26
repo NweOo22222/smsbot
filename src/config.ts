@@ -17,7 +17,7 @@ export const ON_UNEXISTED =
   "မှားယွင်းနေပါတယ်။ သတင်းများရယူရန်ဖုန်းနံပါတ် %s ကို news ဟုပို့ပါ။ - nweoo.com";
 
 export const ON_RATE_LIMIT =
-  "SMS %s Limit ပြည့်သွားပါသဖြင့် %s နေမှပြန်ပို့ပေးပါ။ - nweoo.com";
+  "SMS Limit ပြည့်သွားပါသဖြင့် %sနေမှပြန်ပို့ပေးပါ။ - nweoo.com";
 
 export const ON_SEARCH_EXISTED =
   '"%s" ပါ၀င်သည့်သတင်း %s ခုရှာတွေ့ပြီး %s ပို့ရန်ကျန်ပါတယ်။ - nweoo.com';

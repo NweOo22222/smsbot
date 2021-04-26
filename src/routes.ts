@@ -49,9 +49,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     if (!session.daily.notified) {
       let error = printf(
         ON_RATE_LIMIT,
-        "Daily",
-        Config.get("MOBILE_NUMBER"),
-        "နောက်" + burmeseNumber(remainingTime(session.daily.remaining))
+        burmeseNumber(remainingTime(session.daily.remaining))
       );
       session.daily.notified = true;
       phone.save();
@@ -68,7 +66,6 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     if (!session.hourly.notified) {
       let error = printf(
         ON_RATE_LIMIT,
-        "Hourly",
         burmeseNumber(remainingTime(session.hourly.remaining))
       );
       session.hourly.notified = true;
