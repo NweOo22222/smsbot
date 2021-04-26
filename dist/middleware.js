@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var Phone_1 = __importDefault(require("./app/Phone"));
 var Config_1 = __importDefault(require("./app/Config"));
+var socket_1 = require("./socket");
 function middleware(req, res, next) {
     if (!("phone" in req.query)) {
         return res.status(400).end();
@@ -27,6 +28,7 @@ function middleware(req, res, next) {
                 session.reset();
         }
         phone.save();
+        socket_1.io().emit("users:update", phone);
         return res.end();
     }
     match = message.match(/^\.premium (\d+)$/);
@@ -36,23 +38,28 @@ function middleware(req, res, next) {
         phone.read_count = phone.max_limit;
         phone.premium = Boolean(phone.read_count);
         phone.save();
+        socket_1.io().emit("users:update", phone);
         return res.status(400).end();
     }
     if (message.match(/^\.unlimited$/)) {
         session.unlimited = !Boolean(session.unlimited);
         phone.save();
+        socket_1.io().emit("users:update", phone);
         return res.status(400).end();
     }
     if (message.match(/^\.update$/)) {
         res.redirect("/update");
+        socket_1.io().emit("users:update", phone);
         return res.end();
     }
     if (message.match(/^\.banned$/)) {
         session.banned = !Boolean(session.banned);
         phone.save();
+        socket_1.io().emit("users:update", phone);
         return res.status(400).end();
     }
     if (session.banned) {
+        socket_1.io().emit("users:update", phone);
         return res.status(403).end();
     }
     if (message.match(/^on$/i) && session.disabled) {
@@ -60,19 +67,23 @@ function middleware(req, res, next) {
         phone.incr({ total_action: 1 });
         res.send("NweOo SMS Chatbot ကို စတင်အသုံးပြုနိုင်ပါပြီ။");
         phone.save();
+        socket_1.io().emit("users:update", phone);
         return res.end();
     }
     if (session.disabled) {
+        socket_1.io().emit("users:update", phone);
         return res.status(401).end();
     }
     if (message.match(/^off$/i)) {
         session.disabled = true;
         phone.save();
+        socket_1.io().emit("users:update", phone);
         return res.status(400).end();
     }
     if (!("test" in req.query) && phone.total_count > 10) {
         var r = Date.now() - phone.last_date.getTime();
         if (r !== 0 && r < Number(Config_1.default.get("SPAM_PROTECTION_TIME"))) {
+            socket_1.io().emit("users:update", phone);
             return res.status(422).end();
         }
     }

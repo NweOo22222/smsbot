@@ -69,8 +69,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
       let error = printf(
         ON_RATE_LIMIT,
         "Hourly",
-        Config.get("MOBILE_NUMBER"),
-        "နောက်" + burmeseNumber(remainingTime(session.hourly.remaining))
+        burmeseNumber(remainingTime(session.hourly.remaining))
       );
       session.hourly.notified = true;
       phone.save();
@@ -86,7 +85,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
     phone.notified_error = false;
     phone.incr({ total_action: 0 }).save();
-    _tasks[phone.number] = [text];
+    // _tasks[phone.number] = [text];
     res.end();
   });
 
@@ -148,8 +147,8 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     let text: string;
     if (!phone.premium) {
       text = phone.max_limit
-        ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
-        : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လို့ပိတ်ထားတယ်။ - nweoo.com";
+        ? "နောက်နေ့မှထပ်မံကြိုးစားကြည့်ပါ။ - nweoo.com"
+        : "သတင်းအပြည့်အစုံပို့လို့အဆင်မပြေပါ။ - nweoo.com";
       if (!phone.notified_error) {
         phone.notified_error = true;
         phone.incr({ total_action: 0 }).save();
@@ -222,12 +221,9 @@ router.get("/call", middleware, verifySIM, (req, res) => {
             Number(datetime.getMonth() + 1)
         )
       );
-      if (remain > 5) {
-        phone.notified_emtpy = false;
-      }
-      if (remain && session.hourly.total_action < 0.5) {
-        actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
-      }
+      // if (remain > 5) phone.notified_emtpy = false;
+      // if (remain && session.hourly.total_action < 0.5)
+      //    actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
       _tasks[message.phone.number] = actions;
       phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
       res.end();
@@ -269,15 +265,15 @@ router.get("/call", middleware, verifySIM, (req, res) => {
   });
 
   keyword.onUnmatched(() => {
-    let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
-    if (phone.total_count > 1) {
-      if (!phone.notified_error) {
-        phone.notified_error = true;
-        _tasks[phone.number] = [text];
-      }
-      phone.incr({ total_action: 0.2 }).save();
-    }
-    res.end();
+    // let text = printf(ON_UNEXISTED, Config.get("MOBILE_NUMBER"));
+    // if (phone.total_count > 1) {
+    // if (!phone.notified_error) {
+    // phone.notified_error = true;
+    // _tasks[phone.number] = [text];
+    // }
+    // phone.incr({ total_action: 0.2 }).save();
+    // }
+    res.status(404).end();
   });
 
   io().emit("users:update", phone);

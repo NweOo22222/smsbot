@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var dotenv_1 = require("dotenv");
 var path_1 = require("path");
 var socket_1 = require("./socket");
 var express_1 = __importDefault(require("express"));
@@ -15,7 +14,6 @@ var Config_1 = __importDefault(require("./app/Config"));
 var analytic_1 = __importDefault(require("./analytic"));
 var PORT = process.env.PORT || 3001;
 var app = express_1.default();
-dotenv_1.config();
 DB_1.default.init();
 Config_1.default.init();
 app.use(morgan_1.default("dev"));

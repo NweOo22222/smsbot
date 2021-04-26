@@ -88,7 +88,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
     }
     if (!session.unlimited && session.hourly.isDenied()) {
         if (!session.hourly.notified) {
-            var error = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)));
+            var error = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)));
             session.hourly.notified = true;
             phone.save();
             socket_1.io().emit("users:update", phone);
@@ -102,7 +102,6 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
         var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
         phone.notified_error = false;
         phone.incr({ total_action: 0 }).save();
-        _tasks[phone.number] = [text];
         res.end();
     });
     keyword.onAskInfo(function () {
@@ -149,8 +148,8 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
         var text;
         if (!phone.premium) {
             text = phone.max_limit
-                ? "သတ်မှတ်ထားသည့်အရေအတွက်ပြည့်သွားသည့်အတွက် နောက်နေ့မှပြန်လည်ရရှိပါမည်။ - nweoo.com"
-                : "သတင်းအပြည်အစုံကိုပို့လို့အဆင်မပြေတော့လို့ပိတ်ထားတယ်။ - nweoo.com";
+                ? "နောက်နေ့မှထပ်မံကြိုးစားကြည့်ပါ။ - nweoo.com"
+                : "သတင်းအပြည့်အစုံပို့လို့အဆင်မပြေပါ။ - nweoo.com";
             if (!phone.notified_error) {
                 phone.notified_error = true;
                 phone.incr({ total_action: 0 }).save();
@@ -212,12 +211,6 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
                     "/" +
                     Number(datetime.getMonth() + 1);
             }));
-            if (remain > 5) {
-                phone.notified_emtpy = false;
-            }
-            if (remain && session.hourly.total_action < 0.5) {
-                actions.push(printf_1.default(config_1.ON_HEADLINES_NEXT, burmeseNumber_1.default(remain)));
-            }
             _tasks[message.phone.number] = actions;
             phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
             res.end();
@@ -257,15 +250,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
         res.status(400).end();
     });
     keyword.onUnmatched(function () {
-        var text = printf_1.default(config_1.ON_UNEXISTED, Config_1.default.get("MOBILE_NUMBER"));
-        if (phone.total_count > 1) {
-            if (!phone.notified_error) {
-                phone.notified_error = true;
-                _tasks[phone.number] = [text];
-            }
-            phone.incr({ total_action: 0.2 }).save();
-        }
-        res.end();
+        res.status(404).end();
     });
     socket_1.io().emit("users:update", phone);
     socket_1.io().emit("messages:update", message.body);

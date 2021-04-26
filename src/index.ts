@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 import { join, dirname } from "path";
 import { connect } from "./socket";
 import express from "express";
@@ -11,8 +10,6 @@ import analytic from "./analytic";
 
 const PORT = process.env.PORT || 3001;
 const app = express();
-
-config();
 
 DB.init();
 Config.init();
