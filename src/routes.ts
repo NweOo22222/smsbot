@@ -218,9 +218,10 @@ router.get("/call", middleware, verifySIM, (req, res) => {
             Number(datetime.getMonth() + 1)
         )
       );
-      // if (remain > 5) phone.notified_emtpy = false;
-      // if (remain && session.hourly.total_action < 0.5)
-      //    actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
+      if (remain > Number(Config.get("NEWS_PER_SMS"))) {
+        phone.notified_emtpy = false;
+      }
+      // if (remain && session.hourly.total_action < 0.5) actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
       _tasks[message.phone.number] = actions;
       phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
       res.end();

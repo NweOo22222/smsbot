@@ -76,7 +76,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
     phone.extend().session.extend();
     if (!session.unlimited && session.daily.isDenied()) {
         if (!session.daily.notified) {
-            var error = printf_1.default(config_1.ON_RATE_LIMIT, "Daily", Config_1.default.get("MOBILE_NUMBER"), "နောက်" + burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)));
+            var error = printf_1.default(config_1.ON_RATE_LIMIT, burmeseNumber_1.default(remainingTime_1.default(session.daily.remaining)));
             session.daily.notified = true;
             phone.save();
             socket_1.io().emit("users:update", phone);
@@ -88,7 +88,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
     }
     if (!session.unlimited && session.hourly.isDenied()) {
         if (!session.hourly.notified) {
-            var error = printf_1.default(config_1.ON_RATE_LIMIT, "Hourly", burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)));
+            var error = printf_1.default(config_1.ON_RATE_LIMIT, burmeseNumber_1.default(remainingTime_1.default(session.hourly.remaining)));
             session.hourly.notified = true;
             phone.save();
             socket_1.io().emit("users:update", phone);
@@ -211,6 +211,9 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
                     "/" +
                     Number(datetime.getMonth() + 1);
             }));
+            if (remain > Number(Config_1.default.get("NEWS_PER_SMS"))) {
+                phone.notified_emtpy = false;
+            }
             _tasks[message.phone.number] = actions;
             phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
             res.end();
