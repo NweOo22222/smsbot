@@ -24,14 +24,13 @@ import {
 } from "./config";
 import middleware from "./middleware";
 import Config from "./app/Config";
-import { config } from "./settings";
-import Article from "./app/Article";
 import analytics from "./functions/analytics";
 import verifySIM from "./verifySIM";
 import axios from "axios";
 
-const _tasks = {};
 const router = Router();
+const _tasks = {};
+let reports = [];
 
 router.get("/call", middleware, verifySIM, (req, res) => {
   const message = new Message({
@@ -58,7 +57,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
       return res.end();
     }
     io().emit("users:update", phone);
-    return res.status(419).end();
+    return res.status(429).end();
   }
 
   // check hourly session
@@ -75,16 +74,8 @@ router.get("/call", middleware, verifySIM, (req, res) => {
       return res.end();
     }
     io().emit("users:update", phone);
-    return res.status(419).end();
+    return res.status(429).end();
   }
-
-  keyword.onAskHelp(() => {
-    let text = printf(ON_HELP, Config.get("MOBILE_NUMBER"));
-    phone.notified_error = false;
-    phone.incr({ total_action: 0 }).save();
-    // _tasks[phone.number] = [text];
-    res.end();
-  });
 
   keyword.onAskInfo(() => {
     let dailyAction = Math.round(
@@ -112,6 +103,8 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     res.end();
   });
 
+  /* 
+  // search news "...."
   keyword.onSearchContent((keyword) => {
     let articles: any = Article.fetchAll().filter((article) =>
       article.find(keyword)
@@ -138,8 +131,9 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     ];
     _tasks[phone.number] = articles;
     res.end();
-  });
-
+  }); 
+  
+  // read full articles
   keyword.onAskRead((title) => {
     let text: string;
     if (!phone.premium) {
@@ -191,6 +185,15 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     res.end();
   });
 
+  // reset sent articles
+  keyword.onAskReset(() => {
+    phone.notified_error = false;
+    phone.reset().incr({ total_action: 0.8 }).save();
+    _tasks[phone.number] = [ON_RESET];
+    res.end();
+  });
+  */
+
   keyword.onAskHeadlines(() => {
     let actions: string[] = [];
     let news_count = Number(Config.get("NEWS_PER_SMS"));
@@ -218,10 +221,9 @@ router.get("/call", middleware, verifySIM, (req, res) => {
             Number(datetime.getMonth() + 1)
         )
       );
-      if (remain > Number(Config.get("NEWS_PER_SMS"))) {
+      if (remain > news_count) {
         phone.notified_emtpy = false;
       }
-      // if (remain && session.hourly.total_action < 0.5) actions.push(printf(ON_HEADLINES_NEXT, burmeseNumber(remain)));
       _tasks[message.phone.number] = actions;
       phone.markAsSent(highlights, latest).incr({ total_action: 0 }).save();
       res.end();
@@ -232,7 +234,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
         _tasks[phone.number] = [text];
         phone.incr({ total_action: 0.8 }).save();
       } else {
-        phone.incr({ total_action: 1 }).save();
+        phone.incr({ total_action: 0.5 }).save();
       }
       res.end();
     }
@@ -249,16 +251,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     res.end();
   });
 
-  keyword.onAskReset(() => {
-    let text = ON_RESET;
-    phone.notified_error = false;
-    phone.reset().incr({ total_action: 0.8 }).save();
-    _tasks[phone.number] = [text];
-    res.end();
-  });
-
   keyword.onCommonMistake(() => {
-    phone.incr({ total_action: 0 }).save();
     res.status(400).end();
   });
 
@@ -269,10 +262,24 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     // phone.notified_error = true;
     // _tasks[phone.number] = [text];
     // }
-    // phone.incr({ total_action: 0.2 }).save();
+    // phone.incr({ total_action: 0 }).save();
     // }
     res.status(404).end();
   });
+
+  if (reports.length) {
+    console.log("[Queue:REPORT]", reports.length);
+    reports.forEach((report) => {
+      axios
+        .post("https://api.nweoo.com/report", report)
+        .then(({ data }) => {
+          reports = reports.filter((_report) => _report !== report);
+        })
+        .catch((e) =>
+          console.log("[ATTEMPT_FAILED:REPORT]", e.response?.data || e.message)
+        );
+    });
+  }
 
   io().emit("users:update", phone);
   io().emit("messages:update", message.body);
@@ -295,44 +302,32 @@ router.get("/action", analytics, async (req, res) => {
   res.send(text);
 });
 
-router.get("/support", (req, res) => {
-  let { phone, message } = req.query;
-  if (!message) {
-    return res.status(400).end();
-  }
-  res.end();
-});
-
 router.get("/report", (req, res) => {
   let { phone, message } = req.query;
   if (!(phone && message)) {
     return res.status(400).end();
   }
+  message = String(message)
+    .replace(/#n[we]{2}oo/gim, "")
+    .trim();
   const data = {
-    id: req["id"] || Date.now().toString().slice(6),
     phone,
-    message: String(message)
-      .replace(/#n[we]{2}oo/gim, "")
-      .trim(),
-    date: new Date().toLocaleString(),
-    datetime: new Date().toLocaleString(),
+    message,
     timestamp: Date.now(),
   };
-  axios
-    .post("https://api.nweoo.com/report", data)
-    .then(() => res.end())
-    .catch((e) => res.status(400).send(e.data || e.message));
+  res.end();
+  axios.post("https://api.nweoo.com/report", data).catch((e) => {
+    console.log("[FAILED:REPORT]", reports.length);
+    reports.push(data);
+  });
 });
 
 router.get("/update", (req, res) =>
   Headline.fetch()
-    .then((articles) => {
-      Headline.store(articles);
-      Article.update(Number(req.query.limit || "50"))
-        .then((articles) => Article.store(articles))
-        .then(() => res.send("updated"))
-        .catch((e) => res.status(500).send(e.message));
-    })
+    .then(
+      (articles) => Headline.store(articles) // Article.update(Number(req.query.limit || "50")).then((articles) => Article.store(articles))
+    )
+    .then(() => res.send("updated"))
     .catch((e) => res.send(e.message))
 );
 
