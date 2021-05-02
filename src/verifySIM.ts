@@ -14,29 +14,30 @@ export default function verifySIM(
   if ("test" in req.query || sim == -1) {
     return next();
   }
-  axios
-    .get("http://localhost:8080/v1/sms")
-    .then(({ data: { messages } }) => {
-      messages = messages.filter(
-        (message) =>
-          message.msg_box === "inbox" &&
-          message.address === phone &&
-          message.sim_slot == sim &&
-          !threads.includes(message._id)
-      );
-      if (messages.length) {
-        threads.push(...messages.map(({ _id }) => _id));
-        let s = threads.length - 20;
-        threads = s > 0 ? threads.slice(s, 20) : threads;
-        req["id"] = messages[0]["_id"];
+  setTimeout(() => {
+    axios
+      .get("http://localhost:8080/v1/sms")
+      .then(({ data: { messages } }) => {
+        messages = messages.filter(
+          ({ msg_box, address, sim_slot, _id }) =>
+            msg_box === "inbox" &&
+            address === phone &&
+            sim_slot == sim &&
+            !threads.includes(_id)
+        );
+        threads.unshift(...messages.map(({ _id }) => _id));
+        if (messages.length) {
+          threads = threads.slice(0, 20);
+          req["id"] = messages[0]["_id"];
+          next();
+        } else {
+          console.log("ignored to response %s, SIM Slot not matched", phone);
+          res.status(401).end();
+        }
+      })
+      .catch((e) => {
+        console.log(e.message, "Could not verify SIM Slot %s", sim);
         next();
-      } else {
-        console.log("ignored to response %s, SIM Slot not matched", phone);
-        res.status(401).end();
-      }
-    })
-    .catch((e) => {
-      console.log(e.message, "Could not verify SIM Slot %s", sim);
-      next();
-    });
+      });
+  }, 5000);
 }
