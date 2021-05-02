@@ -58,13 +58,12 @@ var socket_1 = require("./socket");
 var config_1 = require("./config");
 var middleware_1 = __importDefault(require("./middleware"));
 var Config_1 = __importDefault(require("./app/Config"));
-var settings_1 = require("./settings");
-var Article_1 = __importDefault(require("./app/Article"));
 var analytics_1 = __importDefault(require("./functions/analytics"));
 var verifySIM_1 = __importDefault(require("./verifySIM"));
 var axios_1 = __importDefault(require("axios"));
-var _tasks = {};
 var router = express_1.Router();
+var _tasks = {};
+var reports = [];
 router.get("/call", middleware_1.default, verifySIM_1.default, function (req, res) {
     var message = new Message_1.default({
         body: decodeURIComponent(String(req.query.message)),
@@ -84,7 +83,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
             return res.end();
         }
         socket_1.io().emit("users:update", phone);
-        return res.status(419).end();
+        return res.status(429).end();
     }
     if (!session.unlimited && session.hourly.isDenied()) {
         if (!session.hourly.notified) {
@@ -96,14 +95,8 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
             return res.end();
         }
         socket_1.io().emit("users:update", phone);
-        return res.status(419).end();
+        return res.status(429).end();
     }
-    keyword.onAskHelp(function () {
-        var text = printf_1.default(config_1.ON_HELP, Config_1.default.get("MOBILE_NUMBER"));
-        phone.notified_error = false;
-        phone.incr({ total_action: 0 }).save();
-        res.end();
-    });
     keyword.onAskInfo(function () {
         var dailyAction = Math.round(session.daily.actions / Number(Config_1.default.get("ACTION_SCORE")));
         var hourlyAction = Math.round(session.hourly.actions / Number(Config_1.default.get("ACTION_SCORE")));
@@ -117,77 +110,6 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
         phone.notified_error = false;
         phone.incr({ total_action: 0 }).save();
         _tasks[phone.number] = [text];
-        res.end();
-    });
-    keyword.onSearchContent(function (keyword) {
-        var articles = Article_1.default.fetchAll().filter(function (article) {
-            return article.find(keyword);
-        });
-        var total = articles.length;
-        articles = articles
-            .filter(function (article) { return !phone.headlines.includes(article.id); })
-            .map(function (article) { return article.toHeadline(); })
-            .slice(0, 5);
-        var text = printf_1.default(config_1.ON_SEARCH_EXISTED, keyword, total, articles.length);
-        phone.notified_error = false;
-        phone.incr({ total_action: 0 }).markAsSent([], articles).save();
-        var headlines = DB_1.default.read()["articles"];
-        articles = __spreadArray([
-            text
-        ], articles.map(function (article) {
-            var hl = headlines.find(function (h) { return h.title == article.title; });
-            var ct = article.title + " -" + article.source;
-            var d = hl && new Date(hl.datetime || hl.timestamp);
-            return (ct + (hl ? " " + d.getDate() + "/" + Number(d.getMonth() + 1) : ""));
-        }));
-        _tasks[phone.number] = articles;
-        res.end();
-    });
-    keyword.onAskRead(function (title) {
-        var _a;
-        var text;
-        if (!phone.premium) {
-            text = phone.max_limit
-                ? "နောက်နေ့မှထပ်မံကြိုးစားကြည့်ပါ။ - nweoo.com"
-                : "သတင်းအပြည့်အစုံပို့လို့အဆင်မပြေပါ။ - nweoo.com";
-            if (!phone.notified_error) {
-                phone.notified_error = true;
-                phone.incr({ total_action: 0 }).save();
-                _tasks[phone.number] = [text];
-            }
-            return res.end();
-        }
-        title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
-        var article = Article_1.default.fetchAll().find(function (article) { return article.title == title; });
-        if (!article) {
-            text = "\u101E\u1010\u1004\u103A\u1038\u1001\u1031\u102B\u1004\u103A\u1038\u1005\u1025\u103A \"" + title + "\" \u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com";
-            phone.incr({ total_action: 0 }).save();
-            _tasks[phone.number] = [text];
-            return res.send(text);
-        }
-        var characters = (_a = article.content) === null || _a === void 0 ? void 0 : _a.length;
-        var keywords = article.content.replace(/\n/gm, " ").split(" ");
-        var max_chunk = Math.floor(characters / settings_1.config.MAX_CHARACTER_LIMIT) || 1;
-        var chunk = Math.floor(keywords.length / max_chunk);
-        var chunks = [];
-        phone.notified_error = false;
-        for (var i = 0; i < max_chunk; i++) {
-            if (i + 1 === max_chunk) {
-                chunks.push(keywords.slice(chunk * i).join("") + " -" + article.source);
-            }
-            else {
-                chunks.push(keywords.slice(chunk * i, chunk * (i + 1)).join("") + " #" + (i + 1));
-            }
-        }
-        phone.read_count -= 1;
-        phone
-            .incr({
-            total_action: 1,
-        })
-            .save();
-        _tasks[phone.number] = __spreadArray([
-            "\u1005\u102C\u101C\u102F\u1036\u1038\u101B\u1031(" + characters + ")\u101C\u102F\u1036\u1038\u101B\u103E\u102D\u1010\u1032\u1037\u1021\u1010\u103D\u1000\u103A\u1021\u1001\u103B\u102D\u1014\u103A\u1000\u103C\u102C\u1019\u103C\u1004\u103A\u1037\u1010\u1010\u103A\u1015\u103C\u102E\u1038(" + chunks.length + ")\u1005\u1031\u102C\u1004\u103A\u1015\u102D\u102F\u1037\u1006\u1031\u102C\u1004\u103A\u1014\u1031\u1015\u102B\u1010\u101A\u103A\u104B - nweoo.com"
-        ], chunks);
         res.end();
     });
     keyword.onAskHeadlines(function () {
@@ -211,7 +133,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
                     "/" +
                     Number(datetime.getMonth() + 1);
             }));
-            if (remain > Number(Config_1.default.get("NEWS_PER_SMS"))) {
+            if (remain > news_count) {
                 phone.notified_emtpy = false;
             }
             _tasks[message.phone.number] = actions;
@@ -226,7 +148,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
                 phone.incr({ total_action: 0.8 }).save();
             }
             else {
-                phone.incr({ total_action: 1 }).save();
+                phone.incr({ total_action: 0.5 }).save();
             }
             res.end();
         }
@@ -241,20 +163,24 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
         _tasks[phone.number] = [text];
         res.end();
     });
-    keyword.onAskReset(function () {
-        var text = config_1.ON_RESET;
-        phone.notified_error = false;
-        phone.reset().incr({ total_action: 0.8 }).save();
-        _tasks[phone.number] = [text];
-        res.end();
-    });
     keyword.onCommonMistake(function () {
-        phone.incr({ total_action: 0 }).save();
         res.status(400).end();
     });
     keyword.onUnmatched(function () {
         res.status(404).end();
     });
+    if (reports.length) {
+        console.log("[Queue:REPORT]", reports.length);
+        reports.forEach(function (report) {
+            axios_1.default
+                .post("https://api.nweoo.com/report", report)
+                .then(function (_a) {
+                var data = _a.data;
+                reports = reports.filter(function (_report) { return _report !== report; });
+            })
+                .catch(function (e) { var _a; return console.log("[ATTEMPT_FAILED:REPORT]", ((_a = e.response) === null || _a === void 0 ? void 0 : _a.data) || e.message); });
+        });
+    }
     socket_1.io().emit("users:update", phone);
     socket_1.io().emit("messages:update", message.body);
 });
@@ -277,42 +203,29 @@ router.get("/action", analytics_1.default, function (req, res) { return __awaite
         return [2];
     });
 }); });
-router.get("/support", function (req, res) {
-    var _a = req.query, phone = _a.phone, message = _a.message;
-    if (!message) {
-        return res.status(400).end();
-    }
-    res.end();
-});
 router.get("/report", function (req, res) {
     var _a = req.query, phone = _a.phone, message = _a.message;
     if (!(phone && message)) {
         return res.status(400).end();
     }
+    message = String(message)
+        .replace(/#n[we]{2}oo/gim, "")
+        .trim();
     var data = {
-        id: req["id"] || Date.now().toString().slice(6),
         phone: phone,
-        message: String(message)
-            .replace(/#n[we]{2}oo/gim, "")
-            .trim(),
-        date: new Date().toLocaleString(),
-        datetime: new Date().toLocaleString(),
+        message: message,
         timestamp: Date.now(),
     };
-    axios_1.default
-        .post("https://api.nweoo.com/report", data)
-        .then(function () { return res.end(); })
-        .catch(function (e) { return res.status(400).send(e.data || e.message); });
+    res.end();
+    axios_1.default.post("https://api.nweoo.com/report", data).catch(function (e) {
+        console.log("[FAILED:REPORT]", reports.length);
+        reports.push(data);
+    });
 });
 router.get("/update", function (req, res) {
     return Headline_1.default.fetch()
-        .then(function (articles) {
-        Headline_1.default.store(articles);
-        Article_1.default.update(Number(req.query.limit || "50"))
-            .then(function (articles) { return Article_1.default.store(articles); })
-            .then(function () { return res.send("updated"); })
-            .catch(function (e) { return res.status(500).send(e.message); });
-    })
+        .then(function (articles) { return Headline_1.default.store(articles); })
+        .then(function () { return res.send("updated"); })
         .catch(function (e) { return res.send(e.message); });
 });
 router.post("/update", function (req, res) {
