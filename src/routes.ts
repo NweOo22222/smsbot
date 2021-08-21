@@ -1,5 +1,6 @@
 import { Router } from "express";
 import printf from "printf";
+import Article from "./app/Article";
 import Headline from "./app/Headline";
 import Keyword from "./app/Keyword";
 import Message from "./app/Message";
@@ -103,7 +104,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     res.end();
   });
 
-  /* 
+  /*
   // search news "...."
   keyword.onSearchContent((keyword) => {
     let articles: any = Article.fetchAll().filter((article) =>
@@ -131,8 +132,8 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     ];
     _tasks[phone.number] = articles;
     res.end();
-  }); 
-  
+  });
+
   // read full articles
   keyword.onAskRead((title) => {
     let text: string;
@@ -211,14 +212,14 @@ router.get("/call", middleware, verifySIM, (req, res) => {
       phone.notified_error = false;
       actions.push(
         ...result.map(
-          ({ title, datetime, source }) =>
+          ({ title, createdAt, source }) =>
             title.split(" ").join("") +
             " -" +
             source +
             " " +
-            datetime.getDate() +
+            createdAt.getDate() +
             "/" +
-            Number(datetime.getMonth() + 1)
+            Number(createdAt.getMonth() + 1)
         )
       );
       if (remain > news_count) {
@@ -323,10 +324,8 @@ router.get("/report", (req, res) => {
 });
 
 router.get("/update", (req, res) =>
-  Headline.fetch()
-    .then(
-      (articles) => Headline.store(articles) // Article.update(Number(req.query.limit || "50")).then((articles) => Article.store(articles))
-    )
+  Article.update(100)
+    .then((articles) => Article.store(articles))
     .then(() => res.send("updated"))
     .catch((e) => res.send(e.message))
 );

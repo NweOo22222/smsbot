@@ -9,8 +9,10 @@ export default class Article {
   public source: string;
   public link: string;
   public title: string;
+  public timestamp: number;
+  public createdAt: Date;
 
-  constructor({ id, title, content, image, source }) {
+  constructor({ id, title, content, image, source, timestamp }) {
     this.id = id;
     this.title = String(title)
       .replace(/\((?:ရုပ်သံ|ဓာတ်ပုံ)\)/gm, "")
@@ -18,6 +20,8 @@ export default class Article {
     this.content = String(content).replace(/\n\n\n\n/gm, "\n");
     this.image = image;
     this.source = source;
+    this.timestamp = timestamp;
+    this.createdAt = new Date(timestamp);
   }
 
   find(keyword) {
@@ -29,8 +33,8 @@ export default class Article {
       id: this.id,
       title: this.title,
       source: this.source,
-      datetime: new Date(),
-      timestamp: Date.now(),
+      timestamp: this.timestamp,
+      createdAt: this.createdAt,
     });
   }
 
@@ -42,13 +46,13 @@ export default class Article {
 
   static update(limit: number = 30): Promise<Article[]> {
     return axios
-      .get("https://api.nweoo.com/articles?limit=" + limit)
+      .get("https://api.nweoo.com/news/articles?limit=" + limit)
       .then(({ data }) => (data || []).map((article) => new Article(article)));
   }
 
   static store(articles: Article[]) {
     const db = DB.read();
-    db["full_articles"] = articles;
+    db["articles"] = articles;
     DB.save(db);
   }
 }

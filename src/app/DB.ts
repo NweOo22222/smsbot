@@ -6,8 +6,7 @@ const DATABASE_PATH = resolve(dirname(dirname(__dirname)), DATABASE_FILENAME);
 
 export default class DB {
   static init() {
-    existsSync(DATABASE_PATH) ||
-      this.save({ phone: [], articles: [], highlights: [] });
+    existsSync(DATABASE_PATH) || this.save({ phone: [], articles: [] });
   }
 
   static read(): object {

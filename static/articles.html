@@ -47,7 +47,7 @@
           <tr v-for="highlight in highlights" :key="highlight.id">
             <td>{{ highlight.title }}</td>
             <td>{{ highlight.source }}</td>
-            <td>{{ new Date(highlight.datetime).toLocaleString() }}</td>
+            <td>{{ new Date(highlight.timestamp).toLocaleString() }}</td>
             <td>
               <a @click="removeHighlight(highlight.id)" class="btn btn-danger btn-sm badge">Remove</a>
             </td>
@@ -70,7 +70,7 @@
           <tr v-for="article in articles" :key="article.id">
             <td>{{ article.title }}</td>
             <td>{{ article.source }}</td>
-            <td>{{ new Date(article.datetime).toLocaleString() }}</td>
+            <td>{{ new Date(article.createdAt).toLocaleString() }}</td>
             <td>
               <a @click="removeArticle(article.id)" class="btn btn-danger btn-sm badge">Remove</a>
             </td>
@@ -93,7 +93,7 @@
       methods: {
         fetchHighlights() {
           axios('/api/highlights').then(({ data }) => {
-            this.highlights = data.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+            this.highlights = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
           });
         },
         removeHighlight(id) {
@@ -106,7 +106,7 @@
         },
         fetchArticles() {
           axios('/api/articles').then(({ data }) => {
-            this.articles = data.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+            this.articles = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
           });
         },
         removeArticle(id) {
