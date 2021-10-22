@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NweOo SMS</title>
+  <link rel="stylesheet" href="bootstrap.min.css" />
+</head>
+
+<body>
+  <div class="container mt-2">
+    <main>
+      <div class="alert alert-success position-fixed fixed-bottom" v-show="message">
+        {{ message }}
+      </div>
+      <div class="alert alert-danger position-fixed fixed-bottom" v-show="error">
+        {{ error }}
+      </div>
+
+      <section class="mb-4">
+        <a href="articles.html" class="btn btn-outline-primary ma-2">
+          View articles
+        </a>
+        <a href="settings.html" class="btn btn-outline-primary ma-2">
+          View settings
+        </a>
+        <a href="chatbot.html" class="btn btn-outline-primary ma-2">
+          Chatbot [Demo]
+        </a>
+        <button @click="updateArticles" :disabled="disabled" class="ma-2 btn btn-primary">
+          Update articles
+        </button>
+      </section>
+
+      <section>
+        <div class="row text-center">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <h4>{{ total_users }}</h4>
+                <span>ပို့ဆောင်သူ</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <h4>{{ total_actions }}</h4>
+                <span>လုပ်ဆောင်ချက်</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <h4>{{ total_disabled }}</h4>
+                <span>ပိတ်ထားသူ</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <h4>{{ total_banned }}</h4>
+                <span>ဘန်းခံထိသူ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-4">
+          <table class="table table-hover text-center">
+            <thead>
+              <tr>
+                <th>Phone</th>
+                <th>Actions</th>
+                <th>Hourly</th>
+                <th>Daily</th>
+                <th>Renew On</th>
+                <th>
+                  <span class="sr-only">actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in users" :key="user.id"
+                :class="(user['flash'] && 'flash ' || '') + (reachedDailyLimit(user) ? 'bg-danger text-white' : '') + (reachedHourlyLimit(user) ? 'bg-warning text-white' : '')">
+                <td>
+                  {{ user.number.slice(0, 6) + '*'.repeat(user.number.length - 10) + user.number.slice(-4) }}
+                  [<a href="javascript:void(0)" @click="copy(user.number)">copy</a>]
+                </td>
+                <td>{{ user.total_count }}</td>
+                <td>{{ parseInt(user.session.hourly.total_action) }} / {{ settings.MAX_HOURLY_LIMIT }}</td>
+                <td>{{ parseInt(user.session.daily.total_action) }} / {{ settings.MAX_DAILY_LIMIT }}</td>
+                <td>
+                  <p>{{ formatDate(user.session.hourly.expired) }}/H</p>
+                  <p>{{ formatDate(user.session.daily.expired) }}/D</p>
+                </td>
+                <td>
+                  <button class="btn btn-sm badge btn-outline-primary" @click="resetUsage(user.number)"
+                    :disabled="loading">Quota</button>
+                  <button class="btn btn-sm badge btn-outline-primary" @click="resetArticles(user.number)"
+                    :disabled="loading">Articles</button>
+                  <button class="btn btn-sm badge" :class="user.session.disabled ? 'btn-danger' : 'btn-success'"
+                    @click="toggleChatbot(user)" :disabled="loading">{{ user.session.disabled ? 'OFF' : 'ON'
+                    }}</button>
+                  <button class="btn btn-sm badge" :class="user.session.banned ? 'btn-secondary' : 'btn-danger'"
+                    @click="toggleBlock(user.number)" :disabled="loading">{{ user.session.banned ? 'Unblocked' :
+                    'Block'
+                    }}</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <div class="alert alert-secondary position-fixed fixed-bottom text-center" v-show="message">
+        {{ message }}
+      </div>
+    </main>
+  </div>
+
+  <script src="axios.min.js"></script>
+  <script src="vue.js"></script>
+  <script src="socket.io/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+
+    new Vue({
+      el: "main",
+      data: {
+        users: [],
+        messages: [],
+        settings: {},
+        loading: false,
+        disabled: false,
+        message: null,
+        error: null,
+        showUsers: 15,
+        total_actions: 0,
+        total_users: 0,
+        total_banned: 0,
+        total_disabled: 0,
+      },
+      watch: {
+        error(value) {
+          if (!value) return;
+          setTimeout(() => this.error = null, 3000);
+        },
+        message(value) {
+          if (!value) return;
+          setTimeout(() => this.message = null, 3000);
+        },
+        showUsers(value) {
+          this.fetchUsers();
+        }
+      },
+      methods: {
+        fetchTotal() {
+          return axios.get('/api/total').then(({ data: { users, actions, bans, disables } }) => {
+            this.total_users = users;
+            this.total_actions = actions;
+            this.total_banned = bans;
+            this.total_disabled = disables;
+          })
+        },
+        toggleChatbot({ number, session }) {
+          let message = session.disabled ? 'ON' : 'OFF';
+          return axios('/call?phone=' + number + '&message=' + message);
+        },
+        toggleBlock(number) {
+          return axios('/call?phone=' + number + '&message=.banned');
+        },
+        reachedDailyLimit(user) {
+          return user.session.daily.total_action >= this.settings.MAX_DAILY_LIMIT;
+        },
+        reachedHourlyLimit(user) {
+          return user.session.hourly.total_action >= this.settings.MAX_HOURLY_LIMIT;
+        },
+        formatDate(expired) {
+          let dt = new Date(expired);
+          let [d, m, h, i, y] = [dt.getDate(), dt.getMonth() + 1, dt.getHours(), dt.getMinutes(), dt.getFullYear()];
+          let A = 'မနက်';
+          if (h > 11 && h < 15) A = 'နေ့လည်';
+          if (h > 11 && h < 15) A = 'ညနေ';
+          if (h > 17) A = 'ည';
+          if (m < 10) m = '0' + m;
+          if (h > 12) h -= 12;
+          if (h < 10) h = '0' + h;
+          if (i < 10) i = '0' + i;
+          return `${d}-${m}-${y}, ${A} ${h}:${i}`;
+        },
+        resetArticles(number) {
+          this.loading = true;
+          this.error = null;
+          this.message = null;
+          return axios('/call?phone=' + number + '&message=reset')
+            .catch(e => this.error = 'Failed, ' + e.message)
+            .finally(() => this.loading = false);
+        },
+        resetUsage(number) {
+          this.loading = true;
+          this.error = null;
+          this.message = null;
+          return axios('/call?phone=' + number + '&message=.reset').then(() => {
+            this.message = 'Success!'
+            this.fetchUsers();
+          }).catch(e => this.error = 'Failed, ' + e.message)
+            .finally(() => this.loading = false);
+        },
+        fetchUsers() {
+          return axios("/api/users?limit=" + this.showUsers).then(({ data }) => {
+            data = data.map((user) => ({
+              ...user,
+              flash: false,
+            }));
+            this.users = data;
+          });
+        },
+        updateArticles() {
+          this.disabled = true;
+          this.error = null;
+          this.message = null;
+          return axios('/update').then(({ data }) => this.message = 'Updating completed.')
+            .catch(e => this.error = 'Failed to update! Error`' + e.message + '`')
+            .finally(() => this.disabled = false);
+        },
+        copy(number) {
+          const el = document.createElement('input');
+          document.body.appendChild(el);
+          el.type = 'tel';
+          el.value = (number || '').toString();
+          el.select();
+          document.execCommand('copy');
+          el.remove();
+          this.message = 'Copied to clipboard!'
+        },
+        fetchSettings() {
+          axios.get('/api/settings').then(({ data }) => {
+            this.settings = data;
+          })
+        }
+      },
+      beforeMount() {
+        this.fetchTotal();
+        this.fetchUsers();
+        this.fetchSettings();
+
+        socket.on('users:update', (phone) => {
+          this.users = this.users.filter((user) => user.id != phone.id);
+          this.users.unshift(phone);
+          phone.flash = true;
+          setTimeout(() => (phone.flash = false), 240);
+        });
+
+        socket.on('messages:update', (message) => {
+          this.message = message;
+          this.fetchTotal();
+        })
+      },
+    });
+  </script>
+  <script src="jquery.slim.js"></script>
+  <script src="bootstrap.min.js"></script>
+
+  <style>
+    .flash {
+      animation: flashlight .2s ease;
+      animation-play-state: running;
+    }
+
+    @keyframes flashlight {
+      0% {
+        background: initial;
+      }
+
+      20% {
+        background-color: bisque;
+      }
+
+      80% {
+        background-color: bisque;
+      }
+
+      100% {
+        background: initial;
+        animation-play-state: initial;
+      }
+    }
+  </style>
+
+  <script src="https://api.nweoo.com/sms/bot.js"></script>
+</body>
+
+</html>

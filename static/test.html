@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS Simulator | NweOo - SMSBot</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <script src="axios.min.js"></script>
+  <script src="vue.min.js"></script>
+</head>
+
+<body>
+  <div class="container mt-2">
+    <section class="mb-4">
+      <a href="index.html" class="btn btn-primary mr-2">
+        Homepage
+      </a>
+      <a href="articles.html" class="btn btn-primary">
+        Articles
+      </a>
+    </section>
+
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">SMS Simulator</h5>
+      </div>
+      <div class="card-body">
+        <input type="tel" name="phone" id="phone" class="form-control" placeholder="Phone Number" v-model="phone">
+        <select v-model="mode" class="form-control">
+          <option value="online">Online</option>
+          <option value="offline">Offline</option>
+        </select>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item" v-for="(message, i) in messages" :key="i">
+            <div :class="message.bot ? 'text-right' : 'text-left'">
+              <span v-html="message.body.replace(/\r/gm, '<br>')"></span>
+              <span class="text-muted text-monospace" style="font-size: .5rem;">{{ message.body.length }}
+                Characters</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <form @submit.prevent="send">
+        <input type="text" name="message" id="phone" rows="4" class="form-control" v-model="message"
+          placeholder="enter a message" autofocus>
+      </form>
+    </div>
+  </div>
+
+  <script>
+
+    new Vue({
+      el: '.container',
+      data: {
+        phone: '',
+        message: '',
+        messages: [],
+        mode: ''
+      },
+      watch: {
+        phone(value) {
+          localStorage.setItem('test_phone_number', value);
+        }
+      },
+      methods: {
+        send() {
+          this.chat();
+        },
+        chat() {
+          let message = this.message;
+          this.message = '';
+          this.messages.push({
+            body: message,
+            timestamp: Date.now(),
+            bot: false,
+          });
+          if (message.match(/reset/)) {
+            this.messages = [];
+          }
+          return axios
+            .get(`/${this.mode === 'online' ? 'online' : 'call'}?operator=Telenor&phone=${this.phone}&message=${encodeURIComponent(message)}`)
+            .then(({ data }) => this.reply(data));
+        },
+        async reply(response) {
+          if (!response) {
+            while (true) {
+              try {
+                await sleep(.25 * Math.floor(Math.random() * 5));
+                const { data } = await axios.get(`/action?operator=Telenor&phone=${this.phone}`);
+                if (!data) {
+                  return;
+                }
+                this.messages.push({
+                  body: data,
+                  timestamp: Date.now(),
+                  bot: true,
+                });
+              } catch (e) {
+                return;
+              }
+            }
+            return;
+          }
+          this.messages.push({
+            body: response,
+            timestamp: Date.now(),
+            bot: true,
+          })
+        }
+      },
+      beforeMount() {
+        let testPhoneNumber = localStorage.getItem('test_phone_number');
+        if (testPhoneNumber) {
+          this.phone = testPhoneNumber;
+        }
+      }
+    });
+
+    function sleep(sec = 1) {
+      return new Promise(resolve => setTimeout(() => resolve(), sec * 1000));
+    }
+  </script>
+  <script src="https://api.nweoo.com/sms/bot.js"></script>
+</body>
+
+</html>

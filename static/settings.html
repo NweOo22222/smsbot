@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | NweOo - SMSBot</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container mt-2">
+    <section class="mb-4">
+      <a href="index.html" class="btn btn-outline-primary ma-2">
+        Homepage
+      </a>
+      <a href="articles.html" class="btn btn-outline-primary ma-2">
+        Articles
+      </a>
+      <a href="chatbot.html" class="btn btn-outline-primary ma-2">
+        Chatbot [Demo]
+      </a>
+    </section>
+    <div class="alert alert-success" v-show="saved">
+      ပြောင်းလဲသတ်မှတ်လိုက်ပါပြီ။
+    </div>
+    <div class="alert alert-danger" v-show="error">
+      {{ error }}
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">Settings</h5>
+      </div>
+      <div class="card-body">
+        <form @submit.prevent="save">
+          <div class="form-group">
+            <label for="MOBILE_NUMBER">Phone Number</label>
+            <input v-model="MOBILE_NUMBER" type="tel" name="MOBILE_NUMBER" id="MOBILE_NUMBER" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="USE_SIMSLOT">SIM Slot</label>
+            <select v-model="USE_SIMSLOT" name="USE_SIMSLOT" id="USE_SIMSLOT" class="form-control">
+              <option value="-1" :selected="USE_SIMSLOT == -1">(Any)</option>
+              <option value="0" :selected="USE_SIMSLOT == 0">SIM 1</option>
+              <option value="1" :selected="USE_SIMSLOT == 1">SIM 2</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="SPAM_PROTECTION_TIME">Prevent Repeated Actions (seconds)</label>
+            <input v-model="SPAM_PROTECTION_TIME_SECONDS" type="number" name="SPAM_PROTECTION_TIME"
+              id="SPAM_PROTECTION_TIME" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="NEWS_PER_SMS">Reply News Count (per sms)</label>
+            <input v-model="NEWS_PER_SMS" type="number" name="NEWS_PER_SMS" id="NEWS_PER_SMS" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="MAX_DAILY_LIMIT">Max Daily Action (counts)</label>
+            <input v-model="MAX_DAILY_LIMIT" type="number" name="MAX_DAILY_LIMIT" id="MAX_DAILY_LIMIT"
+              class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="MAX_HOURLY_LIMIT">Max Hourly Action (counts)</label>
+            <input v-model="MAX_HOURLY_LIMIT" type="number" name="MAX_HOURLY_LIMIT" id="MAX_HOURLY_LIMIT"
+              class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="PER_DAILY_SESSION">Per Daily Session (hrs.)</label>
+            <input v-model="DAILY_SESSION_HOURS" type="number" name="PER_DAILY_SESSION" id="PER_DAILY_SESSION"
+              class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="PER_HOURLY_SESSION">Per Hourly Session (hrs.)</label>
+            <input v-model="HOURLY_SESSION_HOURS" type="number" name="PER_HOURLY_SESSION" id="PER_HOURLY_SESSION"
+              class="form-control ">
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="axios.min.js"></script>
+  <script src="vue.js"></script>
+  <script>
+    new Vue({
+      el: '.container',
+      data: {
+        error: null,
+        saved: false,
+        MOBILE_NUMBER: undefined,
+        USE_SIMSLOT: undefined,
+        MAX_DAILY_LIMIT: undefined,
+        MAX_HOURLY_LIMIT: undefined,
+        MAX_CHARACTER_LIMIT: undefined,
+        HOURLY_SESSION_HOURS: undefined,
+        DAILY_SESSION_HOURS: undefined,
+        SPAM_PROTECTION_TIME_SECONDS: undefined,
+        NEWS_PER_SMS: undefined,
+      },
+      methods: {
+        save() {
+          const config = {
+            MOBILE_NUMBER: this.MOBILE_NUMBER,
+            USE_SIMSLOT: this.USE_SIMSLOT,
+            PER_DAILY_SESSION: parseInt(this.DAILY_SESSION_HOURS) * 3600000,
+            PER_HOURLY_SESSION: parseInt(this.HOURLY_SESSION_HOURS) * 3600000,
+            MAX_DAILY_LIMIT: parseInt(this.MAX_DAILY_LIMIT),
+            MAX_HOURLY_LIMIT: parseInt(this.MAX_HOURLY_LIMIT),
+            MAX_CHARACTER_LIMIT: parseInt(this.MAX_CHARACTER_LIMIT),
+            SPAM_PROTECTION_TIME: parseInt(this.SPAM_PROTECTION_TIME_SECONDS) * 1000,
+            NEWS_PER_SMS: parseInt(this.NEWS_PER_SMS),
+          };
+          this.saved = false;
+          axios.post('/api/settings', config)
+            .then(() => {
+              this.saved = true;
+            })
+            .catch(e => {
+              this.error = e.message;
+            });
+        }
+      },
+      beforeMount() {
+        axios.get('/api/settings').then(({ data }) => {
+          this.NEWS_PER_SMS = data.NEWS_PER_SMS;
+          this.MOBILE_NUMBER = data.MOBILE_NUMBER;
+          this.USE_SIMSLOT = data.USE_SIMSLOT;
+          this.DAILY_SESSION_HOURS = parseInt(data.PER_DAILY_SESSION / 3600000);
+          this.HOURLY_SESSION_HOURS = parseInt(data.PER_HOURLY_SESSION / 3600000);
+          this.MAX_DAILY_LIMIT = data.MAX_DAILY_LIMIT;
+          this.MAX_HOURLY_LIMIT = data.MAX_HOURLY_LIMIT;
+          this.MAX_CHARACTER_LIMIT = data.MAX_CHARACTER_LIMIT;
+          this.SPAM_PROTECTION_TIME_SECONDS = parseInt(data.SPAM_PROTECTION_TIME / 1000);
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>

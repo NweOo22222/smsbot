@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ON_SMS_LIMIT = exports.NO_SMS_LIMIT = exports.ON_SEARCH_EXISTED = exports.ON_RATE_LIMIT = exports.ON_UNEXISTED = exports.ON_RESET = exports.ON_HEADLINES_NULL = exports.ON_HEADLINES_NEXT = exports.ON_REMAINING_COUNT_NULL = exports.ON_REMAINING_COUNT = exports.ON_HELP = void 0;
+exports.ON_HELP = "";
+exports.ON_REMAINING_COUNT = "မပို့ရသေးသောသတင်းခေါင်းစဥ် %s ခုကျန်ပါတယ်။ - nweoo.com";
+exports.ON_REMAINING_COUNT_NULL = "သတင်းများနောက်ထပ်မရှိပါ။ - nweoo.com";
+exports.ON_HEADLINES_NEXT = exports.ON_REMAINING_COUNT;
+exports.ON_HEADLINES_NULL = exports.ON_REMAINING_COUNT_NULL;
+exports.ON_RESET = "သတင်းများကိုအစမှပြန်လည်ရယူရန် news ဟုပို့ပါ။ - nweoo.com";
+exports.ON_UNEXISTED = "မှားယွင်းနေပါတယ်။ သတင်းများရယူရန်ဖုန်းနံပါတ် %s ကို news ဟုပို့ပါ။ - nweoo.com";
+exports.ON_RATE_LIMIT = "SMS Limit ပြည့်သွားပါသဖြင့် %sနေမှပြန်ပို့ပေးပါ။ - nweoo.com";
+exports.ON_SEARCH_EXISTED = '"%s" ပါ၀င်သည့်သတင်း %s ခုရှာတွေ့ပြီး %s ပို့ရန်ကျန်ပါတယ်။ - nweoo.com';
+exports.NO_SMS_LIMIT = "သင့်ဖုန်းနံပါတ်ကို SMS Limit သတ်မှတ်ထားခြင်းမရှိပါ။";
+exports.ON_SMS_LIMIT = "%sအတွင်းနောက်ထပ် %s စောင်၊ %sအတွင်း %s စောင်ပြန်ပို့ပေးနိုင်ပါတယ်။";

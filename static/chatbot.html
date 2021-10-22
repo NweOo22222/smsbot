@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="msapplication-TileImage" content="/images/icons/ms-icon-144x144.png" />
+  <meta name="msapplication-TileColor" content="#ffffff" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" sizes="57x57" href="images/icons/apple-icon-57x57.png" />
+  <link rel="apple-touch-icon" sizes="60x60" href="images/icons/apple-icon-60x60.png" />
+  <link rel="apple-touch-icon" sizes="72x72" href="images/icons/apple-icon-72x72.png" />
+  <link rel="apple-touch-icon" sizes="76x76" href="images/icons/apple-icon-76x76.png" />
+  <link rel="apple-touch-icon" sizes="114x114" href="images/icons/apple-icon-114x114.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="images/icons/apple-icon-120x120.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="images/icons/apple-icon-144x144.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="images/icons/apple-icon-152x152.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="images/icons/apple-icon-180x180.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="images/icons/android-icon-192x192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="images/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="images/icons/favicon-96x96.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="images/icons/favicon-16x16.png" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Chatbot | NweOo</title>
+  <link rel="stylesheet" href="tailwind.min.css">
+  <script src="vue.js"></script>
+  <script src="axios.min.js"></script>
+  <style>
+    .scrollbar-w-2::-webkit-scrollbar {
+      width: 0.25rem;
+      height: 0.25rem;
+    }
+
+    .scrollbar-track-blue-lighter::-webkit-scrollbar-track {
+      --bg-opacity: 1;
+      background-color: #f7fafc;
+      background-color: rgba(247, 250, 252, var(--bg-opacity));
+    }
+
+    .scrollbar-thumb-blue::-webkit-scrollbar-thumb {
+      --bg-opacity: 1;
+      background-color: #edf2f7;
+      background-color: rgba(237, 242, 247, var(--bg-opacity));
+    }
+
+    .scrollbar-thumb-rounded::-webkit-scrollbar-thumb {
+      border-radius: 0.25rem;
+    }
+
+    #status-bar {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #2062cc;
+      color: #edf2f7;
+    }
+
+    #status-bar .wrapper {
+      width: 100vw;
+      padding: 10px 25px;
+      margin: 0 auto;
+    }
+
+    #status-bar .row {
+      display: grid;
+      grid-template-columns: repeat(12, 8.33%);
+    }
+
+    #status-bar h6 {
+      font-weight: medium;
+      letter-spacing: 1px;
+      grid-column: 1/2;
+    }
+
+    #status-bar .status {
+      grid-column: 2/13;
+      text-align: right;
+    }
+
+    #status-bar span {
+      padding-left: 5px;
+    }
+
+    #status-bar span::before {
+      font-family: monospace;
+      padding-right: 5px;
+      opacity: 0.8;
+    }
+
+    #status-bar #error::before {
+      content: 'ERR#';
+    }
+
+    #status-bar #phone::before {
+      content: 'Phone:';
+    }
+
+    #chat-message::after {
+      content: attr(char) ' characters';
+      color: #818181;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: small;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div id="status-bar">
+      <div class="wrapper">
+        <div class="row">
+          <h6>
+            <a href="/">{{ bot }}</a>
+          </h6>
+          <div class="status">
+            <span id="error">{{ error || 'n/a' }}</span>
+            <span id="status"></span>
+            <span id="remainng"></span>
+            <span id="phone">
+              <a class="underline" @click="changePhone" href='#'>{{ phone }}</a>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 p:2 sm:p-6 justify-between flex flex-col h-screen">
+      <!-- chat messages box -->
+      <div ref="messages"
+        class="mt-5 flex flex-col space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch">
+
+        <!-- chat bubble -->
+        <div class="flex items-end" :class="message.from == bot ? '' : 'justify-end'" v-for="(message, i) of messages"
+          :key="i">
+          <div class="flex flex-col space-y-2 text-md leading-tight max-w-lg mx-2"
+            :class="message.from == bot ? 'order-2 items-start' : 'order-1 items-end'" id="chat-message"
+            :char="message.text.length">
+            <div>
+              <span class="px-4 py-3 rounded-xl inline-block" style="line-height: 2em; letter-spacing: 1px;"
+                :class="message.from == bot ? 'rounded-bl-none bg-gray-100 text-gray-600' : 'rounded-br-none bg-blue-500 text-white'"
+                v-html="message.text">
+              </span>
+            </div>
+          </div>
+          <img :src="message.from == bot ? 'bot.svg' : 'human.svg'" alt="profile_avatar" class="w-6 h-6 rounded-full"
+            :class="message.from == bot ? 'order-1' : 'order-2'">
+        </div>
+
+        <!-- typing animation -->
+        <div v-show="typing" style="display: none;">
+          <div class="flex items-end">
+            <div class="flex flex-col space-y-2 text-md leading-tight mx-2 order-2 items-start">
+              <div><img src="typing-animation-3x.gif" alt="..." class="w-16 ml-6"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="border-t-2 border-gray-200 px-4 pt-4 mt-2 mb-2 sm:mb-0">
+        <form class="relative flex" @submit.prevent="updateChat">
+          <input type="text" placeholder="press ENTER to send message" autocomplete="off" autofocus="true"
+            class="text-md w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-5 pr-16 bg-gray-100 border-2 border-gray-200 focus:border-blue-500 rounded-full py-2"
+            v-model="message" />
+          <div class="absolute right-2 items-center inset-y-0 hidden sm:flex">
+            <button type="submit"
+              class="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 ease-in-out text-white bg-blue-500 hover:bg-blue-600 focus:outline-none">
+              <!-- <i class="mdi mdi-arrow-right text-xl leading-none"></i> -->
+              >
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BOT_NAME = 'NweOo';
+
+    new Vue({
+      el: '#app',
+      data: {
+        bot: BOT_NAME,
+        phone: '',
+        message: '',
+        messages: [],
+        typing: false,
+        error: '',
+      },
+      methods: {
+        scrollChat() {
+          const container = this.$refs.messages;
+          container.scrollTop = container.scrollHeight - container.clientHeight;
+          requestAnimationFrame(() => container.scrollTop = container.scrollHeight - container.clientHeight);
+        },
+        async botReply(text) {
+          const sleep = (ms) => new Promise((resolve) => setTimeout(() => resolve(), ms));
+          if (text) {
+            this.typing = true;
+            await sleep(Math.round(Math.random() * 10) * 100);
+            this.typing = false;
+            this.scrollChat();
+            return this.messages.push({
+              text: this.formatText(text),
+              from: this.bot,
+              timestamp: Date.now(),
+            });
+          }
+          while (true) {
+            try {
+              const { data } = await axios.get(`/action?phone=${this.phone}`);
+              if (data) {
+                this.typing = true;
+                await sleep(Math.round(Math.random() * 10) * 100);
+                this.messages.push({
+                  from: this.bot,
+                  text: this.formatText(data),
+                  timestamp: Date.now(),
+                });
+                this.scrollChat();
+              }
+            } catch (e) {
+              this.typing = false;
+              return;
+            }
+          }
+        },
+        humanChat(text) {
+          this.messages.push({
+            text: this.formatText(text),
+            from: this.phone,
+            timestamp: Date.now(),
+          });
+          this.scrollChat();
+          return axios.get(`/call?test=1&phone=${this.phone}&message=${encodeURIComponent(text)}`)
+            .then(({ data }) => {
+              this.typing = true;
+              return this.botReply(data);
+            })
+            .catch(e => {
+              this.typing = false;
+              switch (e.response?.status || 0) {
+                case 400:
+                  this.error = '';
+                  break;
+                case 401:
+                  this.error = '(prevent)';
+                  break;
+                case 403:
+                  this.error = '[Banned]';
+                  break;
+                case 419:
+                  this.error = '[RateLimit]';
+                  break;
+                case 422:
+                  this.error = '[SpamProtection]';
+                default:
+                  this.error = e.message;
+              }
+            });
+        },
+        changePhone() {
+          this.phone = '';
+          localStorage.setItem('test_phone_number', '');
+          this.intro();
+        },
+        intro() {
+          let text;
+          this.phone = localStorage.getItem('test_phone_number');
+          if (!this.phone) {
+            text = 'ဖုန်းနံပါတ်တစ်ခုခုကို အရင်ရိုက်ထည့်ပါ။';
+          } else {
+            text = 'မင်္ဂလာပါ။ NweOo SMS Chatbot ကို စမ်းသပ်အသုံးပြုနိုင်ဖို့အတွက် အနီးစပ်ဆုံးတူအောင် ဖန်တီးထားတဲ့ Demo Version ပါ။';
+          }
+          this.typing = true;
+          setTimeout(() => {
+            this.messages = [{
+              from: this.bot,
+              text: this.formatText(text),
+              timestamp: Date.now()
+            }];
+            this.typing = false;
+          }, 800);
+        },
+        updateChat() {
+          if (!this.phone) {
+            this.phone = this.message;
+            localStorage.setItem('test_phone_number', this.phone)
+            this.message = '';
+            this.intro();
+            return;
+          }
+          if (this.message === 'clear') {
+            this.intro();
+            this.message = '.reset';
+          }
+          if (this.message.match(/#n[we]{2}oo/gmi)) {
+            return axios.get('/report?phone=' + this.phone + '&message=' + encodeURIComponent(this.message))
+              .finally(() => {
+                this.message = ''
+              });
+          }
+          this.humanChat(this.message).finally(() => this.typing = false);
+          this.message = '';
+        },
+        formatText(text) {
+          let matched;
+          let url = /((\w+)\.(\w{2,5}))/;
+          let phonenumber = /(\d{4,})/;
+
+          // replace number with telephone
+          matched = text.match(phonenumber);
+          if (matched)
+            text = text.replace(new RegExp(matched[1], 'gm'), `<a class="underline hover:opacity-80" href="tel:+${matched[1]}">${matched[1]}</a>`);
+
+          // replace url with link
+          matched = text.match(url);
+          if (matched)
+            text = text.replace(new RegExp(matched[1], 'gm'), `<a class="underline hover:opacity-80" target="_blank" href="//${matched[1]}">${matched[1]}</a>`);
+
+          return text.split("\n").join("<br />");
+        }
+      },
+      beforeMount() {
+        this.intro();
+      }
+    })
+  </script>
+</body>
+
+</html>
