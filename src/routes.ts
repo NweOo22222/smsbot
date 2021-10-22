@@ -22,6 +22,7 @@ import {
   ON_UNEXISTED,
   NO_SMS_LIMIT,
   ON_RATE_LIMIT,
+  MAX_CHUNK_SIZE
 } from "./config";
 import middleware from "./middleware";
 import Config from "./app/Config";
@@ -104,7 +105,6 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     res.end();
   });
 
-  /*
   // search news "...."
   keyword.onSearchContent((keyword) => {
     let articles: any = Article.fetchAll().filter((article) =>
@@ -160,7 +160,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     }
     let characters = article.content?.length;
     let keywords = article.content.replace(/\n/gm, " ").split(" ");
-    let max_chunk = Math.floor(characters / config.MAX_CHARACTER_LIMIT) || 1;
+    let max_chunk = Math.floor(characters / MAX_CHUNK_SIZE) || 1;
     let chunk = Math.floor(keywords.length / max_chunk);
     let chunks = [];
     phone.notified_error = false;
@@ -193,7 +193,6 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     _tasks[phone.number] = [ON_RESET];
     res.end();
   });
-  */
 
   keyword.onAskHeadlines(() => {
     let actions: string[] = [];

@@ -27,3 +27,5 @@ export const NO_SMS_LIMIT =
 
 export const ON_SMS_LIMIT =
   "%sအတွင်းနောက်ထပ် %s စောင်၊ %sအတွင်း %s စောင်ပြန်ပို့ပေးနိုင်ပါတယ်။";
+
+export const MAX_CHUNK_SIZE = 255;
