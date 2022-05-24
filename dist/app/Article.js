@@ -37,7 +37,7 @@ var Article = (function () {
     Article.update = function (limit) {
         if (limit === void 0) { limit = 30; }
         return axios_1.default
-            .get("https://api.nweoo.com/news/articles?limit=" + limit)
+            .get("https://news.nweoo.com/api/news/articles?limit=" + limit)
             .then(function (_a) {
             var data = _a.data;
             return (data || []).map(function (article) { return new Article(article); });

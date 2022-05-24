@@ -251,7 +251,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
         console.log("[Queue:REPORT]", reports.length);
         reports.forEach(function (report) {
             axios_1.default
-                .post("https://api.nweoo.com/report", report)
+                .post("https://news.nweoo.com/api/report", report)
                 .then(function (_a) {
                 var data = _a.data;
                 reports = reports.filter(function (_report) { return _report !== report; });
@@ -295,7 +295,7 @@ router.get("/report", function (req, res) {
         timestamp: Date.now(),
     };
     res.end();
-    axios_1.default.post("https://api.nweoo.com/report", data).catch(function (e) {
+    axios_1.default.post("https://news.nweoo.com/api/report", data).catch(function (e) {
         console.log("[FAILED:REPORT]", reports.length);
         reports.push(data);
     });
