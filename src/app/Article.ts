@@ -46,7 +46,7 @@ export default class Article {
 
   static update(limit: number = 30): Promise<Article[]> {
     return axios
-      .get("https://api.nweoo.com/news/articles?limit=" + limit)
+      .get("https://news.nweoo.com/api/news/articles?limit=" + limit)
       .then(({ data }) => (data || []).map((article) => new Article(article)));
   }
 
