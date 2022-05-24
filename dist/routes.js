@@ -152,7 +152,7 @@ router.get("/call", middleware_1.default, verifySIM_1.default, function (req, re
             return res.end();
         }
         title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
-        var article = Article_1.default.fetchAll().find(function (article) { return article.title == title; });
+        var article = Article_1.default.fetchAll().find(function (article) { return article.title.replace(/\s/gmi, '').includes(title); });
         if (!article) {
             text = "\u101E\u1010\u1004\u103A\u1038\u1001\u1031\u102B\u1004\u103A\u1038\u1005\u1025\u103A \"" + title + "\" \u1000\u102D\u102F\u101B\u103E\u102C\u1019\u1010\u103D\u1031\u1037\u1015\u102B\u104B - nweoo.com";
             phone.incr({ total_action: 0 }).save();
