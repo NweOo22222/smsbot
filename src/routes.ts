@@ -271,7 +271,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     console.log("[Queue:REPORT]", reports.length);
     reports.forEach((report) => {
       axios
-        .post("https://api.nweoo.com/report", report)
+        .post("https://news.nweoo.com/api/report", report)
         .then(({ data }) => {
           reports = reports.filter((_report) => _report !== report);
         })
@@ -316,7 +316,7 @@ router.get("/report", (req, res) => {
     timestamp: Date.now(),
   };
   res.end();
-  axios.post("https://api.nweoo.com/report", data).catch((e) => {
+  axios.post("https://news.nweoo.com/api/report", data).catch((e) => {
     console.log("[FAILED:REPORT]", reports.length);
     reports.push(data);
   });
