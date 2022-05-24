@@ -150,7 +150,7 @@ router.get("/call", middleware, verifySIM, (req, res) => {
     }
     title = title.replace(/- ?\w+ \d+\/\d+$/gm, "").trim();
     const article = Article.fetchAll().find(
-      (article) => article.title == title
+      (article) => article.title.replace(/\s/gmi, '').includes(title)
     );
     if (!article) {
       text = `သတင်းခေါင်းစဥ် "${title}" ကိုရှာမတွေ့ပါ။ - nweoo.com`;
